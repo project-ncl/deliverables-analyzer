@@ -16,27 +16,30 @@
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import java.net.URL;
-import java.util.Map;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import javax.annotation.security.PermitAll;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import io.quarkus.security.identity.SecurityIdentity;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.jboss.pnc.build.finder.core.BuildSystemInteger;
-import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.deliverablesanalyzer.Finder;
+import org.jboss.pnc.deliverablesanalyzer.model.Build;
+import org.jboss.pnc.deliverablesanalyzer.model.BuiltFromSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +47,10 @@ import org.slf4j.LoggerFactory;
 @Path("analyze")
 public class AnalyzeResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeResource.class);
+
+    @Inject
+    @RequestScoped
+    SecurityIdentity identity;
 
     @Inject
     ManagedExecutor pool;
@@ -57,13 +64,33 @@ public class AnalyzeResource {
     @Parameter(name = "url", description = "URL to the file to analyze.", required = true)
     @APIResponse(responseCode = "200", description = "Analysis successful.")
     @APIResponse(responseCode = "500", description = "Analysis error.")
-    public CompletionStage<Map<BuildSystemInteger, KojiBuild>> analyze(@NotNull @QueryParam("url") URL url) {
-        LOGGER.info("Analyzing {}", url);
+    public CompletionStage<List<Build>> analyze(@NotNull @QueryParam("url") URL url) {
+        final String username = identity.isAnonymous() ? "anonymous" : identity.getPrincipal().getName();
 
-        CompletableFuture<Map<BuildSystemInteger, KojiBuild>> cs = pool.supplyAsync(() -> new Finder().find(url));
+        LOGGER.info("Analyzing {} for {}", url, username);
 
-        LOGGER.info("Done analyzing {}", url);
+        CompletableFuture<List<Build>> cs = pool.supplyAsync(() -> new Finder().find(url, username));
+
+        LOGGER.info("Done analyzing {} for {}", url, username);
 
         return cs;
     }
+
+    @GET
+    @Path("built-from-source")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @PermitAll
+    public CompletionStage<BuiltFromSource> geBuiltFromSource(@NotNull @QueryParam("url") URL url) {
+        CompletionStage<List<Build>> cs = analyze(url);
+        CompletionStage<BuiltFromSource> cs2 = cs.thenApplyAsync(
+                builds -> new BuiltFromSource(
+                        builds.stream()
+                                .flatMap(build -> build.getArtifacts().stream())
+                                .filter(a -> a.getBuiltFromSource().equals(Boolean.TRUE))
+                                .count() == 0L));
+
+        return cs2;
+    }
+
 }

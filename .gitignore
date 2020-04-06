@@ -1,6 +1,7 @@
 .classpath
 .project
 .settings/
+lsp/
 ObjectStore/
 target/
 .idea

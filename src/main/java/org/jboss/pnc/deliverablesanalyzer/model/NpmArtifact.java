@@ -16,46 +16,65 @@
 package org.jboss.pnc.deliverablesanalyzer.model;
 
 import java.util.Date;
-import java.util.List;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
-
-@Entity
-@JsonIgnoreProperties("persistent")
-public class NpmArtifact extends PanacheEntity {
-    @OneToOne(mappedBy = "npmArtifact")
+public class NpmArtifact {
     @NotNull
     @Valid
-    public Artifact artifact;
+    private Artifact artifact;
 
     @NotEmpty
-    public String name;
+    private String name;
 
     @NotEmpty
-    public String version;
+    private String version;
 
-    @Column(nullable = false)
-    @Pattern(regexp = "^((?!anonymous).).*$")
-    public String username;
+    // TODO
+    //@Pattern(regexp = "^((?!anonymous).).*$")
+    private String username;
 
-    @Column(nullable = false)
-    public Date created;
+    private Date created;
 
-    public static List<NpmArtifact> findByName(String name) {
-        return list("name", name);
+    public Artifact getArtifact() {
+        return artifact;
     }
 
-    public static List<NpmArtifact> findByVersion(String version) {
-        return list("version", version);
+    public void setArtifact(Artifact artifact) {
+        this.artifact = artifact;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
     }
 }

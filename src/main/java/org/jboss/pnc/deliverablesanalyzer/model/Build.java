@@ -17,88 +17,110 @@ package org.jboss.pnc.deliverablesanalyzer.model;
 
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import javax.validation.constraints.PositiveOrZero;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
-
-@Entity
-@JsonIgnoreProperties("persistent")
-public class Build extends PanacheEntity implements Comparable<Build> {
-    @Column(nullable = false)
+public class Build {
     @NotBlank
-    public String identifier;
+    private String identifier;
 
     @PositiveOrZero
-    public Long kojiId;
+    private Long kojiId;
 
     @PositiveOrZero
-    public Long pncId;
-
-    @Column(nullable = false)
-    @NotNull
-    public Boolean builtFromSource = Boolean.FALSE;
-
-    @Column(nullable = true)
-    public String source;
+    private Long pncId;
 
     @NotNull
-    public BuildSystemType buildSystemType = BuildSystemType.UNKNOWN;
+    private Boolean builtFromSource = Boolean.FALSE;
 
-    @Column(nullable = false)
-    @Pattern(regexp = "^((?!anonymous).).*$")
-    public String username;
+    private String source;
 
-    @Column(nullable = false)
-    public Date created;
+    @NotNull
+    private BuildSystemType buildSystemType = BuildSystemType.UNKNOWN;
 
-    @OneToMany(mappedBy = "build")
+    // TODO
+    //@Pattern(regexp = "^((?!anonymous).).*$")
+    private String username;
+
+    private Date created;
+
     @JsonIgnoreProperties("build")
-    public Set<Artifact> artifacts = new HashSet<>();
+    private Set<Artifact> artifacts = new HashSet<>();
 
-    @ManyToMany(mappedBy = "builds")
-    @JsonIgnoreProperties("builds")
-    public Set<ProductVersion> productVersions = new HashSet<>();
-
-    public static Build findByIdentifierAndBuildSystemType(String identifier, BuildSystemType buildSystemType) {
-        List<Build> builds = find("identifier = ?1 AND buildSystemType = ?2", identifier, buildSystemType).list();
-
-        return builds.isEmpty() ? null : builds.get(0);
+    public String getIdentifier() {
+        return identifier;
     }
 
-    public static List<Build> findByIdentifier(String identifier) {
-        return list("identifier", identifier);
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 
-    public static List<Build> findByKojiId(Long kojiId) {
-        return list("kojiId", kojiId);
+    public Long getKojiId() {
+        return kojiId;
     }
 
-    public static List<Build> findByPncId(Long pncId) {
-        return list("pncId", pncId);
+    public void setKojiId(Long kojiId) {
+        this.kojiId = kojiId;
     }
 
-    public static List<Build> findByBuiltFromSource(Boolean builtFromSource) {
-        return list("builtFromSource", builtFromSource);
+    public Long getPncId() {
+        return pncId;
     }
 
-    public static List<Build> findBySource(String source) {
-        return list("source", source);
+    public void setPncId(Long pncId) {
+        this.pncId = pncId;
     }
 
-    @Override
-    public int compareTo(Build o) {
-        return id.compareTo(o.id);
+    public Boolean getBuiltFromSource() {
+        return builtFromSource;
+    }
+
+    public void setBuiltFromSource(Boolean builtFromSource) {
+        this.builtFromSource = builtFromSource;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public BuildSystemType getBuildSystemType() {
+        return buildSystemType;
+    }
+
+    public void setBuildSystemType(BuildSystemType buildSystemType) {
+        this.buildSystemType = buildSystemType;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+
+    public Set<Artifact> getArtifacts() {
+        return artifacts;
+    }
+
+    public void setArtifacts(Set<Artifact> artifacts) {
+        this.artifacts = artifacts;
     }
 }

@@ -1,3 +1,5 @@
+package org.jboss.pnc.deliverablesanalyzer.model;
+
 /*
  * Copyright (C) 2019 Red Hat, Inc.
  *
@@ -13,12 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer;
+public class BuiltFromSource {
+    private boolean builtFromSource;
 
-import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.h2.H2DatabaseTestResource;
+    public BuiltFromSource(boolean builtFromSource) {
+        this.builtFromSource = builtFromSource;
+    }
 
-@QuarkusTestResource(H2DatabaseTestResource.class)
-public class TestResources {
+    public BuiltFromSource(String s) {
+        this.builtFromSource = Boolean.valueOf(s);
+    }
 
+    public boolean isBuiltFromSource() {
+        return builtFromSource;
+    }
+
+    public void setBuiltFromSource(boolean builtFromSource) {
+        this.builtFromSource = builtFromSource;
+    }
 }

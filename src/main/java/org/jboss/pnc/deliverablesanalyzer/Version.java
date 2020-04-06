@@ -22,7 +22,7 @@ import java.util.Properties;
 import org.jboss.pnc.build.finder.core.Utils;
 
 public final class Version {
-    private static Properties properties = null;
+    private static Properties properties;
 
     private Version() {
 

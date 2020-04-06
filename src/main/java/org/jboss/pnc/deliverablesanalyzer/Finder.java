@@ -21,8 +21,11 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +34,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.ws.rs.BadRequestException;
+
+import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.io.FileUtils;
 import org.infinispan.configuration.cache.Configuration;
@@ -41,14 +47,22 @@ import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.DefaultCacheManager;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.BuildFinder;
+import org.jboss.pnc.build.finder.core.BuildSystem;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
+import org.jboss.pnc.build.finder.core.Checksum;
 import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.ConfigDefaults;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.Utils;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiClientSession;
+import org.jboss.pnc.build.finder.koji.KojiLocalArchive;
 import org.jboss.pnc.build.finder.pnc.client.PncClient14;
+import org.jboss.pnc.deliverablesanalyzer.model.Artifact;
+import org.jboss.pnc.deliverablesanalyzer.model.Build;
+import org.jboss.pnc.deliverablesanalyzer.model.BuildSystemType;
+import org.jboss.pnc.deliverablesanalyzer.model.MavenArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.NpmArtifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -140,8 +154,9 @@ public class Finder {
         cacheManager.defineConfiguration("builds-pnc", configuration);
     }
 
-    public Map<BuildSystemInteger, KojiBuild> find(URL url) {
-        LOGGER.info("Find: {}", url);
+    // TODO: handle exceptions
+    public List<Build> find(URL url, String username) {
+        LOGGER.info("Find: {} for {}", url, username);
 
         Map<BuildSystemInteger, KojiBuild> builds = Collections.emptyMap();
         ExecutorService pool = null;
@@ -237,7 +252,170 @@ public class Finder {
             }
         }
 
-        return builds;
+        return toBuildList(Collections.unmodifiableMap(builds), username);
+    }
+
+    private List<Build> toBuildList(Map<BuildSystemInteger, KojiBuild> builds, String username) {
+        int numBuilds = builds.size();
+        List<Build> buildList = new ArrayList<>(numBuilds);
+        int buildCount = 0;
+
+        Set<Map.Entry<BuildSystemInteger, KojiBuild>> entrySet = builds.entrySet();
+
+        for (Map.Entry<BuildSystemInteger, KojiBuild> entry : entrySet) {
+            buildCount++;
+
+            BuildSystemInteger buildSystemInteger = entry.getKey();
+
+            if (buildSystemInteger.getValue().equals(Integer.valueOf(0))) {
+                continue;
+            }
+
+            BuildSystemType buildSystemType;
+
+            if (buildSystemInteger.getBuildSystem().equals(BuildSystem.pnc)) {
+                buildSystemType = BuildSystemType.PNC;
+            } else {
+                buildSystemType = BuildSystemType.KOJI;
+            }
+
+            KojiBuild kojiBuild = entry.getValue();
+            String identifier = kojiBuild.getBuildInfo().getNvr();
+
+            LOGGER.info("Build: {} / {} ({}.{})", buildCount, numBuilds, identifier, buildSystemType);
+
+            // TODO
+            Build existingBuild = null;
+            Build build;
+
+            if (existingBuild == null) {
+                build = new Build();
+
+                build.setIdentifier(identifier);
+                build.setBuildSystemType(buildSystemType);
+
+                if (build.getBuildSystemType().equals(BuildSystemType.PNC)) {
+                    build.setPncId(Long.valueOf(kojiBuild.getBuildInfo().getId()));
+                } else {
+                    build.setKojiId(Long.valueOf(kojiBuild.getBuildInfo().getId()));
+                }
+
+                build.setSource(kojiBuild.getSource());
+                build.setBuiltFromSource(!kojiBuild.isImport());
+
+                build.setUsername(username);
+                build.setCreated(new Date());
+            } else {
+                build = existingBuild;
+            }
+
+            List<KojiLocalArchive> localArchives = kojiBuild.getArchives();
+            int numArchives = localArchives.size();
+            int archiveCount = 0;
+
+            for (KojiLocalArchive localArchive : localArchives) {
+                archiveCount++;
+
+                KojiArchiveInfo archiveInfo = localArchive.getArchive();
+                String artifactIdentifier;
+                Artifact artifact;
+                MavenArtifact mavenArtifact = null;
+                NpmArtifact npmArtifact = null;
+
+                if (archiveInfo.getBuildType().equals("maven")) {
+                    String groupId = archiveInfo.getGroupId();
+                    String artifactId = archiveInfo.getArtifactId();
+                    String type = archiveInfo.getExtension() != null ? archiveInfo.getExtension() : "";
+                    String version = archiveInfo.getVersion();
+                    String classifier = archiveInfo.getClassifier() != null ? archiveInfo.getClassifier() : "";
+                    artifactIdentifier = String.join(":", groupId, artifactId, type, version, classifier);
+                    mavenArtifact = new MavenArtifact();
+                    mavenArtifact.setGroupId(groupId);
+                    mavenArtifact.setArtifactId(artifactId);
+                    mavenArtifact.setType(type);
+                    mavenArtifact.setVersion(version);
+                    mavenArtifact.setClassifier(classifier);
+                } else if (archiveInfo.getBuildType().equals("npm")) { // TODO: NPM support doesn't exist yet
+                    String name = archiveInfo.getArtifactId();
+                    String version = archiveInfo.getVersion();
+                    artifactIdentifier = String.join(":", name, version);
+                    npmArtifact = new NpmArtifact();
+                    npmArtifact.setName(name);
+                    npmArtifact.setVersion(version);
+                } else {
+                    throw new BadRequestException(
+                        "Archive " + archiveInfo.getArtifactId() + " had unhandled artifact type: "
+                        + archiveInfo.getBuildType());
+                }
+
+                LOGGER.info("Artifact: {} / {} ({})", archiveCount, numArchives, artifactIdentifier);
+
+                // TODO
+                Artifact existingArtifact = null;
+
+                if (existingArtifact == null) {
+                    artifact = new Artifact();
+
+                    artifact.setIdentifier(artifactIdentifier);
+                    artifact.setBuildSystemType(buildSystemType);
+                    artifact.setBuiltFromSource(localArchive.isBuiltFromSource());
+                    artifact.getFilesNotBuiltFromSource().addAll(localArchive.getUnmatchedFilenames());
+
+                    Collection<Checksum> checksums = localArchive.getChecksums();
+
+                    for (Checksum checksum : checksums) {
+                        switch (checksum.getType()) {
+                            case md5:
+                                artifact.setMd5(checksum.getValue());
+                                break;
+                            case sha1:
+                                artifact.setSha1(checksum.getValue());
+                                break;
+                            case sha256:
+                                artifact.setSha256(checksum.getValue());
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    if (kojiBuild.isPnc()) {
+                        artifact.setPncId(Long.valueOf(archiveInfo.getArchiveId()));
+                    } else {
+                        artifact.setKojiId(Long.valueOf(archiveInfo.getArchiveId()));
+                    }
+
+                    artifact.setBuild(build);
+
+                    artifact.setUsername(username);
+                    artifact.setCreated(new Date());
+
+                    build.getArtifacts().add(artifact);
+
+                    if (mavenArtifact != null) {
+                        mavenArtifact.setArtifact(artifact);
+                        mavenArtifact.setUsername(username);
+                        mavenArtifact.setCreated(new Date());
+                        artifact.setMavenArtifact(mavenArtifact);
+                        artifact.setType(Artifact.Type.MAVEN);
+                    } else if (npmArtifact != null) {
+                        npmArtifact.setArtifact(artifact);
+                        npmArtifact.setUsername(username);
+                        npmArtifact.setCreated(new Date());
+                        artifact.setNpmArtifact(npmArtifact);
+                        artifact.setType(Artifact.Type.NPM);
+                    }
+                } else {
+                    build.getArtifacts().add(existingArtifact);
+                }
+            }
+
+            buildList.add(build);
+        }
+
+        LOGGER.info("Builds map has size {} and builds list has size {}", builds.size(), buildList.size());
+
+        return Collections.unmodifiableList(buildList);
     }
 
     public BuildConfig getBuildConfig() {

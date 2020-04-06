@@ -16,77 +16,97 @@
 package org.jboss.pnc.deliverablesanalyzer.model;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
-
-@Entity
-@JsonIgnoreProperties("persistent")
-public class MavenArtifact extends PanacheEntity {
-    @OneToOne(mappedBy = "mavenArtifact")
+public class MavenArtifact {
     @NotNull
     @Valid
-    public Artifact artifact;
+    private Artifact artifact;
 
     @NotEmpty
-    public String groupId;
+    private String groupId;
 
     @NotEmpty
-    public String artifactId;
+    private String artifactId;
 
     @NotEmpty
-    public String type;
+    private String type;
 
     @NotEmpty
-    public String version;
+    private String version;
 
-    public String classifier;
+    private String classifier;
 
-    @Column(nullable = false)
-    @Pattern(regexp = "^((?!anonymous).).*$")
-    public String username;
+    // TODO
+    //@Pattern(regexp = "^((?!anonymous).).*$")
+    private String username;
 
-    @Column(nullable = false)
-    public Date created;
+    private Date created;
 
-    public static List<MavenArtifact> findByGroupId(String groupId) {
-        return list("groupId", groupId);
+    public Artifact getArtifact() {
+        return artifact;
     }
 
-    public static List<MavenArtifact> findByArtifactId(String artifactId) {
-        return list("artifactId", artifactId);
+    public void setArtifact(Artifact artifact) {
+        this.artifact = artifact;
     }
 
-    public static List<MavenArtifact> findByType(String type) {
-        return list("type", type);
+    public String getGroupId() {
+        return groupId;
     }
 
-    public static List<MavenArtifact> findByVersion(String version) {
-        return list("version", version);
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
     }
 
-    public static List<MavenArtifact> findByClassifer(String classifier) {
-        return list("classifier", classifier);
+    public String getArtifactId() {
+        return artifactId;
     }
 
-    public static List<MavenArtifact> findByGroupIdAndArtifactId(String groupId, String artifactId) {
-        Map<String, Object> params = new HashMap<>(2);
+    public void setArtifactId(String artifactId) {
+        this.artifactId = artifactId;
+    }
 
-        params.put("groupId", groupId);
-        params.put("artifactId", artifactId);
+    public String getType() {
+        return type;
+    }
 
-        return MavenArtifact.list("groupId = :groupId and artifactId = :artifactId", params);
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getClassifier() {
+        return classifier;
+    }
+
+    public void setClassifier(String classifier) {
+        this.classifier = classifier;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
     }
 }

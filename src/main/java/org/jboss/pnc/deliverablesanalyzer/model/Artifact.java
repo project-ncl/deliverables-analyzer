@@ -15,18 +15,10 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import javax.persistence.OrderBy;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -35,124 +27,171 @@ import javax.validation.constraints.Positive;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
-
-@Entity
-@JsonIgnoreProperties("persistent")
-public class Artifact extends PanacheEntity implements Comparable<Artifact> {
-    @Column(nullable = false)
+public class Artifact {
     @NotBlank
-    public String identifier;
+    private String identifier;
 
-    @Column(nullable = false)
     @NotNull
-    public Type type = Type.NONE;
+    private Type type = Type.NONE;
 
-    @Column(nullable = false, length = 128)
     @Pattern(regexp = "^[a-f0-9]{32}$")
-    public String md5;
+    private String md5;
 
-    @Column(nullable = false, length = 160)
     @Pattern(regexp = "^[a-f0-9]{40}$")
-    public String sha1;
+    private String sha1;
 
-    @Column(nullable = false, length = 256)
     @Pattern(regexp = "^[a-f0-9]{64}$")
-    public String sha256;
+    private String sha256;
 
     @Positive
-    public Long kojiId;
+    private Long kojiId;
 
     @Positive
-    public Long pncId;
+    private Long pncId;
 
     @NotNull
-    public BuildSystemType buildSystemType = BuildSystemType.UNKNOWN;
+    private BuildSystemType buildSystemType = BuildSystemType.UNKNOWN;
 
-    @Column(nullable = false)
     @NotNull
-    public Boolean builtFromSource = Boolean.FALSE;
+    private Boolean builtFromSource = Boolean.FALSE;
 
-    @ElementCollection
-    @OrderBy
-    public SortedSet<String> filesNotBuiltFromSource = new TreeSet<>();
+    private SortedSet<String> filesNotBuiltFromSource = new TreeSet<>();
 
-    @ManyToOne
     @NotNull
     @Valid
     @JsonIgnoreProperties("artifacts")
-    public Build build;
+    private Build build;
 
-    @OneToOne
     @JsonIgnoreProperties("artifact")
-    public MavenArtifact mavenArtifact;
+    private MavenArtifact mavenArtifact;
 
-    @OneToOne
     @JsonIgnoreProperties("artifact")
-    public NpmArtifact npmArtifact;
+    private NpmArtifact npmArtifact;
 
-    @Column(nullable = false)
-    @Pattern(regexp = "^((?!anonymous).).*$")
-    public String username;
+    // TODO
+    //@Pattern(regexp = "^((?!anonymous).).*$")
+    private String username;
 
-    @Column(nullable = false)
-    public Date created;
+    private Date created;
 
-    public static Artifact findByIdentifierAndBuildSystemType(String identifier, BuildSystemType buildSystemType) {
-        return find("identifier = ?1 AND buildSystemType = ?2", identifier, buildSystemType).firstResult();
+    public String getIdentifier() {
+        return identifier;
     }
 
-    public static List<Artifact> findByIdentifier(String identifier) {
-        return list("identifier", identifier);
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 
-    public static List<Artifact> findByHash(String hash) {
-        if (hash.length() == 128) {
-            return findByMd5(hash);
-        }
-
-        if (hash.length() == 160) {
-            return findBySha1(hash);
-        }
-
-        if (hash.length() == 256) {
-            return findBySha256(hash);
-        }
-
-        return Collections.emptyList();
+    public Type getType() {
+        return type;
     }
 
-    public static List<Artifact> findByMd5(String md5) {
-        return list("md5", md5);
+    public void setType(Type type) {
+        this.type = type;
     }
 
-    public static List<Artifact> findBySha1(String sha1) {
-        return list("sha1", sha1);
+    public String getMd5() {
+        return md5;
     }
 
-    public static List<Artifact> findBySha256(String sha256) {
-        return list("sha256", sha256);
+    public void setMd5(String md5) {
+        this.md5 = md5;
     }
 
-    public static List<Artifact> findByKojiId(Long kojiId) {
-        return list("kojiId", kojiId);
+    public String getSha1() {
+        return sha1;
     }
 
-    public static List<Artifact> findByPncId(Long pncId) {
-        return list("pncId", pncId);
+    public void setSha1(String sha1) {
+        this.sha1 = sha1;
     }
 
-    public static List<Artifact> findByBuiltFromSource(Boolean builtFromSource) {
-        return list("builtFromSource", builtFromSource);
+    public String getSha256() {
+        return sha256;
     }
 
-    public static List<Artifact> findByType(Type type) {
-        return list("type", type);
+    public void setSha256(String sha256) {
+        this.sha256 = sha256;
     }
 
-    @Override
-    public int compareTo(Artifact o) {
-        return id.compareTo(o.id);
+    public Long getKojiId() {
+        return kojiId;
+    }
+
+    public void setKojiId(Long kojiId) {
+        this.kojiId = kojiId;
+    }
+
+    public Long getPncId() {
+        return pncId;
+    }
+
+    public void setPncId(Long pncId) {
+        this.pncId = pncId;
+    }
+
+    public BuildSystemType getBuildSystemType() {
+        return buildSystemType;
+    }
+
+    public void setBuildSystemType(BuildSystemType buildSystemType) {
+        this.buildSystemType = buildSystemType;
+    }
+
+    public Boolean getBuiltFromSource() {
+        return builtFromSource;
+    }
+
+    public void setBuiltFromSource(Boolean builtFromSource) {
+        this.builtFromSource = builtFromSource;
+    }
+
+    public SortedSet<String> getFilesNotBuiltFromSource() {
+        return filesNotBuiltFromSource;
+    }
+
+    public void setFilesNotBuiltFromSource(SortedSet<String> filesNotBuiltFromSource) {
+        this.filesNotBuiltFromSource = filesNotBuiltFromSource;
+    }
+
+    public Build getBuild() {
+        return build;
+    }
+
+    public void setBuild(Build build) {
+        this.build = build;
+    }
+
+    public MavenArtifact getMavenArtifact() {
+        return mavenArtifact;
+    }
+
+    public void setMavenArtifact(MavenArtifact mavenArtifact) {
+        this.mavenArtifact = mavenArtifact;
+    }
+
+    public NpmArtifact getNpmArtifact() {
+        return npmArtifact;
+    }
+
+    public void setNpmArtifact(NpmArtifact npmArtifact) {
+        this.npmArtifact = npmArtifact;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
     }
 
     public enum Type {
