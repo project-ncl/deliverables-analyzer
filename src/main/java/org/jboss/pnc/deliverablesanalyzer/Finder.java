@@ -344,8 +344,8 @@ public class Finder {
                     npmArtifact.setVersion(version);
                 } else {
                     throw new BadRequestException(
-                        "Archive " + archiveInfo.getArtifactId() + " had unhandled artifact type: "
-                        + archiveInfo.getBuildType());
+                            "Archive " + archiveInfo.getArtifactId() + " had unhandled artifact type: "
+                                    + archiveInfo.getBuildType());
                 }
 
                 LOGGER.info("Artifact: {} / {} ({})", archiveCount, numArchives, artifactIdentifier);

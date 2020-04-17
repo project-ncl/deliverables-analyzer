@@ -33,7 +33,7 @@ public class NpmArtifact {
     private String version;
 
     // TODO
-    //@Pattern(regexp = "^((?!anonymous).).*$")
+    // @Pattern(regexp = "^((?!anonymous).).*$")
     private String username;
 
     private Date created;

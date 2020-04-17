@@ -69,7 +69,7 @@ public class Artifact {
     private NpmArtifact npmArtifact;
 
     // TODO
-    //@Pattern(regexp = "^((?!anonymous).).*$")
+    // @Pattern(regexp = "^((?!anonymous).).*$")
     private String username;
 
     private Date created;

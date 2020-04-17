@@ -41,7 +41,7 @@ public class MavenArtifact {
     private String classifier;
 
     // TODO
-    //@Pattern(regexp = "^((?!anonymous).).*$")
+    // @Pattern(regexp = "^((?!anonymous).).*$")
     private String username;
 
     private Date created;

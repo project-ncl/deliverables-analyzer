@@ -44,7 +44,7 @@ public class Build {
     private BuildSystemType buildSystemType = BuildSystemType.UNKNOWN;
 
     // TODO
-    //@Pattern(regexp = "^((?!anonymous).).*$")
+    // @Pattern(regexp = "^((?!anonymous).).*$")
     private String username;
 
     private Date created;
