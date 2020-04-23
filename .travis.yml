@@ -23,5 +23,13 @@ matrix:
     - os: osx
       osx_image: xcode8.3
 
+before_install:
+  - mvn io.takari:maven:0.7.7:wrapper -Dmaven=3.6.3 -B -V -N
+
+install:
+  - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -Dlicense.skip=true -B -V
+
+script: skip
+
 after_success:
   - bash <(curl -s https://codecov.io/bash)
