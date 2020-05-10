@@ -428,6 +428,7 @@
             <css>SLASHSTAR_STYLE</css>
             <dockerignore>SCRIPT_STYLE</dockerignore>
             <editorconfig>SCRIPT_STYLE</editorconfig>
+            <gitattributes>SCRIPT_STYLE</gitattributes>
             <java>SLASHSTAR_STYLE</java>
             <jvm>SCRIPT_STYLE</jvm>
             <native>SCRIPT_STYLE</native>
