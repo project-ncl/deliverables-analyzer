@@ -17,7 +17,7 @@
 FROM fabric8/java-alpine-openjdk8-jre
 ENV JAVA_OPTIONS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dcom.sun.net.ssl.enableECC=false"
 ENV AB_ENABLED=jmx_exporter
-COPY target/lib/* /deployments/lib/
+#COPY target/lib/* /deployments/lib/
 COPY target/*-runner.jar /deployments/app.jar
 RUN apk update && apk upgrade
 RUN apk add --no-cache nss tzdata
