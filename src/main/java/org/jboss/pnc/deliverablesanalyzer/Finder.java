@@ -57,7 +57,8 @@ import org.jboss.pnc.build.finder.core.Utils;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiClientSession;
 import org.jboss.pnc.build.finder.koji.KojiLocalArchive;
-import org.jboss.pnc.build.finder.pnc.client.PncClient14;
+import org.jboss.pnc.build.finder.pnc.client.HashMapCachingPncClient;
+import org.jboss.pnc.build.finder.pnc.client.PncClient;
 import org.jboss.pnc.deliverablesanalyzer.model.Artifact;
 import org.jboss.pnc.deliverablesanalyzer.model.Build;
 import org.jboss.pnc.deliverablesanalyzer.model.BuildSystemType;
@@ -195,7 +196,8 @@ public class Finder {
                 BuildFinder finder;
 
                 if (config.getPncURL() != null) {
-                    PncClient14 pncclient = new PncClient14(config);
+                    PncClient pncclient = new HashMapCachingPncClient(config);
+                    LOGGER.info("Initialized PNC client with URL {}", config.getPncURL());
                     finder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
                 } else {
                     finder = new BuildFinder(session, config, analyzer, cacheManager);
