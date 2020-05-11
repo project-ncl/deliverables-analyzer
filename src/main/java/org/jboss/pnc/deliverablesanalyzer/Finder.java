@@ -36,7 +36,6 @@ import java.util.concurrent.Future;
 
 import javax.ws.rs.BadRequestException;
 
-import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.io.FileUtils;
 import org.infinispan.configuration.cache.Configuration;
@@ -68,6 +67,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.KojiClientException;
+import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 
 public class Finder {
     private static final Logger LOGGER = LoggerFactory.getLogger(Finder.class);

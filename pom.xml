@@ -16,7 +16,7 @@
     limitations under the License.
 
 -->
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -27,7 +27,7 @@
 
   <groupId>org.jboss.pnc.deliverablesanalyzer</groupId>
   <artifactId>deliverables-analyzer</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
 
   <name>Deliverables Analyzer</name>
   <description>Analyzes deliverables.</description>
@@ -48,8 +48,8 @@
   <scm>
     <connection>scm:git:https://github.com/project-ncl/deliverables-analyzer.git</connection>
     <developerConnection>scm:git:git@github.com:project-ncl/deliverables-analyzer.git</developerConnection>
-    <url>https://github.com/project-ncl/deliverables-analyzer</url>
     <tag>HEAD</tag>
+    <url>https://github.com/project-ncl/deliverables-analyzer</url>
   </scm>
 
   <properties>
@@ -58,15 +58,16 @@
     <skipITs>true</skipITs>
     <version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>4.0.0</version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>
     <version.com.github.eirslett>1.9.1</version.com.github.eirslett>
+    <version.com.github.ekryd.sortpom>2.11.0</version.com.github.ekryd.sortpom>
     <version.com.github.spotbugs>4.0.0</version.com.github.spotbugs>
     <version.com.mycila>3.0</version.com.mycila>
-    <version.com.puppycrawl.tools>8.31</version.com.puppycrawl.tools>
-    <version.org.jboss.pnc.build.finder>2.0.0-SNAPSHOT</version.org.jboss.pnc.build.finder>
-    <version.io.quarkus>1.3.1.Final</version.io.quarkus>
+    <version.com.puppycrawl.tools>8.32</version.com.puppycrawl.tools>
+    <version.io.quarkus>1.4.2.Final</version.io.quarkus>
     <version.net.revelc.code.formatter.formatter-maven-plugin>2.11.0</version.net.revelc.code.formatter.formatter-maven-plugin>
-    <version.net.sourceforge.pmd>6.22.0</version.net.sourceforge.pmd>
-    <version.org.apache.maven.plugins.maven-antrun-plugin>1.8</version.org.apache.maven.plugins.maven-antrun-plugin>
-    <version.org.apache.maven.plugins.maven-assembly-plugin>3.2.0</version.org.apache.maven.plugins.maven-assembly-plugin>
+    <version.net.revelc.code.impsort-maven-plugin>1.4.1</version.net.revelc.code.impsort-maven-plugin>
+    <version.net.sourceforge.pmd>6.23.0</version.net.sourceforge.pmd>
+    <version.org.apache.maven.plugins.maven-antrun-plugin>3.0.0</version.org.apache.maven.plugins.maven-antrun-plugin>
+    <version.org.apache.maven.plugins.maven-assembly-plugin>3.3.0</version.org.apache.maven.plugins.maven-assembly-plugin>
     <version.org.apache.maven.plugins.maven-checkstyle-plugin>3.1.1</version.org.apache.maven.plugins.maven-checkstyle-plugin>
     <version.org.apache.maven.plugins.maven-clean-plugin>3.1.0</version.org.apache.maven.plugins.maven-clean-plugin>
     <version.org.apache.maven.plugins.maven-compiler-plugin>3.8.1-jboss-1</version.org.apache.maven.plugins.maven-compiler-plugin>
@@ -86,17 +87,18 @@
     <version.org.apache.maven.plugins.maven-surefire-plugin>3.0.0-M4</version.org.apache.maven.plugins.maven-surefire-plugin>
     <version.org.codehaus.mojo.buildnumber-maven-plugin>1.4</version.org.codehaus.mojo.buildnumber-maven-plugin>
     <version.org.codehaus.mojo.versions-maven-plugin>2.7</version.org.codehaus.mojo.versions-maven-plugin>
+    <version.org.ec4j.maven.editorconfig-maven-plugin>0.1.0</version.org.ec4j.maven.editorconfig-maven-plugin>
     <version.org.jacoco>0.8.5</version.org.jacoco>
+    <version.org.jboss.pnc.build.finder>2.0.0-SNAPSHOT</version.org.jboss.pnc.build.finder>
   </properties>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-bom</artifactId>
-        <version>${version.io.quarkus}</version>
-        <type>pom</type>
-        <scope>import</scope>
+        <groupId>org.jacoco</groupId>
+        <artifactId>org.jacoco.agent</artifactId>
+        <version>${version.org.jacoco}</version>
+        <classifier>runtime</classifier>
       </dependency>
       <dependency>
         <groupId>org.jboss.pnc.build.finder</groupId>
@@ -110,10 +112,11 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.jacoco</groupId>
-        <artifactId>org.jacoco.agent</artifactId>
-        <classifier>runtime</classifier>
-        <version>${version.org.jacoco}</version>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-bom</artifactId>
+        <version>${version.io.quarkus}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -171,64 +174,84 @@
 
   <repositories>
     <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
       <id>jboss-public-repository</id>
       <name>JBoss Public Maven Repository</name>
       <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
+    </repository>
+    <repository>
       <releases>
         <enabled>false</enabled>
       </releases>
-    </repository>
-    <repository>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
       <id>jboss-snapshots-repository</id>
       <name>JBoss Snapshots Maven Repository</name>
       <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
     </repository>
   </repositories>
   <pluginRepositories>
     <pluginRepository>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
       <id>jboss-public-repository</id>
       <name>JBoss Public Maven Repository</name>
       <url>https://repository.jboss.org/nexus/content/groups/public/</url>
       <layout>default</layout>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
     </pluginRepository>
     <pluginRepository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
       <id>jboss-snapshots-repository</id>
       <name>JBoss Snapshots Maven Repository</name>
       <url>https://repository.jboss.org/nexus/content/repositories/snapshots/</url>
       <layout>default</layout>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
     </pluginRepository>
   </pluginRepositories>
 
   <build>
     <resources>
       <resource>
-        <directory>${project.basedir}/src/main/resources</directory>
         <filtering>true</filtering>
+        <directory>${project.basedir}/src/main/resources</directory>
       </resource>
     </resources>
+
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>com.dkanejs.maven.plugins</groupId>
+          <artifactId>docker-compose-maven-plugin</artifactId>
+          <version>${version.com.dkanejs.maven.plugins.docker-compose-maven-plugin}</version>
+        </plugin>
+        <plugin>
+          <groupId>com.github.ekryd.sortpom</groupId>
+          <artifactId>sortpom-maven-plugin</artifactId>
+          <version>${version.com.github.ekryd.sortpom}</version>
+          <configuration>
+            <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
+            <lineSeparator>\n</lineSeparator>
+            <encoding>${project.build.sourceEncoding}</encoding>
+            <sortProperties>true</sortProperties>
+            <keepBlankLines>true</keepBlankLines>
+            <sortDependencies>scope,groupId,artifactId</sortDependencies>
+            <sortPlugins>scope,groupId,artifactId</sortPlugins>
+          </configuration>
+        </plugin>
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
@@ -240,9 +263,15 @@
           <version>${version.com.mycila}</version>
         </plugin>
         <plugin>
-          <groupId>com.dkanejs.maven.plugins</groupId>
-          <artifactId>docker-compose-maven-plugin</artifactId>
-          <version>${version.com.dkanejs.maven.plugins.docker-compose-maven-plugin}</version>
+          <groupId>net.revelc.code</groupId>
+          <artifactId>impsort-maven-plugin</artifactId>
+          <version>${version.net.revelc.code.impsort-maven-plugin}</version>
+          <configuration>
+            <groups>java.,javax.,org.,com.</groups>
+            <lineEnding>LF</lineEnding>
+            <removeUnused>true</removeUnused>
+            <staticGroups>*</staticGroups>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>net.revelc.code.formatter</groupId>
@@ -250,9 +279,6 @@
           <version>${version.net.revelc.code.formatter.formatter-maven-plugin}</version>
           <configuration>
             <configFile>https://raw.githubusercontent.com/project-ncl/ide-config/master/eclipse/jboss-java-formatter.xml</configFile>
-            <directories>
-              <directory>${project.build.sourceDirectory}</directory>
-            </directories>
             <lineEnding>LF</lineEnding>
           </configuration>
         </plugin>
@@ -431,6 +457,20 @@
 
     <plugins>
       <plugin>
+        <groupId>com.github.ekryd.sortpom</groupId>
+        <artifactId>sortpom-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <verifyFail>Stop</verifyFail>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
         <configuration>
@@ -438,18 +478,14 @@
           <excludes>
             <exclude>LICENSE</exclude>
             <exclude>lsp/log/*.log</exclude>
-            <exclude>ObjectStore/**</exclude>
             <exclude>src/main/resources/LICENSE-HEADER</exclude>
           </excludes>
           <mapping>
-            <css>SLASHSTAR_STYLE</css>
             <dockerignore>SCRIPT_STYLE</dockerignore>
-            <editorconfig>SCRIPT_STYLE</editorconfig>
             <gitattributes>SCRIPT_STYLE</gitattributes>
             <java>SLASHSTAR_STYLE</java>
             <jvm>SCRIPT_STYLE</jvm>
             <native>SCRIPT_STYLE</native>
-            <yml>SCRIPT_STYLE</yml>
           </mapping>
         </configuration>
         <executions>
@@ -473,6 +509,28 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>net.revelc.code</groupId>
+        <artifactId>impsort-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>net.revelc.code.formatter</groupId>
+        <artifactId>formatter-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>validate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
@@ -484,10 +542,10 @@
         <executions>
           <execution>
             <id>create-quarkus-zip</id>
-            <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
+            <phase>package</phase>
           </execution>
         </executions>
       </plugin>
@@ -566,10 +624,10 @@
         <executions>
           <execution>
             <id>integration-tests</id>
-            <phase>integration-test</phase>
             <goals>
               <goal>test</goal>
             </goals>
+            <phase>integration-test</phase>
             <configuration>
               <excludedGroups>!integration</excludedGroups>
               <groups>integration</groups>
@@ -742,20 +800,20 @@
             <executions>
               <execution>
                 <id>pull</id>
-                <phase>verify</phase>
                 <goals>
                   <goal>pull</goal>
                 </goals>
+                <phase>verify</phase>
                 <configuration>
                   <composeFile>${project.basedir}/docker-compose.yml</composeFile>
                 </configuration>
               </execution>
               <execution>
                 <id>up</id>
-                <phase>verify</phase>
                 <goals>
                   <goal>up</goal>
                 </goals>
+                <phase>verify</phase>
                 <configuration>
                   <composeFile>${project.basedir}/docker-compose.yml</composeFile>
                   <build>true</build>
@@ -763,10 +821,10 @@
               </execution>
               <execution>
                 <id>down</id>
-                <phase>verify</phase>
                 <goals>
                   <goal>down</goal>
                 </goals>
+                <phase>verify</phase>
                 <configuration>
                   <composeFile>${project.basedir}/docker-compose.yml</composeFile>
                   <removeImages>true</removeImages>
@@ -852,7 +910,7 @@
                         </goals>
                       </pluginExecutionFilter>
                       <action>
-                        <ignore/>
+                        <ignore></ignore>
                       </action>
                     </pluginExecution>
                     <pluginExecution>

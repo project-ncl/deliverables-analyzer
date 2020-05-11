@@ -32,7 +32,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import io.quarkus.security.identity.SecurityIdentity;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -42,6 +41,8 @@ import org.jboss.pnc.deliverablesanalyzer.model.Build;
 import org.jboss.pnc.deliverablesanalyzer.model.BuiltFromSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.quarkus.security.identity.SecurityIdentity;
 
 @ApplicationScoped
 @Path("analyze")
