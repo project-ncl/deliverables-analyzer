@@ -78,15 +78,21 @@ public class Finder {
 
     private BuildConfig config;
 
-    private String krbService;
+    private void ensureConfigurationDirectoryExists() throws IOException {
+        Path configPath = Paths.get(ConfigDefaults.CONFIG_PATH);
 
-    private String krbPrincipal;
+        LOGGER.info("Configuration directory is: {}", configPath);
 
-    private String krbPassword;
+        if (Files.exists(configPath)) {
+            if (!Files.isDirectory(configPath)) {
+                throw new IOException("Configuration directory is not a directory: " + configPath);
+            }
+        } else {
+            LOGGER.info("Creating configuration directory: {}", configPath);
 
-    private File krbCCache;
-
-    private File krbKeytab;
+            Files.createDirectory(configPath);
+        }
+    }
 
     private BuildConfig setupBuildConfig() throws IOException {
         BuildConfig defaults = BuildConfig.load(Finder.class.getClassLoader());
@@ -116,7 +122,7 @@ public class Finder {
     }
 
     @SuppressWarnings("deprecation")
-    private void initCaches(BuildConfig config) {
+    private void initCaches(BuildConfig config) throws IOException {
         KojiBuild.KojiBuildExternalizer externalizer = new KojiBuild.KojiBuildExternalizer();
         GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
         globalConfigurationBuilder.serialization()
@@ -128,7 +134,27 @@ public class Finder {
         GlobalConfiguration globalConfiguration = globalConfigurationBuilder.build();
         cacheManager = new DefaultCacheManager(globalConfiguration);
 
-        String location = configFile.getParent();
+        ensureConfigurationDirectoryExists();
+
+        Path locationPath = Paths.get(ConfigDefaults.CONFIG_PATH, "cache");
+
+        if (!Files.exists(locationPath)) {
+            Files.createDirectory(locationPath);
+        }
+
+        if (!Files.isDirectory(locationPath)) {
+            throw new IOException("Tried to set cache location to non-directory: " + locationPath);
+        }
+
+        if (!Files.isReadable(locationPath)) {
+            throw new IOException("Cache location is not readable: " + locationPath);
+        }
+
+        if (!Files.isWritable(locationPath)) {
+            throw new IOException("Cache location is not writable: " + locationPath);
+        }
+
+        String location = locationPath.toAbsolutePath().toString();
         Configuration configuration = new ConfigurationBuilder().expiration()
                 .lifespan(config.getCacheLifespan())
                 .maxIdle(config.getCacheMaxIdle())
@@ -181,18 +207,8 @@ public class Finder {
             Map<ChecksumType, MultiValuedMap<String, String>> checksums;
             DistributionAnalyzer analyzer = new DistributionAnalyzer(inputs, config, cacheManager);
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum = pool.submit(analyzer);
-            boolean isKerberos = krbService != null && krbPrincipal != null && krbPassword != null || krbCCache != null
-                    || krbKeytab != null;
 
-            try (KojiClientSession session = isKerberos
-                    ? new KojiClientSession(
-                            config.getKojiHubURL(),
-                            krbService,
-                            krbPrincipal,
-                            krbPassword,
-                            krbCCache,
-                            krbKeytab)
-                    : new KojiClientSession(config.getKojiHubURL())) {
+            try (KojiClientSession session = new KojiClientSession(config.getKojiHubURL())) {
                 BuildFinder finder;
 
                 if (config.getPncURL() != null) {
