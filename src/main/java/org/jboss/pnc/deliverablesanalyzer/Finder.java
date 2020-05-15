@@ -137,6 +137,9 @@ public class Finder {
         ensureConfigurationDirectoryExists();
 
         Path locationPath = Paths.get(ConfigDefaults.CONFIG_PATH, "cache");
+        String location = locationPath.toAbsolutePath().toString();
+
+        LOGGER.info("Cache location is: {}", location);
 
         if (!Files.exists(locationPath)) {
             Files.createDirectory(locationPath);
@@ -154,7 +157,6 @@ public class Finder {
             throw new IOException("Cache location is not writable: " + locationPath);
         }
 
-        String location = locationPath.toAbsolutePath().toString();
         Configuration configuration = new ConfigurationBuilder().expiration()
                 .lifespan(config.getCacheLifespan())
                 .maxIdle(config.getCacheMaxIdle())
@@ -169,6 +171,8 @@ public class Finder {
                 .location(location)
                 .build();
         Set<ChecksumType> checksumTypes = config.getChecksumTypes();
+
+        LOGGER.info("Setting up caches for checksum types size: {}", checksumTypes.size());
 
         for (ChecksumType checksumType : checksumTypes) {
             cacheManager.defineConfiguration("files-" + checksumType, configuration);
@@ -203,9 +207,20 @@ public class Finder {
                 initCaches(config);
             }
 
-            pool = Executors.newFixedThreadPool(1 + config.getChecksumTypes().size());
-            Map<ChecksumType, MultiValuedMap<String, String>> checksums;
+            int nThreads = 1 + config.getChecksumTypes().size();
+
+            LOGGER.info("Setting up fixed thread pool of size: {}", nThreads);
+
+            pool = Executors.newFixedThreadPool(nThreads);
+
             DistributionAnalyzer analyzer = new DistributionAnalyzer(inputs, config, cacheManager);
+
+            LOGGER.info(
+                    "Starting distribution analysis for {} with config {} and cache manager {}",
+                    inputs,
+                    config,
+                    cacheManager.getName());
+
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum = pool.submit(analyzer);
 
             try (KojiClientSession session = new KojiClientSession(config.getKojiHubURL())) {
@@ -220,6 +235,7 @@ public class Finder {
                 }
 
                 Future<Map<BuildSystemInteger, KojiBuild>> futureBuilds = pool.submit(finder);
+                Map<ChecksumType, MultiValuedMap<String, String>> checksums;
 
                 try {
                     checksums = futureChecksum.get();
