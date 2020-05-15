@@ -1,9 +1,22 @@
 # Deliverables Analyzer
 
+Deliverables Analyzer is a RESTful Web Service that uses the
+[Build Finder](https://github.com/project-ncl/build-finder) library to
+scan a given URL containing a software distribution and return the list
+of builds.
+
 This application runs with:
 
 - Quarkus
 - Docker and Docker Compose
+
+## Endpoints
+
+The service supports the following endpoints:
+
+- /health (/health/live and /health/ready)
+- /api/analyze?url=\<url\>
+- /api/version
 
 ## Building with Maven
 
