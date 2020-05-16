@@ -591,6 +591,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <excludedGroups>integration</excludedGroups>
+          <forkedProcessExitTimeoutInSeconds>60</forkedProcessExitTimeoutInSeconds>
           <systemProperties>
             <jacoco-agent.destfile>${project.build.directory}/jacoco-ut.exec</jacoco-agent.destfile>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
