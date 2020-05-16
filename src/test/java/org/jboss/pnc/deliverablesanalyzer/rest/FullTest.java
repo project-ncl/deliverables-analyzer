@@ -18,20 +18,22 @@ package org.jboss.pnc.deliverablesanalyzer.rest;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.util.Arrays;
-import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.jboss.pnc.build.finder.core.BuildFinderObjectMapper;
 import org.jboss.pnc.deliverablesanalyzer.Version;
-import org.jboss.pnc.deliverablesanalyzer.model.Build;
+import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
@@ -43,16 +45,20 @@ public class FullTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(FullTest.class);
 
     @Test
-    public void testEverything() {
+    public void testEverything() throws JsonProcessingException {
         final String url = System.getProperty("distribution.url");
 
         assertNotNull(url, "You must set property distribution.url");
 
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+
         RestAssured.config = RestAssuredConfig.config()
-                .objectMapperConfig(
-                        new ObjectMapperConfig()
-                                .jackson2ObjectMapperFactory((cls, charset) -> new BuildFinderObjectMapper()));
+                .objectMapperConfig(new ObjectMapperConfig().jackson2ObjectMapperFactory((cls, charset) -> {
+                    ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+                    objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+                    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+                    return objectMapper;
+                }));
 
         String version = given().log()
                 .all()
@@ -68,42 +74,25 @@ public class FullTest {
                 .response()
                 .asString();
 
-        LOGGER.info("Got version: {}", version);
+        LOGGER.info("Version: {}", version);
 
-        List<Build> builds = Arrays.asList(
-                given().log()
-                        .all()
-                        .accept(MediaType.APPLICATION_JSON)
-                        .queryParam("url", url)
-                        .when()
-                        .get("/api/analyze")
-                        .then()
-                        .log()
-                        .ifError()
-                        .assertThat()
-                        .statusCode(Response.Status.OK.getStatusCode())
-                        .extract()
-                        .response()
-                        .as(Build[].class));
-
-        LOGGER.info("Got number builds: {}", builds.size());
-
-        boolean isBuiltFromSource = given().log()
+        FinderResult result = given().log()
                 .all()
                 .accept(MediaType.APPLICATION_JSON)
                 .queryParam("url", url)
                 .when()
-                .get("/api/analyze/built-from-source")
+                .get("/api/analyze")
                 .then()
                 .log()
-                .ifError()
+                .all()
                 .assertThat()
                 .statusCode(Response.Status.OK.getStatusCode())
                 .extract()
                 .response()
-                .jsonPath()
-                .getBoolean("builtFromSource");
+                .as(FinderResult.class);
 
-        LOGGER.info("Built from source: {}", isBuiltFromSource);
+        LOGGER.info("Got number builds: {}", result.getBuilds().size());
+
+        assertFalse(result.getBuilds().isEmpty());
     }
 }

@@ -39,12 +39,14 @@ public final class Version {
     }
 
     private static String getAppProperty(String name) {
+        final String unknown = "unknown";
+
         if (properties == null) {
             try {
                 try (InputStream stream = ApplicationLifecycle.class.getClassLoader()
                         .getResourceAsStream("app.properties")) {
                     if (stream == null) {
-                        return "unknown";
+                        return unknown;
                     }
 
                     properties = new Properties();
@@ -52,14 +54,14 @@ public final class Version {
                     properties.load(stream);
                 }
             } catch (IOException e) {
-                return "unknown";
+                return unknown;
             }
         }
 
         Object value = properties.get(name);
 
         if (value == null) {
-            return "unknown";
+            return unknown;
         }
 
         return String.valueOf(value);

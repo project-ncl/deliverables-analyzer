@@ -15,11 +15,11 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
-import java.util.Date;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class NpmArtifact {
     @NotNull
@@ -31,12 +31,6 @@ public class NpmArtifact {
 
     @NotEmpty
     private String version;
-
-    // TODO
-    // @Pattern(regexp = "^((?!anonymous).).*$")
-    private String username;
-
-    private Date created;
 
     public Artifact getArtifact() {
         return artifact;
@@ -62,19 +56,8 @@ public class NpmArtifact {
         this.version = version;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public Date getCreated() {
-        return created;
-    }
-
-    public void setCreated(Date created) {
-        this.created = created;
+    @JsonIgnore
+    public String getIdentifier() {
+        return String.join(":", name, version);
     }
 }

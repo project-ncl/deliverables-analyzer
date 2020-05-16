@@ -15,7 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,32 +23,34 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.PositiveOrZero;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class Build {
     @NotBlank
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String identifier;
 
     @PositiveOrZero
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Long kojiId;
 
     @PositiveOrZero
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Long pncId;
 
     @NotNull
-    private Boolean builtFromSource = Boolean.FALSE;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean builtFromSource;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String source;
 
-    @NotNull
-    private BuildSystemType buildSystemType = BuildSystemType.UNKNOWN;
-
-    // TODO
-    // @Pattern(regexp = "^((?!anonymous).).*$")
-    private String username;
-
-    private Date created;
+    @NotBlank
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private BuildSystemType buildSystemType;
 
     @JsonIgnoreProperties("build")
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Set<Artifact> artifacts = new HashSet<>();
 
     public String getIdentifier() {
@@ -98,22 +99,6 @@ public class Build {
 
     public void setBuildSystemType(BuildSystemType buildSystemType) {
         this.buildSystemType = buildSystemType;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public Date getCreated() {
-        return created;
-    }
-
-    public void setCreated(Date created) {
-        this.created = created;
     }
 
     public Set<Artifact> getArtifacts() {

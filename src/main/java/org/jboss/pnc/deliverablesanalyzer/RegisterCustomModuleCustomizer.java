@@ -1,5 +1,3 @@
-package org.jboss.pnc.deliverablesanalyzer.model;
-
 /*
  * Copyright (C) 2019 Red Hat, Inc.
  *
@@ -15,22 +13,21 @@ package org.jboss.pnc.deliverablesanalyzer.model;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class BuiltFromSource {
-    private boolean builtFromSource;
+package org.jboss.pnc.deliverablesanalyzer;
 
-    public BuiltFromSource(boolean builtFromSource) {
-        this.builtFromSource = builtFromSource;
-    }
+import javax.inject.Singleton;
 
-    public BuiltFromSource(String s) {
-        this.builtFromSource = Boolean.valueOf(s);
-    }
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
-    public boolean isBuiltFromSource() {
-        return builtFromSource;
-    }
+import io.quarkus.jackson.ObjectMapperCustomizer;
 
-    public void setBuiltFromSource(boolean builtFromSource) {
-        this.builtFromSource = builtFromSource;
+@Singleton
+public class RegisterCustomModuleCustomizer implements ObjectMapperCustomizer {
+    @Override
+    public void customize(ObjectMapper objectMapper) {
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
     }
 }

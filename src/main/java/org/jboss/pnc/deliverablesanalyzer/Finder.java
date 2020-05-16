@@ -21,11 +21,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,41 +30,34 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import javax.ws.rs.BadRequestException;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.io.FileUtils;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.BuildFinder;
-import org.jboss.pnc.build.finder.core.BuildSystem;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
-import org.jboss.pnc.build.finder.core.Checksum;
 import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.ConfigDefaults;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.Utils;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiClientSession;
-import org.jboss.pnc.build.finder.koji.KojiLocalArchive;
 import org.jboss.pnc.build.finder.pnc.client.HashMapCachingPncClient;
 import org.jboss.pnc.build.finder.pnc.client.PncClient;
-import org.jboss.pnc.deliverablesanalyzer.model.Artifact;
-import org.jboss.pnc.deliverablesanalyzer.model.Build;
-import org.jboss.pnc.deliverablesanalyzer.model.BuildSystemType;
-import org.jboss.pnc.deliverablesanalyzer.model.MavenArtifact;
-import org.jboss.pnc.deliverablesanalyzer.model.NpmArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.KojiClientException;
-import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 
 public class Finder {
     private static final Logger LOGGER = LoggerFactory.getLogger(Finder.class);
@@ -114,26 +104,24 @@ public class Finder {
         // XXX: Force output directory since it defaults to "." which usually isn't the best
         Path tmpDir = Files.createTempDirectory("deliverables-analyzer-");
 
-        config.setOutputDirectory(tmpDir.toString());
+        config.setOutputDirectory(tmpDir.toAbsolutePath().toString());
 
         LOGGER.info("Output directory set to: {}", config.getOutputDirectory());
 
         return config;
     }
 
+    private static void deletePath(Path path) {
+        LOGGER.info("Delete: {}", path);
+        try {
+            Files.delete(path);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to delete path {}", path, e);
+        }
+    }
+
     @SuppressWarnings("deprecation")
     private void initCaches(BuildConfig config) throws IOException {
-        KojiBuild.KojiBuildExternalizer externalizer = new KojiBuild.KojiBuildExternalizer();
-        GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
-        globalConfigurationBuilder.serialization()
-                .marshaller(new GenericJBossMarshaller())
-                .addAdvancedExternalizer(externalizer.getId(), externalizer)
-                .whiteList()
-                .addRegexp(".*")
-                .create();
-        GlobalConfiguration globalConfiguration = globalConfigurationBuilder.build();
-        cacheManager = new DefaultCacheManager(globalConfiguration);
-
         ensureConfigurationDirectoryExists();
 
         Path locationPath = Paths.get(ConfigDefaults.CONFIG_PATH, "cache");
@@ -157,6 +145,18 @@ public class Finder {
             throw new IOException("Cache location is not writable: " + locationPath);
         }
 
+        KojiBuild.KojiBuildExternalizer externalizer = new KojiBuild.KojiBuildExternalizer();
+        GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
+
+        globalConfig.globalState()
+                .persistentLocation(location)
+                .serialization()
+                .marshaller(new GenericJBossMarshaller())
+                .addAdvancedExternalizer(externalizer.getId(), externalizer)
+                .whiteList()
+                .addRegexp(".*")
+                .create();
+
         Configuration configuration = new ConfigurationBuilder().expiration()
                 .lifespan(config.getCacheLifespan())
                 .maxIdle(config.getCacheMaxIdle())
@@ -164,13 +164,17 @@ public class Finder {
                 .persistence()
                 .passivation(false)
                 .addSingleFileStore()
+                .segmented(true)
                 .shared(false)
                 .preload(true)
                 .fetchPersistentState(true)
                 .purgeOnStartup(false)
                 .location(location)
                 .build();
+
         Set<ChecksumType> checksumTypes = config.getChecksumTypes();
+        GlobalConfiguration globalConfiguration = globalConfig.build();
+        cacheManager = new DefaultCacheManager(globalConfiguration);
 
         LOGGER.info("Setting up caches for checksum types size: {}", checksumTypes.size());
 
@@ -185,15 +189,61 @@ public class Finder {
         cacheManager.defineConfiguration("builds-pnc", configuration);
     }
 
-    // TODO: handle exceptions
-    public List<Build> find(URL url, String username) {
-        LOGGER.info("Find: {} for {}", url, username);
+    private boolean cleanup(String directory, EmbeddedCacheManager cacheManager, ExecutorService pool) {
+        boolean success = cleanupOutput(directory);
 
-        Map<BuildSystemInteger, KojiBuild> builds = Collections.emptyMap();
+        success |= cleanupCache(cacheManager);
+        success |= cleanupPool(pool);
+
+        return success;
+    }
+
+    private boolean cleanupOutput(String directory) {
+        Path outputDirectory = Paths.get(directory);
+
+        try (Stream<Path> stream = Files.walk(outputDirectory)) {
+            stream.sorted(Comparator.reverseOrder()).forEach(Finder::deletePath);
+        } catch (IOException e) {
+            LOGGER.warn("Failed while walking output directory {}", outputDirectory, e);
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean cleanupCache(EmbeddedCacheManager cacheManager) {
+        if (cacheManager != null) {
+            try {
+                cacheManager.close();
+            } catch (IOException e) {
+                LOGGER.warn("Failed to close cache manager {}", cacheManager.getCache().getName(), e);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean cleanupPool(ExecutorService pool) {
+        if (pool != null) {
+            Utils.shutdownAndAwaitTermination(pool);
+        }
+
+        return true;
+    }
+
+    public FinderResult find(URL url) throws IOException, KojiClientException {
+        FinderResult result = null;
         ExecutorService pool = null;
 
         try {
             config = setupBuildConfig();
+        } catch (IOException e) {
+            LOGGER.error("Error reading configuration file", e);
+            throw new IOException("Error reading configuration file", e);
+        }
+
+        try {
             Path filename = Paths.get(url.getPath()).getFileName();
             File file = Paths.get(config.getOutputDirectory()).resolve(filename).toFile();
 
@@ -205,6 +255,13 @@ public class Finder {
 
             if (cacheManager == null && !config.getDisableCache()) {
                 initCaches(config);
+                LOGGER.info(
+                        "Initialized {} {} cache {}",
+                        Version.getBrandName(),
+                        Version.getVersion(),
+                        cacheManager.getName());
+            } else {
+                LOGGER.info("Cache disabled");
             }
 
             int nThreads = 1 + config.getChecksumTypes().size();
@@ -222,234 +279,61 @@ public class Finder {
                     cacheManager.getName());
 
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum = pool.submit(analyzer);
-
-            try (KojiClientSession session = new KojiClientSession(config.getKojiHubURL())) {
-                BuildFinder finder;
-
-                if (config.getPncURL() != null) {
-                    PncClient pncclient = new HashMapCachingPncClient(config);
-                    LOGGER.info("Initialized PNC client with URL {}", config.getPncURL());
-                    finder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
-                } else {
-                    finder = new BuildFinder(session, config, analyzer, cacheManager);
-                }
-
-                Future<Map<BuildSystemInteger, KojiBuild>> futureBuilds = pool.submit(finder);
-                Map<ChecksumType, MultiValuedMap<String, String>> checksums;
-
-                try {
-                    checksums = futureChecksum.get();
-                    builds = futureBuilds.get();
-
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Got {} checksums and {} builds", checksums.size(), checksums.size());
-                    }
-                } catch (ExecutionException e) {
-                    // throw new KojiClientException("", e);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            } catch (KojiClientException e) {
-                // ignore
-            }
+            result = findBuilds(analyzer, pool, futureChecksum);
         } catch (IOException e) {
-            // throw new KojiClientException("Error getting url " + url + " to file " + file, e);
+            LOGGER.error("Error finding builds", e);
+            throw new IOException("Error finding builds", e);
+        } catch (KojiClientException e) {
+            LOGGER.error("Error finding builds", e);
+            throw new KojiClientException("Error finding builds", e);
         } finally {
-            Path outputDirectory = Paths.get(config.getOutputDirectory());
-
-            try {
-                LOGGER.info("Cleanup after finding {}", url);
-
-                Files.walk(outputDirectory).sorted(Comparator.reverseOrder()).forEach(path -> {
-                    try {
-                        LOGGER.info("Delete: {}", path);
-
-                        Files.delete(path);
-                    } catch (IOException e) {
-                        // ignore
-                    }
-                });
-            } catch (IOException e) {
-                // ignore
-            }
-
-            if (cacheManager != null) {
-                try {
-                    cacheManager.close();
-                } catch (IOException e) {
-                    // ignore
-                }
-            }
-
-            if (pool != null) {
-                Utils.shutdownAndAwaitTermination(pool);
-            }
+            LOGGER.info("Cleanup after finding {}", url);
+            cleanup(config.getOutputDirectory(), cacheManager, pool);
         }
 
-        return toBuildList(Collections.unmodifiableMap(builds), username);
+        return result;
     }
 
-    private List<Build> toBuildList(Map<BuildSystemInteger, KojiBuild> builds, String username) {
-        int numBuilds = builds.size();
-        List<Build> buildList = new ArrayList<>(numBuilds);
-        int buildCount = 0;
+    private FinderResult findBuilds(
+            DistributionAnalyzer analyzer,
+            ExecutorService pool,
+            Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum) throws KojiClientException {
+        try (KojiClientSession session = new KojiClientSession(config.getKojiHubURL())) {
+            LOGGER.info("Initialized Koji client session with URL {}", config.getKojiHubURL());
 
-        Set<Map.Entry<BuildSystemInteger, KojiBuild>> entrySet = builds.entrySet();
+            BuildFinder finder;
 
-        for (Map.Entry<BuildSystemInteger, KojiBuild> entry : entrySet) {
-            buildCount++;
-
-            BuildSystemInteger buildSystemInteger = entry.getKey();
-
-            if (buildSystemInteger.getValue().equals(Integer.valueOf(0))) {
-                continue;
-            }
-
-            BuildSystemType buildSystemType;
-
-            if (buildSystemInteger.getBuildSystem().equals(BuildSystem.pnc)) {
-                buildSystemType = BuildSystemType.PNC;
+            if (config.getPncURL() != null) {
+                PncClient pncclient = new HashMapCachingPncClient(config);
+                LOGGER.info("Initialized PNC client with URL {}", config.getPncURL());
+                finder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
             } else {
-                buildSystemType = BuildSystemType.KOJI;
+                finder = new BuildFinder(session, config, analyzer, cacheManager);
             }
 
-            KojiBuild kojiBuild = entry.getValue();
-            String identifier = kojiBuild.getBuildInfo().getNvr();
+            LOGGER.info("Initialized finder");
 
-            LOGGER.info("Build: {} / {} ({}.{})", buildCount, numBuilds, identifier, buildSystemType);
+            Future<Map<BuildSystemInteger, KojiBuild>> futureBuilds = pool.submit(finder);
 
-            // TODO
-            Build existingBuild = null;
-            Build build;
+            try {
+                Map<ChecksumType, MultiValuedMap<String, String>> checksums = futureChecksum.get();
+                Map<BuildSystemInteger, KojiBuild> builds = futureBuilds.get();
 
-            if (existingBuild == null) {
-                build = new Build();
+                LOGGER.info("Got {} checksum types and {} builds", checksums.size(), builds.size() - 1);
 
-                build.setIdentifier(identifier);
-                build.setBuildSystemType(buildSystemType);
+                FinderResult result = new FinderResult(builds);
 
-                if (build.getBuildSystemType().equals(BuildSystemType.PNC)) {
-                    build.setPncId(Long.valueOf(kojiBuild.getBuildInfo().getId()));
-                } else {
-                    build.setKojiId(Long.valueOf(kojiBuild.getBuildInfo().getId()));
-                }
+                LOGGER.info("Initialized finder result");
 
-                build.setSource(kojiBuild.getSource());
-                build.setBuiltFromSource(!kojiBuild.isImport());
-
-                build.setUsername(username);
-                build.setCreated(new Date());
-            } else {
-                build = existingBuild;
+                return result;
+            } catch (ExecutionException e) {
+                throw new KojiClientException("Got ExecutionException", e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
-
-            List<KojiLocalArchive> localArchives = kojiBuild.getArchives();
-            int numArchives = localArchives.size();
-            int archiveCount = 0;
-
-            for (KojiLocalArchive localArchive : localArchives) {
-                archiveCount++;
-
-                KojiArchiveInfo archiveInfo = localArchive.getArchive();
-                String artifactIdentifier;
-                Artifact artifact;
-                MavenArtifact mavenArtifact = null;
-                NpmArtifact npmArtifact = null;
-
-                if (archiveInfo.getBuildType().equals("maven")) {
-                    String groupId = archiveInfo.getGroupId();
-                    String artifactId = archiveInfo.getArtifactId();
-                    String type = archiveInfo.getExtension() != null ? archiveInfo.getExtension() : "";
-                    String version = archiveInfo.getVersion();
-                    String classifier = archiveInfo.getClassifier() != null ? archiveInfo.getClassifier() : "";
-                    artifactIdentifier = String.join(":", groupId, artifactId, type, version, classifier);
-                    mavenArtifact = new MavenArtifact();
-                    mavenArtifact.setGroupId(groupId);
-                    mavenArtifact.setArtifactId(artifactId);
-                    mavenArtifact.setType(type);
-                    mavenArtifact.setVersion(version);
-                    mavenArtifact.setClassifier(classifier);
-                } else if (archiveInfo.getBuildType().equals("npm")) { // TODO: NPM support doesn't exist yet
-                    String name = archiveInfo.getArtifactId();
-                    String version = archiveInfo.getVersion();
-                    artifactIdentifier = String.join(":", name, version);
-                    npmArtifact = new NpmArtifact();
-                    npmArtifact.setName(name);
-                    npmArtifact.setVersion(version);
-                } else {
-                    throw new BadRequestException(
-                            "Archive " + archiveInfo.getArtifactId() + " had unhandled artifact type: "
-                                    + archiveInfo.getBuildType());
-                }
-
-                LOGGER.info("Artifact: {} / {} ({})", archiveCount, numArchives, artifactIdentifier);
-
-                // TODO
-                Artifact existingArtifact = null;
-
-                if (existingArtifact == null) {
-                    artifact = new Artifact();
-
-                    artifact.setIdentifier(artifactIdentifier);
-                    artifact.setBuildSystemType(buildSystemType);
-                    artifact.setBuiltFromSource(localArchive.isBuiltFromSource());
-                    artifact.getFilesNotBuiltFromSource().addAll(localArchive.getUnmatchedFilenames());
-
-                    Collection<Checksum> checksums = localArchive.getChecksums();
-
-                    for (Checksum checksum : checksums) {
-                        switch (checksum.getType()) {
-                            case md5:
-                                artifact.setMd5(checksum.getValue());
-                                break;
-                            case sha1:
-                                artifact.setSha1(checksum.getValue());
-                                break;
-                            case sha256:
-                                artifact.setSha256(checksum.getValue());
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-
-                    if (kojiBuild.isPnc()) {
-                        artifact.setPncId(Long.valueOf(archiveInfo.getArchiveId()));
-                    } else {
-                        artifact.setKojiId(Long.valueOf(archiveInfo.getArchiveId()));
-                    }
-
-                    artifact.setBuild(build);
-
-                    artifact.setUsername(username);
-                    artifact.setCreated(new Date());
-
-                    build.getArtifacts().add(artifact);
-
-                    if (mavenArtifact != null) {
-                        mavenArtifact.setArtifact(artifact);
-                        mavenArtifact.setUsername(username);
-                        mavenArtifact.setCreated(new Date());
-                        artifact.setMavenArtifact(mavenArtifact);
-                        artifact.setType(Artifact.Type.MAVEN);
-                    } else if (npmArtifact != null) {
-                        npmArtifact.setArtifact(artifact);
-                        npmArtifact.setUsername(username);
-                        npmArtifact.setCreated(new Date());
-                        artifact.setNpmArtifact(npmArtifact);
-                        artifact.setType(Artifact.Type.NPM);
-                    }
-                } else {
-                    build.getArtifacts().add(existingArtifact);
-                }
-            }
-
-            buildList.add(build);
         }
 
-        LOGGER.info("Builds map has size {} and builds list has size {}", builds.size(), buildList.size());
-
-        return Collections.unmodifiableList(buildList);
+        return null;
     }
 
     public BuildConfig getBuildConfig() {

@@ -15,7 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
-import java.util.Date;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -25,54 +24,65 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Positive;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Artifact {
     @NotBlank
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String identifier;
 
     @NotNull
-    private Type type = Type.NONE;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Type type;
 
     @Pattern(regexp = "^[a-f0-9]{32}$")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String md5;
 
     @Pattern(regexp = "^[a-f0-9]{40}$")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String sha1;
 
     @Pattern(regexp = "^[a-f0-9]{64}$")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String sha256;
 
     @Positive
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Long kojiId;
 
     @Positive
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Long pncId;
 
     @NotNull
-    private BuildSystemType buildSystemType = BuildSystemType.UNKNOWN;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private BuildSystemType buildSystemType;
 
     @NotNull
-    private Boolean builtFromSource = Boolean.FALSE;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean builtFromSource;
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private SortedSet<String> filesNotBuiltFromSource = new TreeSet<>();
 
     @NotNull
     @Valid
-    @JsonIgnoreProperties("artifacts")
+    @JsonIgnore
+    // @JsonIgnoreProperties("artifacts")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Build build;
 
     @JsonIgnoreProperties("artifact")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private MavenArtifact mavenArtifact;
 
     @JsonIgnoreProperties("artifact")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private NpmArtifact npmArtifact;
-
-    // TODO
-    // @Pattern(regexp = "^((?!anonymous).).*$")
-    private String username;
-
-    private Date created;
 
     public String getIdentifier() {
         return identifier;
@@ -178,23 +188,7 @@ public class Artifact {
         this.npmArtifact = npmArtifact;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public Date getCreated() {
-        return created;
-    }
-
-    public void setCreated(Date created) {
-        this.created = created;
-    }
-
     public enum Type {
-        NONE, MAVEN, NPM
+        @JsonProperty("maven") MAVEN, @JsonProperty("npm") NPM;
     }
 }

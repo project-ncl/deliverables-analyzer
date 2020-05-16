@@ -18,16 +18,25 @@ package org.jboss.pnc.deliverablesanalyzer;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 
 @ApplicationScoped
 public class ApplicationLifecycle {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationLifecycle.class);
+
     public void onStart(@Observes StartupEvent event) {
-        System.out.println(Version.getVersion() + " started");
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("{} started", Version.getVersion());
+        }
     }
 
     public void onStop(@Observes ShutdownEvent event) {
-        System.out.println(Version.getVersion() + " stopped");
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("{} stopped", Version.getVersion());
+        }
     }
 }

@@ -15,6 +15,8 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum BuildSystemType {
-    UNKNOWN, KOJI, PNC
+    @JsonProperty("koji") KOJI, @JsonProperty("pnc") PNC;
 }

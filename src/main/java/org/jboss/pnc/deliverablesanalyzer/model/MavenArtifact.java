@@ -15,11 +15,12 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
-import java.util.Date;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class MavenArtifact {
     @NotNull
@@ -38,13 +39,8 @@ public class MavenArtifact {
     @NotEmpty
     private String version;
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String classifier;
-
-    // TODO
-    // @Pattern(regexp = "^((?!anonymous).).*$")
-    private String username;
-
-    private Date created;
 
     public Artifact getArtifact() {
         return artifact;
@@ -94,19 +90,12 @@ public class MavenArtifact {
         this.classifier = classifier;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public Date getCreated() {
-        return created;
-    }
-
-    public void setCreated(Date created) {
-        this.created = created;
+    @JsonIgnore
+    public String getIdentifier() {
+        if (classifier != null && !classifier.isEmpty()) {
+            return String.join(":", groupId, artifactId, type, version, classifier);
+        } else {
+            return String.join(":", groupId, artifactId, type, version);
+        }
     }
 }
