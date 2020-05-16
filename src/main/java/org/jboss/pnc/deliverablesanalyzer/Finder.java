@@ -303,12 +303,17 @@ public class Finder {
 
             BuildFinder finder;
 
-            if (config.getPncURL() != null) {
-                PncClient pncclient = new HashMapCachingPncClient(config);
-                LOGGER.info("Initialized PNC client with URL {}", config.getPncURL());
-                finder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
+            if (config.getKojiHubURL() != null) {
+                if (config.getPncURL() != null) {
+                    PncClient pncclient = new HashMapCachingPncClient(config);
+                    LOGGER.info("Initialized PNC client with URL {}", config.getPncURL());
+                    finder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
+                } else {
+                    LOGGER.warn("PNC support disabled because PNC URL is not set");
+                    finder = new BuildFinder(session, config, analyzer, cacheManager);
+                }
             } else {
-                finder = new BuildFinder(session, config, analyzer, cacheManager);
+                throw new KojiClientException("Koji hub URL is not set");
             }
 
             LOGGER.info("Initialized finder");
