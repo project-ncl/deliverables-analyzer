@@ -298,22 +298,25 @@ public class Finder {
             DistributionAnalyzer analyzer,
             ExecutorService pool,
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum) throws KojiClientException {
-        try (KojiClientSession session = new KojiClientSession(config.getKojiHubURL())) {
-            LOGGER.info("Initialized Koji client session with URL {}", config.getKojiHubURL());
+        URL kojiHubURL = config.getKojiHubURL();
+
+        if (kojiHubURL == null) {
+            throw new KojiClientException("Koji hub URL is not set");
+        }
+
+        try (KojiClientSession session = new KojiClientSession(kojiHubURL)) {
+            LOGGER.info("Initialized Koji client session with URL {}", kojiHubURL);
 
             BuildFinder finder;
+            URL pncURL = config.getPncURL();
 
-            if (config.getKojiHubURL() != null) {
-                if (config.getPncURL() != null) {
-                    PncClient pncclient = new HashMapCachingPncClient(config);
-                    LOGGER.info("Initialized PNC client with URL {}", config.getPncURL());
-                    finder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
-                } else {
-                    LOGGER.warn("PNC support disabled because PNC URL is not set");
-                    finder = new BuildFinder(session, config, analyzer, cacheManager);
-                }
+            if (pncURL != null) {
+                PncClient pncclient = new HashMapCachingPncClient(config);
+                LOGGER.info("Initialized PNC client with URL {}", pncURL);
+                finder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
             } else {
-                throw new KojiClientException("Koji hub URL is not set");
+                LOGGER.warn("PNC support disabled because PNC URL is not set");
+                finder = new BuildFinder(session, config, analyzer, cacheManager);
             }
 
             LOGGER.info("Initialized finder");
