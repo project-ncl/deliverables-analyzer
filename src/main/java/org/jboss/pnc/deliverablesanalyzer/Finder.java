@@ -300,6 +300,7 @@ public class Finder {
         if (optionalKojiHubURL.isPresent()) {
             try {
                 kojiHubURL = new URL(optionalKojiHubURL.get());
+                config.setKojiHubURL(kojiHubURL);
             } catch (MalformedURLException e) {
                 throw new KojiClientException("Bad Koji hub URL: " + optionalKojiHubURL.get(), e);
             }
@@ -322,6 +323,7 @@ public class Finder {
             if (optionalPncURL.isPresent()) {
                 try {
                     pncURL = new URL(optionalPncURL.get());
+                    config.setPncURL(pncURL);
                 } catch (MalformedURLException e) {
                     throw new KojiClientException("Bad PNC URL: " + optionalPncURL.get(), e);
                 }
