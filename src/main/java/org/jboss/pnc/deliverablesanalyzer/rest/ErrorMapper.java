@@ -26,16 +26,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ErrorMapper implements ExceptionMapper<Exception> {
     @Override
     public Response toResponse(Exception exception) {
-        Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
+        Response.Status status;
 
         if (exception instanceof WebApplicationException) {
             status = ((WebApplicationException) exception).getResponse().getStatusInfo().toEnum();
+        } else {
+            status = Response.Status.INTERNAL_SERVER_ERROR;
         }
 
         int code = status.getStatusCode();
 
         return Response.status(status)
-                .entity(new ObjectMapper().createObjectNode().put("error", exception.getMessage()).put("code", code))
+                .entity(
+                        new ObjectMapper().createObjectNode()
+                                .put(
+                                        "error",
+                                        exception.getCause() != null ? exception.getCause().getMessage()
+                                                : exception.getMessage())
+                                .put("code", code))
                 .build();
     }
 }

@@ -17,6 +17,7 @@ package org.jboss.pnc.deliverablesanalyzer;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -34,6 +36,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -67,6 +70,11 @@ public class Finder {
     private DefaultCacheManager cacheManager;
 
     private BuildConfig config;
+
+    private Optional<String> optionalKojiHubURL = ConfigProvider.getConfig()
+            .getOptionalValue("koji.hub.url", String.class);
+
+    private Optional<String> optionalPncURL = ConfigProvider.getConfig().getOptionalValue("pnc.url", String.class);
 
     private void ensureConfigurationDirectoryExists() throws IOException {
         Path configPath = Paths.get(ConfigDefaults.CONFIG_PATH);
@@ -233,15 +241,10 @@ public class Finder {
     }
 
     public FinderResult find(URL url) throws IOException, KojiClientException {
-        FinderResult result = null;
+        FinderResult result;
         ExecutorService pool = null;
 
-        try {
-            config = setupBuildConfig();
-        } catch (IOException e) {
-            LOGGER.error("Error reading configuration file", e);
-            throw new IOException("Error reading configuration file", e);
-        }
+        config = setupBuildConfig();
 
         try {
             Path filename = Paths.get(url.getPath()).getFileName();
@@ -280,12 +283,6 @@ public class Finder {
 
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum = pool.submit(analyzer);
             result = findBuilds(analyzer, pool, futureChecksum);
-        } catch (IOException e) {
-            LOGGER.error("Error finding builds", e);
-            throw new IOException("Error finding builds", e);
-        } catch (KojiClientException e) {
-            LOGGER.error("Error finding builds", e);
-            throw new KojiClientException("Error finding builds", e);
         } finally {
             LOGGER.info("Cleanup after finding {}", url);
             cleanup(config.getOutputDirectory(), cacheManager, pool);
@@ -298,7 +295,19 @@ public class Finder {
             DistributionAnalyzer analyzer,
             ExecutorService pool,
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum) throws KojiClientException {
-        URL kojiHubURL = config.getKojiHubURL();
+        URL kojiHubURL;
+
+        if (optionalKojiHubURL.isPresent()) {
+            try {
+                kojiHubURL = new URL(optionalKojiHubURL.get());
+            } catch (MalformedURLException e) {
+                throw new KojiClientException("Bad Koji hub URL: " + optionalKojiHubURL.get(), e);
+            }
+        } else {
+            kojiHubURL = config.getKojiHubURL();
+        }
+
+        LOGGER.info("Koji Hub URL: {}", kojiHubURL);
 
         if (kojiHubURL == null) {
             throw new KojiClientException("Koji hub URL is not set");
@@ -308,15 +317,27 @@ public class Finder {
             LOGGER.info("Initialized Koji client session with URL {}", kojiHubURL);
 
             BuildFinder finder;
-            URL pncURL = config.getPncURL();
+            URL pncURL;
 
-            if (pncURL != null) {
+            if (optionalPncURL.isPresent()) {
+                try {
+                    pncURL = new URL(optionalPncURL.get());
+                } catch (MalformedURLException e) {
+                    throw new KojiClientException("Bad PNC URL: " + optionalPncURL.get(), e);
+                }
+            } else {
+                pncURL = config.getPncURL();
+            }
+
+            LOGGER.info("PNC URL: {}", pncURL);
+
+            if (pncURL == null) {
+                LOGGER.warn("PNC support disabled because PNC URL is not set");
+                finder = new BuildFinder(session, config, analyzer, cacheManager);
+            } else {
                 PncClient pncclient = new HashMapCachingPncClient(config);
                 LOGGER.info("Initialized PNC client with URL {}", pncURL);
                 finder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
-            } else {
-                LOGGER.warn("PNC support disabled because PNC URL is not set");
-                finder = new BuildFinder(session, config, analyzer, cacheManager);
             }
 
             LOGGER.info("Initialized finder");
