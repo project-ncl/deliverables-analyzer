@@ -205,8 +205,13 @@ public class FinderResult {
 
         artifact.setIdentifier(artifactIdentifier);
         artifact.setBuildSystemType(build.getBuildSystemType());
-        artifact.setBuiltFromSource(localArchive.isBuiltFromSource());
-        artifact.getFilesNotBuiltFromSource().addAll(localArchive.getUnmatchedFilenames());
+
+        if (!localArchive.isBuiltFromSource()) {
+            artifact.setBuiltFromSource(Boolean.FALSE);
+            artifact.getFilesNotBuiltFromSource().addAll(localArchive.getUnmatchedFilenames());
+        } else {
+            artifact.setBuiltFromSource(build.getBuiltFromSource());
+        }
 
         setArtifactChecksums(artifact, localArchive.getChecksums());
 
