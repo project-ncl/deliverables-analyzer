@@ -471,6 +471,8 @@
           <excludes>
             <exclude>LICENSE</exclude>
             <exclude>lsp/log/*.log</exclude>
+            <exclude>src/main/docker/Dockerfile.jvm</exclude>
+            <exclude>src/main/docker/Dockerfile.native</exclude>
           </excludes>
           <inlineHeader><![CDATA[Copyright (C) ${project.inceptionYear} Red Hat, Inc.
 
