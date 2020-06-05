@@ -53,6 +53,10 @@
   </scm>
 
   <properties>
+    <maven.compiler.parameters>true</maven.compiler.parameters>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <mavenVersion>3.6.2</mavenVersion>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <skipITs>true</skipITs>
@@ -61,11 +65,12 @@
     <version.com.github.ekryd.sortpom>2.11.0</version.com.github.ekryd.sortpom>
     <version.com.github.spotbugs>4.0.0</version.com.github.spotbugs>
     <version.com.mycila>3.0</version.com.mycila>
-    <version.com.puppycrawl.tools>8.32</version.com.puppycrawl.tools>
-    <version.io.quarkus>1.4.2.Final</version.io.quarkus>
+    <version.com.puppycrawl.tools>8.33</version.com.puppycrawl.tools>
+    <version.commons-httpclient>3.1</version.commons-httpclient>
+    <version.io.quarkus>1.5.0.Final</version.io.quarkus>
     <version.net.revelc.code.formatter.formatter-maven-plugin>2.11.0</version.net.revelc.code.formatter.formatter-maven-plugin>
     <version.net.revelc.code.impsort-maven-plugin>1.4.1</version.net.revelc.code.impsort-maven-plugin>
-    <version.net.sourceforge.pmd>6.23.0</version.net.sourceforge.pmd>
+    <version.net.sourceforge.pmd>6.24.0</version.net.sourceforge.pmd>
     <version.org.apache.maven.plugins.maven-antrun-plugin>3.0.0</version.org.apache.maven.plugins.maven-antrun-plugin>
     <version.org.apache.maven.plugins.maven-checkstyle-plugin>3.1.1</version.org.apache.maven.plugins.maven-checkstyle-plugin>
     <version.org.apache.maven.plugins.maven-clean-plugin>3.1.0</version.org.apache.maven.plugins.maven-clean-plugin>
@@ -78,7 +83,7 @@
     <version.org.apache.maven.plugins.maven-javadoc-plugin>3.2.0</version.org.apache.maven.plugins.maven-javadoc-plugin>
     <version.org.apache.maven.plugins.maven-jxr-plugin>3.0.0</version.org.apache.maven.plugins.maven-jxr-plugin>
     <version.org.apache.maven.plugins.maven-pmd-plugin>3.13.0</version.org.apache.maven.plugins.maven-pmd-plugin>
-    <version.org.apache.maven.plugins.maven-project-info-reports-plugin>3.0.0</version.org.apache.maven.plugins.maven-project-info-reports-plugin>
+    <version.org.apache.maven.plugins.maven-project-info-reports-plugin>3.1.0</version.org.apache.maven.plugins.maven-project-info-reports-plugin>
     <version.org.apache.maven.plugins.maven-release-plugin>3.0.0-M1</version.org.apache.maven.plugins.maven-release-plugin>
     <version.org.apache.maven.plugins.maven-resources-plugin>3.1.0</version.org.apache.maven.plugins.maven-resources-plugin>
     <version.org.apache.maven.plugins.maven-site-plugin>3.9.0</version.org.apache.maven.plugins.maven-site-plugin>
@@ -93,6 +98,11 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>commons-httpclient</groupId>
+        <artifactId>commons-httpclient</artifactId>
+        <version>${version.commons-httpclient}</version>
+      </dependency>
       <dependency>
         <groupId>org.jacoco</groupId>
         <artifactId>org.jacoco.agent</artifactId>
@@ -123,10 +133,6 @@
   <dependencies>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-elytron-security</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-hibernate-validator</artifactId>
     </dependency>
     <dependency>
@@ -154,6 +160,11 @@
       <artifactId>core</artifactId>
     </dependency>
     <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>
       <scope>test</scope>
@@ -161,6 +172,11 @@
     <dependency>
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
     <!--<dependency>
@@ -346,6 +362,9 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>${version.org.apache.maven.plugins.maven-javadoc-plugin}</version>
+          <configuration>
+            <source>${maven.compiler.source}</source>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -552,11 +571,6 @@ limitations under the License.]]></inlineHeader>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <parameters>true</parameters>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -604,7 +618,7 @@ limitations under the License.]]></inlineHeader>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <excludedGroups>integration</excludedGroups>
-          <forkedProcessExitTimeoutInSeconds>60</forkedProcessExitTimeoutInSeconds>
+          <forkedProcessExitTimeoutInSeconds>480</forkedProcessExitTimeoutInSeconds>
           <systemProperties>
             <jacoco-agent.destfile>${project.build.directory}/jacoco-ut.exec</jacoco-agent.destfile>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>

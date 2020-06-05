@@ -16,22 +16,28 @@
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import static io.restassured.RestAssured.given;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.time.Duration;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.jboss.pnc.deliverablesanalyzer.Version;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
@@ -44,22 +50,24 @@ import io.restassured.config.RestAssuredConfig;
 public class FullTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(FullTest.class);
 
-    @Test
-    public void testEverything() throws JsonProcessingException {
-        final String url = System.getProperty("distribution.url");
+    private static final String URL = System.getProperty("distribution.url");
 
-        assertNotNull(url, "You must set property distribution.url");
+    @BeforeAll
+    public static void init() {
+        assertNotNull(URL, "You must set property distribution.url");
 
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 
         RestAssured.config = RestAssuredConfig.config()
-                .objectMapperConfig(new ObjectMapperConfig().jackson2ObjectMapperFactory((cls, charset) -> {
-                    ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
-                    objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-                    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-                    return objectMapper;
-                }));
+                .objectMapperConfig(
+                        new ObjectMapperConfig().jackson2ObjectMapperFactory(
+                                (cls, charset) -> new ObjectMapper().findAndRegisterModules()
+                                        .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+                                        .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)));
+    }
 
+    @Test
+    public void testVersion() {
         String version = given().log()
                 .all()
                 .accept(MediaType.TEXT_PLAIN)
@@ -69,19 +77,47 @@ public class FullTest {
                 .log()
                 .all()
                 .statusCode(Response.Status.OK.getStatusCode())
-                .body(not(containsString("unknown")), containsString(Version.getVersion()))
+                .body(
+                        not(is(emptyOrNullString())),
+                        not(containsString("unknown")),
+                        containsString(Version.getVersion()))
                 .extract()
                 .response()
                 .asString();
 
         LOGGER.info("Version: {}", version);
+    }
+
+    @Test
+    public void testRedirect() {
+        String location = given().log()
+                .all()
+                .redirects()
+                .follow(false)
+                .accept(MediaType.APPLICATION_JSON)
+                .formParam("url", URL)
+                .when()
+                .post("/api/analyze")
+                .then()
+                .log()
+                .all()
+                .assertThat()
+                .statusCode(Response.Status.SEE_OTHER.getStatusCode())
+                .extract()
+                .header("Location");
+
+        assertThat(location, is(not(emptyOrNullString())));
+
+        await().atMost(Duration.ofMinutes(10L))
+                .pollInterval(Duration.ofSeconds(30L))
+                .untilAsserted(
+                        () -> RestAssured.when().get(location).then().statusCode(Response.Status.OK.getStatusCode()));
 
         FinderResult result = given().log()
                 .all()
                 .accept(MediaType.APPLICATION_JSON)
-                .queryParam("url", url)
                 .when()
-                .get("/api/analyze")
+                .get(location)
                 .then()
                 .log()
                 .all()
@@ -91,8 +127,28 @@ public class FullTest {
                 .response()
                 .as(FinderResult.class);
 
-        LOGGER.info("Got number builds: {}", result.getBuilds().size());
+        assertThat(result.getBuilds().size(), is(greaterThan(0)));
+    }
 
-        assertFalse(result.getBuilds().isEmpty());
+    @Test
+    public void testFinder() {
+        FinderResult result = given().log()
+                .all()
+                .redirects()
+                .max(1)
+                .accept(MediaType.APPLICATION_JSON)
+                .formParam("url", URL)
+                .when()
+                .post("/api/analyze")
+                .then()
+                .log()
+                .all()
+                .assertThat()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .response()
+                .as(FinderResult.class);
+
+        assertThat(result.getBuilds().size(), is(greaterThan(0)));
     }
 }

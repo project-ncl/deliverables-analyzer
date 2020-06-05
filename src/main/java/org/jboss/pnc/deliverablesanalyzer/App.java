@@ -15,6 +15,7 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 
@@ -24,10 +25,11 @@ import org.eclipse.microprofile.openapi.annotations.info.Info;
 import org.eclipse.microprofile.openapi.annotations.info.License;
 
 @ApplicationPath("/api")
+@ApplicationScoped
 @OpenAPIDefinition(
         info = @Info(
                 title = "Deliverables Analyzer",
-                version = "0.0.1",
+                version = "1.0.0",
                 description = "Analyzes deliverables.",
                 license = @License(
                         name = "The Apache Software License, Version 2.0",

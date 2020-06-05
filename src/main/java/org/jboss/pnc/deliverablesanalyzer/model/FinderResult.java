@@ -15,6 +15,7 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +44,8 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 public class FinderResult {
     private static final Logger LOGGER = LoggerFactory.getLogger(FinderResult.class);
 
+    private URL url;
+
     @NotNull
     @Valid
     private Set<Build> builds;
@@ -61,10 +64,15 @@ public class FinderResult {
         this.statistics = new BuildStatistics(Collections.emptyList());
     }
 
-    public FinderResult(Map<BuildSystemInteger, KojiBuild> builds) {
+    public FinderResult(URL url, Map<BuildSystemInteger, KojiBuild> builds) {
+        this.url = url;
         this.builds = getFoundBuilds(builds);
         this.notFoundArtifacts = getNotFoundArtifacts(builds);
         this.statistics = new BuildStatistics(getBuildsAsList(builds));
+    }
+
+    public URL getUrl() {
+        return url;
     }
 
     public Set<Build> getBuilds() {
@@ -137,9 +145,20 @@ public class FinderResult {
     }
 
     private Set<Artifact> getNotFoundArtifacts(Map<BuildSystemInteger, KojiBuild> builds) {
+        int buildsSize = builds.size();
+
+        if (buildsSize == 0) {
+            return Collections.unmodifiableSet(new LinkedHashSet<>());
+        }
+
         KojiBuild buildZero = builds.get(new BuildSystemInteger(0));
         List<KojiLocalArchive> localArchives = buildZero.getArchives();
         int numArchives = localArchives.size();
+
+        if (numArchives == 0) {
+            return Collections.unmodifiableSet(new LinkedHashSet<>());
+        }
+
         Set<Artifact> artifacts = new LinkedHashSet<>(numArchives);
         int archiveCount = 0;
 
@@ -237,7 +256,13 @@ public class FinderResult {
     }
 
     private Set<Build> getFoundBuilds(Map<BuildSystemInteger, KojiBuild> builds) {
-        int numBuilds = builds.size() - 1;
+        int buildsSize = builds.size();
+
+        if (buildsSize <= 1) {
+            return Collections.unmodifiableSet(new LinkedHashSet<>());
+        }
+
+        int numBuilds = buildsSize - 1;
         Set<Build> buildList = new LinkedHashSet<>(numBuilds);
         int buildCount = 0;
         Set<Map.Entry<BuildSystemInteger, KojiBuild>> entrySet = builds.entrySet();

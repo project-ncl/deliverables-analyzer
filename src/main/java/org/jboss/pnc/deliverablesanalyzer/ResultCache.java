@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.rest;
+package org.jboss.pnc.deliverablesanalyzer;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import java.time.Duration;
+import java.util.concurrent.ConcurrentHashMap;
 
-@Provider
-public class ErrorMapper implements ExceptionMapper<Exception> {
-    @Override
-    public Response toResponse(Exception exception) {
-        ErrorInfo errorInfo = new ErrorInfo(exception);
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-        return Response.status(errorInfo.getCode()).type(MediaType.APPLICATION_JSON).entity(errorInfo).build();
+import org.apache.commons.collections4.map.PassiveExpiringMap;
+
+@Singleton
+public class ResultCache<K, V> extends PassiveExpiringMap<K, V> {
+    private static final long TIME_TO_LIVE_MILLIS = Duration.ofDays(1L).toMillis();
+
+    @Inject
+    public ResultCache() {
+        super(TIME_TO_LIVE_MILLIS, new ConcurrentHashMap<>());
     }
 }

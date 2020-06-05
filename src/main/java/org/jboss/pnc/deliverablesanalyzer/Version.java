@@ -64,7 +64,7 @@ public final class Version {
             return unknown;
         }
 
-        return String.valueOf(value);
+        return value.toString();
     }
 
     private static String getVersionNumber() {

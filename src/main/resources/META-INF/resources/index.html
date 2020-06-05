@@ -1,0 +1,228 @@
+<!--
+
+    Copyright (C) 2019 Red Hat, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Deliverables Analyzer</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script>
+      $(function() {
+        const version = $('#version');
+
+        $.get('/api/version', function(data) {
+          version.html(data);
+        }).fail(function() {
+          version.html('Unknown version');
+        });
+
+        // XXX
+        let config;
+        let table;
+
+        const input = $('#url');
+        const submitButton = $('#submitButton');
+        const error = $('#error');
+
+        $.getJSON('/api/analyze/config', function(data) {
+          config = data;
+        }).fail(function() {
+          error.html('Fatal error getting configuration');
+          submitButton.attr('disabled', true);
+          input.attr('disabled', true);
+        });
+
+        const form = $('#analyzeForm');
+
+        form.submit(function(event) {
+          event.preventDefault();
+
+          error.html('');
+
+          if (table != null) {
+            table.destroy(true);
+          }
+
+          const url = input.val();
+
+          if (url == null || url.trim().length == 0) {
+            alert('URL cannot be empty');
+
+            return;
+          }
+
+          let u;
+
+          try {
+            u = new URL(url);
+          } catch (error) {
+            alert('Invalid URL: ' + url + ': ' + error);
+
+            return;
+          }
+
+          const protocol = u.protocol;
+
+          if (protocol != 'http:' && protocol != 'https:') {
+            alert('Invalid URL protocol: ' + protocol);
+
+            return;
+          }
+
+          input.attr('disabled', true);
+          submitButton.attr('disabled', true);
+
+          $.post('/api/analyze', { url: u.toString() }).done(function(data) {
+            handle(config, data);
+            input.attr('disabled', false);
+            submitButton.attr('disabled', false);
+          }).fail(function(jqXHR, textStatus, errorThrown) {
+            const responseText = jqXHR.responseText;
+            const errorMessage = JSON.parse(responseText);
+            let msg = 'Error ' + errorMessage.code + ': ' + errorMessage.reason + '<br \/>' + errorMessage.message +
+              '<br \/>';
+
+            if (errorMessage.stack_trace != null) {
+              msg += errorMessage.stack_trace.toString().replace(/,/g, '<br \/>');
+            }
+
+            if (errorMessage.cause_stack_trace != null) {
+              msg += 'Caused by:<br \/>' +
+                errorMessage.cause_stack_trace.toString().replace(/,/g, '<br \/>');
+            }
+
+            error.html(msg);
+          });
+        });
+
+        function handle(config, data) {
+          if (!data.hasOwnProperty('builds')) {
+            error.html('Found zero builds');
+            return;
+          }
+
+          const builds = $('#builds');
+          table = builds.DataTable({
+            data: data.builds,
+            columns: [
+              { data: 'identifier' },
+              {
+                data: 'koji_id', defaultContent: '',
+                render: function(data, type) {
+                  if (data == null) {
+                    return '';
+                  }
+
+                  if (type === 'display') {
+                    return '<a href="' + config.koji_web_url + '/buildinfo?buildID=' + data + '">' + data + '<\/a>';
+                  }
+
+                  return data;
+                }
+              },
+              {
+                data: 'pnc_id', defaultContent: '',
+                render: function(data, type) {
+                  if (data == null) {
+                    return '';
+                  }
+
+                  if (type === 'display') {
+                    return '<a href="' + config.pnc_url + '/pnc-web/#/builds/' + data + '">' + data + '<\/a>';
+                  }
+
+                  return data;
+                }
+              },
+              { data: 'built_from_source' },
+              { data: 'source', defaultContent: '' },
+              { data: 'build_system_type' },
+              {
+                data: 'artifacts',
+                render: function(data, type) {
+                  if (type === 'display') {
+                    let text = '<ul>';
+
+                    for (i = 0; i < data.length; i++) {
+                      a = data[i];
+                      text += '<li>';
+                      if (a.koji_id != null) {
+                        text += '<a href="' + config.koji_web_url + '/archiveinfo?archiveID=' + a.koji_id + '">' + a.identifier + '<\/a>';
+                      } else if (a.pnc_id != null) {
+                        text += '<a href="' + config.pnc_url + '/pnc-web/#/artifacts/' + a.pnc_id + '">' + a.identifier + '<\/a>';
+                      }
+
+                      text += '<\/li>';
+                    }
+
+                    text += '<\/ul>';
+
+                    return text;
+                  }
+
+                  return data;
+                }
+              }
+            ]
+          });
+
+          table.draw();
+          builds.show();
+        }
+      });
+    </script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css" />
+    <style type="text/css">
+      input.c1 {
+        width: 75%;
+      }
+
+      table.c1 {
+        display: none;
+      }
+
+      .error {
+        color: red;
+        font-weight: bold;
+      }
+
+    </style>
+  </head>
+  <body>
+    <h2>Deliverables Analyzer ${project.version}</h2>
+    <p><strong><span id="version"></span></strong></p>
+    <form id="analyzeForm">
+      <label for="url">URL:</label> <input id="url" class="c1" size="130" type="text" /> <input id="submitButton"
+        type="submit" value="Analyze" />
+    </form>
+    <table id="builds" class="display c1">
+      <thead>
+        <tr>
+          <th>Identifier</th>
+          <th>Koji ID</th>
+          <th>PNC ID</th>
+          <th>Built from Source</th>
+          <th>Source</th>
+          <th>Build System</th>
+          <th>Artifacts</th>
+        </tr>
+      </thead>
+    </table>
+    <p id="error" class="error"></p>
+  </body>
+</html>

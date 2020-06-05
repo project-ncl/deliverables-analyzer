@@ -17,25 +17,36 @@ package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import javax.annotation.security.PermitAll;
 import javax.enterprise.context.ApplicationScoped;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.jboss.pnc.deliverablesanalyzer.Version;
+import org.hibernate.validator.constraints.URL;
+import org.jboss.resteasy.annotations.jaxrs.FormParam;
+import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
-@Path("version")
 @ApplicationScoped
-public class VersionResource implements VersionService {
-    @Override
-    @Operation(description = "Display version information")
-    @APIResponse(responseCode = "200", description = "OK")
+@Path("analyze")
+public interface AnalyzeService {
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Path("config")
     @PermitAll
-    public String getVersion() {
-        return Version.getVersion();
-    }
+    @Produces(MediaType.APPLICATION_JSON)
+    Response config();
+
+    @GET
+    @Path("results/{id}")
+    @PermitAll
+    @Produces(MediaType.APPLICATION_JSON)
+    Response results(@NotNull @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id);
+
+    @POST
+    @PermitAll
+    @Produces(MediaType.APPLICATION_JSON)
+    Response analyze(@NotNull @FormParam @URL(regexp = "^http(s)?:.*") String url);
 }
