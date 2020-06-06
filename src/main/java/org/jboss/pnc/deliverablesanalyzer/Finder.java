@@ -80,10 +80,13 @@ public class Finder {
     private BuildConfig config;
 
     @ConfigProperty(name = "koji.hub.url")
-    Optional<String> optionalKojiHubURL;
+    Optional<String> optionalKojiHubURL = Optional.empty();
+
+    @ConfigProperty(name = "koji.web.url")
+    Optional<String> optionalKojiWebURL = Optional.empty();
 
     @ConfigProperty(name = "pnc.url")
-    Optional<String> optionalPncURL;
+    Optional<String> optionalPncURL = Optional.empty();
 
     public Finder() throws IOException {
         config = setupBuildConfig();
@@ -119,6 +122,49 @@ public class Finder {
                 config = new BuildConfig();
             } else {
                 config = defaults;
+            }
+        }
+
+        if (optionalKojiHubURL.isPresent()) {
+            String s = optionalKojiHubURL.get();
+
+            try {
+                URL kojiHubURL = new URL(s);
+                config.setKojiHubURL(kojiHubURL);
+            } catch (MalformedURLException e) {
+                throw new IOException("Bad Koji hub URL: " + s, e);
+            }
+        }
+
+        if (optionalKojiWebURL.isPresent()) {
+            String s = optionalKojiWebURL.get();
+
+            try {
+                URL kojiWebURL = new URL(s);
+                config.setKojiWebURL(kojiWebURL);
+            } catch (MalformedURLException e) {
+                throw new IOException("Bad Koji web URL: " + s, e);
+            }
+        } else if (config.getKojiWebURL() == null && config.getKojiHubURL() != null) {
+            // XXX: hack for missing koji.web.url
+            String s = config.getKojiHubURL().toExternalForm().replace("hub.", "web.").replace("hub", "");
+
+            try {
+                URL kojiWebURL = new URL(s);
+                config.setKojiWebURL(kojiWebURL);
+            } catch (MalformedURLException e) {
+                throw new IOException("Bad Koji web URL: " + s, e);
+            }
+        }
+
+        if (optionalPncURL.isPresent()) {
+            String s = optionalPncURL.get();
+
+            try {
+                URL pncURL = new URL(s);
+                config.setPncURL(pncURL);
+            } catch (MalformedURLException e) {
+                throw new IOException("Bad PNC URL: " + s, e);
             }
         }
 
@@ -325,18 +371,7 @@ public class Finder {
             DistributionAnalyzer analyzer,
             ExecutorService pool,
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum) throws KojiClientException {
-        URL kojiHubURL;
-
-        if (optionalKojiHubURL.isPresent()) {
-            try {
-                kojiHubURL = new URL(optionalKojiHubURL.get());
-                config.setKojiHubURL(kojiHubURL);
-            } catch (MalformedURLException e) {
-                throw new KojiClientException("Bad Koji hub URL: " + optionalKojiHubURL.get(), e);
-            }
-        } else {
-            kojiHubURL = config.getKojiHubURL();
-        }
+        URL kojiHubURL = config.getKojiHubURL();
 
         LOGGER.info("Koji Hub URL: {}", kojiHubURL);
 
@@ -344,24 +379,11 @@ public class Finder {
             throw new KojiClientException("Koji hub URL is not set");
         }
 
+        LOGGER.info("Initializing Koji client session with URL {}", kojiHubURL);
+
         try (KojiClientSession session = new KojiClientSession(kojiHubURL)) {
-            LOGGER.info("Initialized Koji client session with URL {}", kojiHubURL);
-
             BuildFinder finder;
-            URL pncURL;
-
-            if (optionalPncURL.isPresent()) {
-                try {
-                    pncURL = new URL(optionalPncURL.get());
-                    config.setPncURL(pncURL);
-                } catch (MalformedURLException e) {
-                    throw new KojiClientException("Bad PNC URL: " + optionalPncURL.get(), e);
-                }
-            } else {
-                pncURL = config.getPncURL();
-            }
-
-            LOGGER.info("Initializing Koji session with URL {}", config.getKojiHubURL());
+            URL pncURL = config.getPncURL();
 
             if (pncURL == null) {
                 LOGGER.warn("PNC support disabled because PNC URL is not set");
