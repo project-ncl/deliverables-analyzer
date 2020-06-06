@@ -43,7 +43,7 @@ import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -78,15 +78,6 @@ public class Finder {
     private DefaultCacheManager cacheManager;
 
     private BuildConfig config;
-
-    @ConfigProperty(name = "koji.hub.url")
-    Optional<String> optionalKojiHubURL = Optional.empty();
-
-    @ConfigProperty(name = "koji.web.url")
-    Optional<String> optionalKojiWebURL = Optional.empty();
-
-    @ConfigProperty(name = "pnc.url")
-    Optional<String> optionalPncURL = Optional.empty();
 
     public Finder() throws IOException {
         config = setupBuildConfig();
@@ -125,6 +116,8 @@ public class Finder {
             }
         }
 
+        Optional<String> optionalKojiHubURL = ConfigProvider.getConfig().getOptionalValue("koji.hub.url", String.class);
+
         if (optionalKojiHubURL.isPresent()) {
             String s = optionalKojiHubURL.get();
 
@@ -135,6 +128,8 @@ public class Finder {
                 throw new IOException("Bad Koji hub URL: " + s, e);
             }
         }
+
+        Optional<String> optionalKojiWebURL = ConfigProvider.getConfig().getOptionalValue("koji.web.url", String.class);
 
         if (optionalKojiWebURL.isPresent()) {
             String s = optionalKojiWebURL.get();
@@ -156,6 +151,8 @@ public class Finder {
                 throw new IOException("Bad Koji web URL: " + s, e);
             }
         }
+
+        Optional<String> optionalPncURL = ConfigProvider.getConfig().getOptionalValue("pnc.url", String.class);
 
         if (optionalPncURL.isPresent()) {
             String s = optionalPncURL.get();
