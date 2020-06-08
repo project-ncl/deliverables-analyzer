@@ -31,6 +31,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.ws.rs.GET;
 import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -44,9 +45,15 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterStyle;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
+import org.eclipse.microprofile.openapi.annotations.headers.Header;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.hibernate.validator.constraints.URL;
+import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.Finder;
 import org.jboss.pnc.deliverablesanalyzer.ResultCache;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
@@ -78,29 +85,63 @@ public class AnalyzeResource implements AnalyzeService {
     UriInfo uriInfo;
 
     @Override
-    @Operation(description = "Get the build config")
-    @APIResponse(responseCode = "200", description = "Result OK")
-    public Response config() {
-        return Response.ok().entity(finder.getBuildConfig()).build();
+    @Operation(summary = "Get build config", description = "Get build config.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Got current build config",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = SchemaType.OBJECT, implementation = BuildConfig.class)))
+    @GET
+    @Path("config")
+    @PermitAll
+    @Produces(MediaType.APPLICATION_JSON)
+    public BuildConfig config() {
+        return finder.getBuildConfig();
     }
 
     @Override
-    @Operation(description = "Get a result")
-    @APIResponse(responseCode = "200", description = "Result OK")
-    @APIResponse(responseCode = "404", description = "Result not found")
-    @APIResponse(responseCode = "500", description = "Error getting result")
-    @APIResponse(responseCode = "503", description = "Timeout getting result. Try again later")
-    @Parameter(name = "id", description = "Result identifier", required = true)
+    @Operation(summary = "Get result", description = "Get result.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Result OK",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = SchemaType.OBJECT, implementation = FinderResult.class)))
+    @APIResponse(
+            responseCode = "404",
+            description = "Result not found.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErrorMessage.class)))
+    @APIResponse(
+            responseCode = "500",
+            description = "Error getting result.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErrorMessage.class)))
+    @APIResponse(
+            responseCode = "503",
+            description = "Timeout getting result. Try again later.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErrorMessage.class)))
     @GET
     @Path("results/{id}")
     @PermitAll
     @Produces(MediaType.APPLICATION_JSON)
-    public Response results(@NotNull @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id) {
+    public FinderResult results(
+            @NotNull @Parameter(
+                    name = "id",
+                    description = "Result identifier",
+                    schema = @Schema(type = SchemaType.STRING),
+                    required = true,
+                    style = ParameterStyle.SIMPLE) @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id) {
         CompletionStage<FinderResult> futureResult = results.get(id);
 
         if (futureResult == null) {
             LOGGER.info("Result id {} is null. Returning Not Found", id);
-            return Response.status(Response.Status.NOT_FOUND).build();
+            throw new NotFoundException("Result id " + id + "not found");
         }
 
         LOGGER.info("Result id {} is {}", id, futureResult);
@@ -111,14 +152,14 @@ public class AnalyzeResource implements AnalyzeService {
             LOGGER.info("Removing abnormal result id {} from cache so that it can be submitted again", id);
             results.remove(id);
             LOGGER.info("Result id {} is cancelled or completed exceptionally. Returning Server Error", id);
-            return Response.serverError().build();
+            throw new InternalServerErrorException("Result id " + id + " was cancelled or completed exceptionally");
         }
 
         if (completableFuture.isDone()) {
             try {
                 LOGGER.info("Result id {} is done", id);
                 FinderResult result = completableFuture.get();
-                return Response.ok(result).build();
+                return result;
             } catch (InterruptedException e) {
                 LOGGER.info("Result id {} is done, but was interrupted. Returning Server Error", id);
                 Thread.currentThread().interrupt();
@@ -131,7 +172,7 @@ public class AnalyzeResource implements AnalyzeService {
             try {
                 LOGGER.info("Result id {} is not done yet. Waiting at most {} ms", id, timeout);
                 FinderResult result = completableFuture.get(timeout, TimeUnit.MILLISECONDS);
-                return Response.ok(result).build();
+                return result;
             } catch (InterruptedException e) {
                 LOGGER.info("Result id {} was interrupted. Returning Server Error", id);
                 Thread.currentThread().interrupt();
@@ -147,11 +188,33 @@ public class AnalyzeResource implements AnalyzeService {
     }
 
     @Override
-    @Operation(description = "Analyze a URL")
-    @APIResponse(responseCode = "201", description = "Created")
-    @APIResponse(responseCode = "400", description = "Bad URL protocol or syntax")
-    @APIResponse(responseCode = "500", description = "Error during find")
-    @Parameter(name = "url", description = "The URL of the file to analyze", required = true)
+    @Operation(summary = "Analyze a URL", description = "Analyze a URL.")
+    @APIResponse(
+            responseCode = "303",
+            description = "See other.",
+            headers = @Header(
+                    name = "Location",
+                    description = "URL containing result generated by this request.",
+                    schema = @Schema(type = SchemaType.STRING),
+                    required = true))
+    @APIResponse(
+            responseCode = "400",
+            description = "Bad URL protocol or syntax.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErrorMessage.class)))
+    @APIResponse(
+            responseCode = "500",
+            description = "Error during find.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErrorMessage.class)))
+    @Parameter(
+            name = "url",
+            description = "The URL of the file to analyze",
+            schema = @Schema(type = SchemaType.STRING),
+            required = true,
+            style = ParameterStyle.FORM)
     @POST
     @PermitAll
     @Produces(MediaType.APPLICATION_JSON)

@@ -28,7 +28,7 @@ import javax.ws.rs.core.Response;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-public class ErrorInfo {
+public class ErrorMessage {
     @NotNull
     private final Exception exception;
 
@@ -47,7 +47,7 @@ public class ErrorInfo {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<String> causeStackTrace = new ArrayList<>();
 
-    public ErrorInfo(Exception exception) {
+    public ErrorMessage(Exception exception) {
         this.exception = exception;
         Response.Status status;
         boolean isWAE = exception instanceof WebApplicationException;

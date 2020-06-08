@@ -27,6 +27,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.hibernate.validator.constraints.URL;
+import org.jboss.pnc.build.finder.core.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
@@ -37,13 +39,13 @@ public interface AnalyzeService {
     @Path("config")
     @PermitAll
     @Produces(MediaType.APPLICATION_JSON)
-    Response config();
+    BuildConfig config();
 
     @GET
     @Path("results/{id}")
     @PermitAll
     @Produces(MediaType.APPLICATION_JSON)
-    Response results(@NotNull @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id);
+    FinderResult results(@NotNull @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id);
 
     @POST
     @PermitAll

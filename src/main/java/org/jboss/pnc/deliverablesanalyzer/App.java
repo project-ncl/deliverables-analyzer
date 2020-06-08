@@ -31,10 +31,8 @@ import org.eclipse.microprofile.openapi.annotations.info.License;
                 title = "Deliverables Analyzer",
                 version = "1.0.0",
                 description = "Analyzes deliverables.",
-                license = @License(
-                        name = "The Apache Software License, Version 2.0",
-                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"),
-                contact = @Contact(name = "Red Hat, Inc.", url = "http://www.redhat.com/")))
+                contact = @Contact(name = "Red Hat, Inc.", url = "http://www.redhat.com/"),
+                license = @License(name = "ASL 2.0", url = "http://www.apache.org/licenses/LICENSE-2.0.txt")))
 public class App extends Application {
 
 }
