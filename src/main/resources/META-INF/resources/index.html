@@ -16,12 +16,40 @@
 
 -->
 <!DOCTYPE html>
-<html>
+<html lang="en-us">
   <head>
     <title>Deliverables Analyzer</title>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
-    <script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly.min.css"
+      integrity="sha384-nJHx77dqIJ9kzFQqUhPYDKwrwgp5od9/BrMUGQLygWcJu64ODr9qYWLHQ4K/YxpB" crossorigin="anonymous" />
+    <link rel="stylesheet" type="text/css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly-additions.min.css"
+      integrity="sha384-q1wvnTYo0F4qq2mYrUz3DfnaM3gXSkyHfVoGbl4zKuZ9SMlg/JIWBHeU398mRAp4" crossorigin="anonymous" />
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+      integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT"
+      crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.2/js/jquery.dataTables.min.js"
+      integrity="sha384-OusN40V9uheElYuYMeJERIpNypVvwCGSiOprm6DoDmmHahLxtqbzSigc54Y/zCkI"
+      crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+      integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+      crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+      integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+      crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/js/patternfly.min.js"
+      integrity="sha384-4lW8IOzfCHwzlShlG/AP2aYc91C+r+v3lpUEpjBM+FOHy0INgLKgyMBZd7O9ejln"
+      crossorigin="anonymous"></script>
+    <style type="text/css">
+      .c1 {
+        padding-left: 3em;
+        padding-right: 3em;
+      }
+
+    </style>
+    <script type="text/javascript">
       $(function() {
         const version = $('#version');
 
@@ -37,22 +65,24 @@
 
         const input = $('#url');
         const submitButton = $('#submitButton');
-        const error = $('#error');
+        const errorAlert = $('#errorAlert');
 
         $.getJSON('/api/analyze/config', function(data) {
           config = data;
         }).fail(function() {
-          error.html('Fatal error getting configuration');
+          errorAlert.html('Fatal error getting configuration').show().alert();
           submitButton.attr('disabled', true);
           input.attr('disabled', true);
         });
 
+        const urlAlert = $('#urlAlert');
         const form = $('#analyzeForm');
 
         form.submit(function(event) {
           event.preventDefault();
 
-          error.html('');
+          urlAlert.html('').hide();
+          errorAlert.html('').hide();
 
           if (table != null) {
             table.destroy(true);
@@ -61,7 +91,7 @@
           const url = input.val();
 
           if (url == null || url.trim().length == 0) {
-            alert('URL cannot be empty');
+            urlAlert.html('URL cannot be empty').show().alert();
 
             return;
           }
@@ -71,7 +101,7 @@
           try {
             u = new URL(url);
           } catch (error) {
-            alert('Invalid URL: ' + url + ': ' + error);
+            urlAlert.html('Invalid URL: ' + url + ': ' + error).show().alert();
 
             return;
           }
@@ -79,7 +109,7 @@
           const protocol = u.protocol;
 
           if (protocol != 'http:' && protocol != 'https:') {
-            alert('Invalid URL protocol: ' + protocol);
+            urlAlert.html('Invalid URL protocol: ' + protocol).show().alert();
 
             return;
           }
@@ -106,13 +136,16 @@
                 errorMessage.cause_stack_trace.toString().replace(/,/g, '<br \/>');
             }
 
-            error.html(msg);
+            errorAlert.html(msg).show().alert();
+            input.attr('disabled', false);
+            submitButton.attr('disabled', false);
           });
         });
 
         function handle(config, data) {
           if (!data.hasOwnProperty('builds')) {
-            error.html('Found zero builds');
+            errorAlert.html('Found zero builds').show().alert();
+
             return;
           }
 
@@ -186,43 +219,40 @@
         }
       });
     </script>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css" />
-    <style type="text/css">
-      input.c1 {
-        width: 75%;
-      }
-
-      table.c1 {
-        display: none;
-      }
-
-      .error {
-        color: red;
-        font-weight: bold;
-      }
-
-    </style>
   </head>
   <body>
-    <h2>Deliverables Analyzer ${project.version}</h2>
-    <p><strong><span id="version"></span></strong></p>
-    <form id="analyzeForm">
-      <label for="url">URL:</label> <input id="url" class="c1" size="130" type="text" /> <input id="submitButton"
-        type="submit" value="Analyze" />
-    </form>
-    <table id="builds" class="display c1">
-      <thead>
-        <tr>
-          <th>Identifier</th>
-          <th>Koji ID</th>
-          <th>PNC ID</th>
-          <th>Built from Source</th>
-          <th>Source</th>
-          <th>Build System</th>
-          <th>Artifacts</th>
-        </tr>
-      </thead>
-    </table>
-    <p id="error" class="error"></p>
+    <div class="container-fluid c1">
+      <div class="page-header">
+        <h1>Deliverables Analyzer ${project.version}</h1>
+        <h4 id="version"></h4>
+      </div>
+      <div class="container-fluid form-container">
+        <form id="analyzeForm" class="form-horizontal">
+          <div class="form-group">
+            <label for="url">URL</label><input id="url" class="form-control input-lg" type="text" />
+            <button id="submitButton" type="submit" class="btn btn-primary btn-lg">Analyze</button>
+          </div>
+          <div id="urlAlert" class="alert alert-danger collapse">
+          </div>
+        </form>
+      </div>
+      <div class="table-responsive">
+        <table id="builds" class="table table-striped table-bordered table-hover table-condensed collapse">
+          <thead>
+            <tr>
+              <th>Identifier</th>
+              <th>Koji ID</th>
+              <th>PNC ID</th>
+              <th>Built from Source</th>
+              <th>Source</th>
+              <th>Build System</th>
+              <th>Artifacts</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div id="errorAlert" class="alert alert-danger collapse">
+      </div>
+    </div>
   </body>
 </html>
