@@ -63,7 +63,7 @@ public class ErrorMessage {
                     Arrays.asList(exception.getCause().getStackTrace())
                             .stream()
                             .map(StackTraceElement::toString)
-                            .collect(Collectors.toList()));
+                            .collect(Collectors.toUnmodifiableList()));
         }
 
         this.message = exception.getMessage();
@@ -73,7 +73,7 @@ public class ErrorMessage {
                 Arrays.asList(exception.getStackTrace())
                         .stream()
                         .map(StackTraceElement::toString)
-                        .collect(Collectors.toList()));
+                        .collect(Collectors.toUnmodifiableList()));
     }
 
     @JsonIgnore
@@ -95,5 +95,9 @@ public class ErrorMessage {
 
     public List<String> getStackTrace() {
         return stackTrace;
+    }
+
+    public List<String> getCauseStackTrace() {
+        return causeStackTrace;
     }
 }
