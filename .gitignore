@@ -15,6 +15,7 @@
 #
 
 .classpath
+.factorypath
 .project
 .settings/
 lsp/
