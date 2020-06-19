@@ -16,17 +16,24 @@ The main way to use the service is as follows:
   or `.jar` file, which contains a product version. For example, if your
   product is `jbossfoo` and your version is `1.0`, then you might have a
   file called `jbossfoo-1.0.zip` to analyze. The `url` must be using
-  protocol `http` or `https`.
+  protocol `http` or `https`. You may also optionally set `config` to
+  override some of the default configuration settings. The `config` is
+  the JSON representation of
+  `org.jboss.pnc.build.finder.core.BuildConfig`.
 - The `/api/analyze` endpoint will return the status code `201 Created`
   with a `Location` header. The location will be set to
   `/api/analyze/results/<id>` where `<id>` is an identifier
   corresponding to the `url`. The results will be cached, but will
-  eventually expire.
+  eventually expire. You may fetch the configuration used by accessing
+  the `/api/analyze/configs/<id>` endpoint.
 - The `/api/analyze/results/<id>` endpoint will return status code `404
   Not Found` if `<id>` doesn't exist. It will return `503 Service
   Unavailable` if the results exist, but are not yet ready. It will
   return `200 OK` if the results exist and are ready. In case there is
   an error getting the results, it will return `500 Server Error`.
+- The `/api/analyze/statuses/<id>` endpoint will return the current
+  status (percent done) of the analysis and may be polled once the
+  analysis has started.
 
 ### Health
 
