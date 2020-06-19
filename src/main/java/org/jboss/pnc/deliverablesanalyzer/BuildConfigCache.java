@@ -24,13 +24,13 @@ import javax.inject.Singleton;
 import org.apache.commons.collections4.map.PassiveExpiringMap;
 
 @Singleton
-public class ResultCache<K, V> extends PassiveExpiringMap<K, V> {
-    private static final long serialVersionUID = 3514518375041689764L;
+public class BuildConfigCache<K, V> extends PassiveExpiringMap<K, V> {
+    private static final long serialVersionUID = -3473704377200486238L;
 
     private static final long TIME_TO_LIVE_MILLIS = Duration.ofDays(1L).toMillis();
 
     @Inject
-    public ResultCache() {
+    public BuildConfigCache() {
         super(TIME_TO_LIVE_MILLIS, new ConcurrentHashMap<>());
     }
 }

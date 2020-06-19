@@ -27,8 +27,9 @@ import java.util.concurrent.TimeoutException;
 import javax.annotation.security.PermitAll;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
@@ -54,9 +55,12 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.hibernate.validator.constraints.URL;
 import org.jboss.pnc.build.finder.core.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.BuildConfigCache;
 import org.jboss.pnc.deliverablesanalyzer.Finder;
 import org.jboss.pnc.deliverablesanalyzer.ResultCache;
+import org.jboss.pnc.deliverablesanalyzer.StatusCache;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
+import org.jboss.pnc.deliverablesanalyzer.model.FinderStatus;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 import org.slf4j.Logger;
@@ -76,10 +80,13 @@ public class AnalyzeResource implements AnalyzeService {
     ManagedExecutor pool;
 
     @Inject
+    BuildConfigCache<String, BuildConfig> configs;
+
+    @Inject
     ResultCache<String, CompletionStage<FinderResult>> results;
 
     @Inject
-    Finder finder;
+    StatusCache<String, FinderStatus> statuses;
 
     @Context
     UriInfo uriInfo;
@@ -92,12 +99,66 @@ public class AnalyzeResource implements AnalyzeService {
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(type = SchemaType.OBJECT, implementation = BuildConfig.class)))
+    @APIResponse(
+            responseCode = "404",
+            description = "Config not found.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErrorMessage.class)))
     @GET
-    @Path("config")
+    @Path("configs/{id}")
     @PermitAll
     @Produces(MediaType.APPLICATION_JSON)
-    public BuildConfig config() {
-        return finder.getBuildConfig();
+    public BuildConfig configs(
+            @NotEmpty @Parameter(
+                    name = "id",
+                    description = "Config identifier",
+                    schema = @Schema(type = SchemaType.STRING),
+                    required = true,
+                    style = ParameterStyle.SIMPLE) @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id) {
+        BuildConfig config = configs.get(id);
+
+        if (config == null) {
+            LOGGER.info("Config id {} is null. Returning Not Found", id);
+            throw new NotFoundException("Config id " + id + " not found");
+        }
+
+        return config;
+    }
+
+    @Override
+    @Operation(summary = "Get status", description = "Get status.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Got current status",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = SchemaType.OBJECT, implementation = BuildConfig.class)))
+    @APIResponse(
+            responseCode = "404",
+            description = "Status not found.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErrorMessage.class)))
+    @GET
+    @Path("statuses/{id}")
+    @PermitAll
+    @Produces(MediaType.APPLICATION_JSON)
+    public FinderStatus statuses(
+            @NotEmpty @Parameter(
+                    name = "id",
+                    description = "Status identifier",
+                    schema = @Schema(type = SchemaType.STRING),
+                    required = true,
+                    style = ParameterStyle.SIMPLE) @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id) {
+        FinderStatus status = statuses.get(id);
+
+        if (status == null) {
+            LOGGER.info("Status id {} is null. Returning Not Found", id);
+            throw new NotFoundException("Status id " + id + " not found");
+        }
+
+        return status;
     }
 
     @Override
@@ -131,7 +192,7 @@ public class AnalyzeResource implements AnalyzeService {
     @PermitAll
     @Produces(MediaType.APPLICATION_JSON)
     public FinderResult results(
-            @NotNull @Parameter(
+            @NotEmpty @Parameter(
                     name = "id",
                     description = "Result identifier",
                     schema = @Schema(type = SchemaType.STRING),
@@ -141,7 +202,7 @@ public class AnalyzeResource implements AnalyzeService {
 
         if (futureResult == null) {
             LOGGER.info("Result id {} is null. Returning Not Found", id);
-            throw new NotFoundException("Result id " + id + "not found");
+            throw new NotFoundException("Result id " + id + " not found");
         }
 
         LOGGER.info("Result id {} is {}", id, futureResult);
@@ -151,6 +212,8 @@ public class AnalyzeResource implements AnalyzeService {
         if (completableFuture.isCancelled() || completableFuture.isCompletedExceptionally()) {
             LOGGER.info("Removing abnormal result id {} from cache so that it can be submitted again", id);
             results.remove(id);
+            configs.remove(id);
+            statuses.remove(id);
             LOGGER.info("Result id {} is cancelled or completed exceptionally. Returning Server Error", id);
             throw new InternalServerErrorException("Result id " + id + " was cancelled or completed exceptionally");
         }
@@ -158,8 +221,7 @@ public class AnalyzeResource implements AnalyzeService {
         if (completableFuture.isDone()) {
             try {
                 LOGGER.info("Result id {} is done", id);
-                FinderResult result = completableFuture.get();
-                return result;
+                return completableFuture.get();
             } catch (InterruptedException e) {
                 LOGGER.info("Result id {} is done, but was interrupted. Returning Server Error", id);
                 Thread.currentThread().interrupt();
@@ -171,8 +233,7 @@ public class AnalyzeResource implements AnalyzeService {
         } else {
             try {
                 LOGGER.info("Result id {} is not done yet. Waiting at most {} ms", id, timeout);
-                FinderResult result = completableFuture.get(timeout, TimeUnit.MILLISECONDS);
-                return result;
+                return completableFuture.get(timeout, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 LOGGER.info("Result id {} was interrupted. Returning Server Error", id);
                 Thread.currentThread().interrupt();
@@ -190,8 +251,8 @@ public class AnalyzeResource implements AnalyzeService {
     @Override
     @Operation(summary = "Analyze a URL", description = "Analyze a URL.")
     @APIResponse(
-            responseCode = "303",
-            description = "See other.",
+            responseCode = "201",
+            description = "Created.",
             headers = @Header(
                     name = "Location",
                     description = "URL containing result generated by this request.",
@@ -217,21 +278,63 @@ public class AnalyzeResource implements AnalyzeService {
             style = ParameterStyle.FORM)
     @POST
     @PermitAll
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response analyze(@NotNull @FormParam @URL(regexp = "^http(s)?:.*") String url) {
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response analyze(
+            @NotEmpty @FormParam @Parameter(
+                    name = "url",
+                    description = "URL to analyze",
+                    schema = @Schema(type = SchemaType.STRING),
+                    required = true,
+                    style = ParameterStyle.SIMPLE) @URL(regexp = "^http(s)?:.*") String url,
+            @FormParam @Parameter(
+                    name = "config",
+                    description = "Build config",
+                    schema = @Schema(type = SchemaType.STRING),
+                    required = true,
+                    style = ParameterStyle.SIMPLE) String config) {
         URI uri = URI.create(url).normalize();
         String normalizedUrl = uri.toString();
         // XXX: Hash URL instead of file contents so that we don't have to download the file
         String sha256 = DigestUtils.sha256Hex(normalizedUrl);
         String id = sha256.substring(0, 8);
 
-        results.computeIfAbsent(id, k -> pool.supplyAsync(() -> {
-            try {
-                return finder.find(uri.toURL());
-            } catch (IOException | KojiClientException e) {
-                throw new InternalServerErrorException(e);
+        try {
+            Finder finder = new Finder();
+            BuildConfig config1 = finder.getBuildConfig();
+
+            if (config != null) {
+                BuildConfig config2 = BuildConfig.load(config);
+
+                if (config2.getExcludes() != null) {
+                    config1.setExcludes(config2.getExcludes());
+                }
+
+                if (config2.getArchiveExtensions() != null) {
+                    config1.setArchiveExtensions(config2.getArchiveExtensions());
+                }
+
+                if (config2.getArchiveTypes() != null) {
+                    config1.setArchiveTypes(config2.getArchiveTypes());
+                }
             }
-        }));
+
+            results.computeIfAbsent(id, k -> pool.supplyAsync(() -> {
+                configs.putIfAbsent(id, config1);
+
+                FinderStatus status = new FinderStatus();
+
+                statuses.putIfAbsent(id, status);
+
+                try {
+                    return finder.find(id, uri.toURL(), status, status);
+                } catch (IOException | KojiClientException e) {
+                    throw new InternalServerErrorException(e);
+                }
+            }));
+        } catch (IOException e) {
+            throw new InternalServerErrorException(e);
+        }
 
         String location = uriInfo.getAbsolutePathBuilder()
                 .path("results")
@@ -239,6 +342,6 @@ public class AnalyzeResource implements AnalyzeService {
                 .resolveTemplate("id", id)
                 .toTemplate();
 
-        return Response.seeOther(URI.create(location).normalize()).build();
+        return Response.created(URI.create(location).normalize()).entity(id).build();
     }
 }

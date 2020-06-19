@@ -35,8 +35,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
-import javax.enterprise.context.RequestScoped;
-
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.vfs2.FileContent;
@@ -54,10 +52,12 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.BuildFinder;
+import org.jboss.pnc.build.finder.core.BuildFinderListener;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
 import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.ConfigDefaults;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
+import org.jboss.pnc.build.finder.core.DistributionAnalyzerListener;
 import org.jboss.pnc.build.finder.core.Utils;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiClientSession;
@@ -69,7 +69,6 @@ import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.KojiClientException;
 
-@RequestScoped
 public class Finder {
     private static final Logger LOGGER = LoggerFactory.getLogger(Finder.class);
 
@@ -78,6 +77,10 @@ public class Finder {
     private DefaultCacheManager cacheManager;
 
     private BuildConfig config;
+
+    private DistributionAnalyzer analyzer;
+
+    private BuildFinder buildFinder;
 
     public Finder() throws IOException {
         config = setupBuildConfig();
@@ -169,8 +172,6 @@ public class Finder {
         Path tmpDir = Files.createTempDirectory("deliverables-analyzer-");
 
         config.setOutputDirectory(tmpDir.toAbsolutePath().toString());
-
-        LOGGER.info("Output directory set to: {}", config.getOutputDirectory());
 
         return config;
     }
@@ -296,7 +297,11 @@ public class Finder {
         return true;
     }
 
-    public FinderResult find(URL url) throws IOException, KojiClientException {
+    public FinderResult find(
+            String id,
+            URL url,
+            DistributionAnalyzerListener distributionAnalyzerListener,
+            BuildFinderListener buildFinderListener) throws IOException, KojiClientException {
         FinderResult result;
         ExecutorService pool = null;
         FileSystemManager manager = VFS.getManager();
@@ -349,9 +354,12 @@ public class Finder {
                     config,
                     cacheManager != null ? cacheManager.getName() : "disabled");
 
-            DistributionAnalyzer analyzer = new DistributionAnalyzer(inputs, config, cacheManager);
+            analyzer = new DistributionAnalyzer(inputs, config, cacheManager);
+
+            analyzer.setListener(distributionAnalyzerListener);
+
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum = pool.submit(analyzer);
-            result = findBuilds(url, analyzer, pool, futureChecksum);
+            result = findBuilds(id, url, analyzer, pool, futureChecksum, buildFinderListener);
 
             LOGGER.info("Done finding builds for {}", url);
         } finally {
@@ -364,10 +372,12 @@ public class Finder {
     }
 
     private FinderResult findBuilds(
+            String id,
             URL url,
             DistributionAnalyzer analyzer,
             ExecutorService pool,
-            Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum) throws KojiClientException {
+            Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum,
+            BuildFinderListener buildFinderListener) throws KojiClientException {
         URL kojiHubURL = config.getKojiHubURL();
 
         LOGGER.info("Koji Hub URL: {}", kojiHubURL);
@@ -379,19 +389,20 @@ public class Finder {
         LOGGER.info("Initializing Koji client session with URL {}", kojiHubURL);
 
         try (KojiClientSession session = new KojiClientSession(kojiHubURL)) {
-            BuildFinder finder;
             URL pncURL = config.getPncURL();
 
             if (pncURL == null) {
                 LOGGER.warn("PNC support disabled because PNC URL is not set");
-                finder = new BuildFinder(session, config, analyzer, cacheManager);
+                buildFinder = new BuildFinder(session, config, analyzer, cacheManager);
             } else {
                 LOGGER.info("Initializing PNC client with URL {}", pncURL);
                 PncClient pncclient = new HashMapCachingPncClient(config);
-                finder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
+                buildFinder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
             }
 
-            Future<Map<BuildSystemInteger, KojiBuild>> futureBuilds = pool.submit(finder);
+            buildFinder.setListener(buildFinderListener);
+
+            Future<Map<BuildSystemInteger, KojiBuild>> futureBuilds = pool.submit(buildFinder);
 
             try {
                 Map<ChecksumType, MultiValuedMap<String, String>> checksums = futureChecksum.get();
@@ -404,7 +415,7 @@ public class Finder {
                     LOGGER.info("Got {} checksum types and {} builds", checksums.size(), numBuilds);
                 }
 
-                FinderResult result = new FinderResult(url, builds);
+                FinderResult result = new FinderResult(id, url, builds);
 
                 LOGGER.info("Returning result for {}", url);
 

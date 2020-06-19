@@ -18,11 +18,13 @@
 .factorypath
 .project
 .settings/
+.vs/
 lsp/
 ObjectStore/
 target/
 .idea
 *.iml
+
 
 # Maven Wrapper
 .mvn/

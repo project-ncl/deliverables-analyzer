@@ -89,12 +89,12 @@ public class FullTest {
     }
 
     @Test
-    public void testRedirect() {
+    public void testCreated() {
         String location = given().log()
                 .all()
                 .redirects()
                 .follow(false)
-                .accept(MediaType.APPLICATION_JSON)
+                .accept(MediaType.TEXT_PLAIN)
                 .formParam("url", URL)
                 .when()
                 .post("/api/analyze")
@@ -102,7 +102,7 @@ public class FullTest {
                 .log()
                 .all()
                 .assertThat()
-                .statusCode(Response.Status.SEE_OTHER.getStatusCode())
+                .statusCode(Response.Status.CREATED.getStatusCode())
                 .extract()
                 .header("Location");
 
@@ -118,28 +118,6 @@ public class FullTest {
                 .accept(MediaType.APPLICATION_JSON)
                 .when()
                 .get(location)
-                .then()
-                .log()
-                .all()
-                .assertThat()
-                .statusCode(Response.Status.OK.getStatusCode())
-                .extract()
-                .response()
-                .as(FinderResult.class);
-
-        assertThat(result.getBuilds().size(), is(greaterThan(0)));
-    }
-
-    @Test
-    public void testFinder() {
-        FinderResult result = given().log()
-                .all()
-                .redirects()
-                .max(1)
-                .accept(MediaType.APPLICATION_JSON)
-                .formParam("url", URL)
-                .when()
-                .post("/api/analyze")
                 .then()
                 .log()
                 .all()

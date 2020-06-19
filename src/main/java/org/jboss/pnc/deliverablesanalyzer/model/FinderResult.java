@@ -27,7 +27,9 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import javax.ws.rs.BadRequestException;
 
 import org.jboss.pnc.build.finder.core.BuildStatistics;
@@ -43,6 +45,10 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 
 public class FinderResult {
     private static final Logger LOGGER = LoggerFactory.getLogger(FinderResult.class);
+
+    @NotEmpty
+    @Pattern(regexp = "^[a-f0-9]{8}$")
+    private String id;
 
     private URL url;
 
@@ -64,11 +70,16 @@ public class FinderResult {
         this.statistics = new BuildStatistics(Collections.emptyList());
     }
 
-    public FinderResult(URL url, Map<BuildSystemInteger, KojiBuild> builds) {
+    public FinderResult(String id, URL url, Map<BuildSystemInteger, KojiBuild> builds) {
+        this.id = id;
         this.url = url;
         this.builds = getFoundBuilds(builds);
         this.notFoundArtifacts = getNotFoundArtifacts(builds);
         this.statistics = new BuildStatistics(getBuildsAsList(builds));
+    }
+
+    public String getId() {
+        return id;
     }
 
     public URL getUrl() {

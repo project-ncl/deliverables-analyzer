@@ -19,8 +19,8 @@
 <html lang="en-us">
   <head>
     <title>Deliverables Analyzer</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" type="text/css"
       href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly.min.css"
       integrity="sha384-nJHx77dqIJ9kzFQqUhPYDKwrwgp5od9/BrMUGQLygWcJu64ODr9qYWLHQ4K/YxpB" crossorigin="anonymous" />
@@ -48,6 +48,14 @@
         padding-right: 3em;
       }
 
+      .c2 {
+        height: 32px;
+      }
+
+      .c3 {
+        width: 0%;
+      }
+
     </style>
     <script type="text/javascript">
       $(function() {
@@ -60,23 +68,15 @@
         });
 
         // XXX
-        let config;
-        let table;
+        var table = null;
+        const builds = $('#builds');
 
         const input = $('#url');
         const submitButton = $('#submitButton');
         const errorAlert = $('#errorAlert');
-
-        $.getJSON('/api/analyze/config', function(data) {
-          config = data;
-        }).fail(function() {
-          errorAlert.html('Fatal error getting configuration').show().alert();
-          submitButton.attr('disabled', true);
-          input.attr('disabled', true);
-        });
-
         const urlAlert = $('#urlAlert');
         const form = $('#analyzeForm');
+        const progress = $('#progress');
 
         form.submit(function(event) {
           event.preventDefault();
@@ -85,7 +85,9 @@
           errorAlert.html('').hide();
 
           if (table != null) {
-            table.destroy(true);
+            builds.hide();
+            table.destroy();
+            table = null;
           }
 
           const url = input.val();
@@ -114,33 +116,101 @@
             return;
           }
 
+          const progressbar = $('#progressbar');
+
+          progressbar.css('width', '0%').attr('aria-valuenow', 0);
+
+          const config = $('#config')
+
           input.attr('disabled', true);
-          submitButton.attr('disabled', true);
+          submitButton.attr('disabled', true).text('Analyzing...');
 
-          $.post('/api/analyze', { url: u.toString() }).done(function(data) {
-            handle(config, data);
-            input.attr('disabled', false);
-            submitButton.attr('disabled', false);
+          const args = { url: u.toString() };
+
+          if (config != null && config.val().length > 0) {
+            args.config = config.val();
+          }
+
+          $.post('/api/analyze', args, function(data, textStatus, jqXHR) {
+            const location = jqXHR.getResponseHeader('Location');
+
+            if (location == null) {
+              errorAlert.html('Fatal error getting Location').show().alert();
+              submitButton.attr('disabled', false).text('Analyze');
+              input.attr('disabled', false);
+              return;
+            }
+
+            const id = location.split('/').pop();
+            const max = 290000;
+            const timeout = 1000;
+            const interval = 3000;
+            var t = 0;
+            var intervalID;
+
+            setTimeout(function() {
+              intervalID = setInterval(function() {
+                $.getJSON('/api/analyze/statuses/' + id, function(data) {
+                  t += interval;
+
+                  const percent = data.percent;
+                  progressbar.css('width', percent + '%').attr('aria-valuenow', percent);
+                  progressbar.html(percent + '%');
+
+                  if (percent === 100 || t >= max) {
+                    clearInterval(intervalID);
+                  }
+                }).fail(function() {
+                  clearInterval(intervalID);
+                });
+              }, interval);
+            }, timeout);
+
+            $.getJSON(location).done(function(data) {
+              $.getJSON('/api/analyze/configs/' + id, function(config) {
+                clearInterval(intervalID);
+
+                handle(config, data);
+
+                if (table != null) {
+                  table.draw();
+                  builds.show();
+                }
+
+                input.attr('disabled', false);
+                submitButton.attr('disabled', false).text('Analyze');
+              }).fail(function() {
+                errorAlert.html('Fatal error getting configuration').show().alert();
+                submitButton.attr('disabled', false).text('Analyze');
+                input.attr('disabled', false);
+              });
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+              handle_error(jqXHR, textStatus, errorThrown);
+            });
           }).fail(function(jqXHR, textStatus, errorThrown) {
-            const responseText = jqXHR.responseText;
-            const errorMessage = JSON.parse(responseText);
-            let msg = 'Error ' + errorMessage.code + ': ' + errorMessage.reason + '<br \/>' + errorMessage.message +
-              '<br \/>';
-
-            if (errorMessage.stack_trace != null) {
-              msg += errorMessage.stack_trace.toString().replace(/,/g, '<br \/>');
-            }
-
-            if (errorMessage.cause_stack_trace != null) {
-              msg += 'Caused by:<br \/>' +
-                errorMessage.cause_stack_trace.toString().replace(/,/g, '<br \/>');
-            }
-
-            errorAlert.html(msg).show().alert();
-            input.attr('disabled', false);
-            submitButton.attr('disabled', false);
+            handle_error(jqXHR, textStatus, errorThrown);
           });
         });
+
+        function handle_error(jqXHR, textStatus, errorThrown) {
+          const responseText = jqXHR.responseText;
+          const errorMessage = JSON.parse(responseText);
+          let msg = 'Error ' + errorMessage.code + ': ' + errorMessage.reason + '<br \/>' + errorMessage.message +
+            '<br \/>';
+
+          if (errorMessage.stack_trace != null) {
+            msg += errorMessage.stack_trace.toString().replace(/,/g, '<br \/>');
+          }
+
+          if (errorMessage.cause_stack_trace != null) {
+            msg += '<br \/>Caused by:<br \/>' +
+              errorMessage.cause_stack_trace.toString().replace(/,/g, '<br \/>');
+          }
+
+          errorAlert.html(msg).show().alert();
+          input.attr('disabled', false);
+          submitButton.attr('disabled', false).text('Analyze');
+        }
 
         function handle(config, data) {
           if (!data.hasOwnProperty('builds')) {
@@ -149,7 +219,6 @@
             return;
           }
 
-          const builds = $('#builds');
           table = builds.DataTable({
             data: data.builds,
             columns: [
@@ -213,9 +282,6 @@
               }
             ]
           });
-
-          table.draw();
-          builds.show();
         }
       });
     </script>
@@ -230,9 +296,16 @@
         <form id="analyzeForm" class="form-horizontal">
           <div class="form-group">
             <label for="url">URL</label><input id="url" class="form-control input-lg" type="text" />
+            <label for="config">Config</label><textarea id="config" class="form-control textarea-lg"
+              rows="24"></textarea>
             <button id="submitButton" type="submit" class="btn btn-primary btn-lg">Analyze</button>
-          </div>
-          <div id="urlAlert" class="alert alert-danger collapse">
+            <div class="progress c2">
+              <div id="progressbar" class="progress-bar c3" role="progressbar" aria-valuenow="0" aria-valuemin="0"
+                aria-valuemax="100">
+              </div>
+            </div>
+            <div id="urlAlert" class="alert alert-danger collapse">
+            </div>
           </div>
         </form>
       </div>

@@ -17,8 +17,8 @@ The main way to use the service is as follows:
   product is `jbossfoo` and your version is `1.0`, then you might have a
   file called `jbossfoo-1.0.zip` to analyze. The `url` must be using
   protocol `http` or `https`.
-- The `/api/analyze` endpoint will return the status code `303 See
-  Other` with a `Location` header. The location will be set to
+- The `/api/analyze` endpoint will return the status code `201 Created`
+  with a `Location` header. The location will be set to
   `/api/analyze/results/<id>` where `<id>` is an identifier
   corresponding to the `url`. The results will be cached, but will
   eventually expire.

@@ -17,8 +17,9 @@ package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import javax.annotation.security.PermitAll;
 import javax.enterprise.context.ApplicationScoped;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -29,6 +30,7 @@ import javax.ws.rs.core.Response;
 import org.hibernate.validator.constraints.URL;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
+import org.jboss.pnc.deliverablesanalyzer.model.FinderStatus;
 import org.jboss.resteasy.annotations.jaxrs.FormParam;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
@@ -36,19 +38,26 @@ import org.jboss.resteasy.annotations.jaxrs.PathParam;
 @Path("analyze")
 public interface AnalyzeService {
     @GET
-    @Path("config")
+    @Path("configs/{id}")
     @PermitAll
     @Produces(MediaType.APPLICATION_JSON)
-    BuildConfig config();
+    BuildConfig configs(@NotEmpty @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id);
 
     @GET
     @Path("results/{id}")
     @PermitAll
     @Produces(MediaType.APPLICATION_JSON)
-    FinderResult results(@NotNull @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id);
+    FinderResult results(@NotEmpty @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id);
+
+    @GET
+    @Path("statuses/{id}")
+    @PermitAll
+    @Produces(MediaType.APPLICATION_JSON)
+    FinderStatus statuses(@NotEmpty @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id);
 
     @POST
     @PermitAll
-    @Produces(MediaType.APPLICATION_JSON)
-    Response analyze(@NotNull @FormParam @URL(regexp = "^http(s)?:.*") String url);
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.TEXT_PLAIN)
+    Response analyze(@NotEmpty @FormParam @URL(regexp = "^http(s)?:.*") String url, @FormParam String config);
 }
