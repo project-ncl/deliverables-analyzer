@@ -22,10 +22,11 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" type="text/css"
-      href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.59.5/css/patternfly.min.css"
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css"
+      integrity="sha384-AkqcRujKtNDdBHrbDApQnhQjawj/rwmEPiHw7WWmBdH8nQjKsfJG96G8MK30WU80" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.59.5/css/patternfly.min.css"
       integrity="sha384-4zLWPetole9qKXk9bJjmPMhcOQT5bmP34swgXhCnpTITjAYtFx9Op/QkhUSmxSGI" crossorigin="anonymous" />
-    <link rel="stylesheet" type="text/css"
+    <link rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.59.5/css/patternfly-additions.min.css"
       integrity="sha384-b+Z99jHmjt1CR2S8dS4TnHamqEjWocD+Fa5hkWWwvc6n6WgWvHAtqs+Tny95jiwb" crossorigin="anonymous" />
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"
@@ -33,6 +34,9 @@
       crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/1.10.2/js/jquery.dataTables.min.js"
       integrity="sha384-OusN40V9uheElYuYMeJERIpNypVvwCGSiOprm6DoDmmHahLxtqbzSigc54Y/zCkI"
+      crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.js"
+      integrity="sha384-ihFowtLatdMq7geOs1tSO3Y5yXQVT0B2jUG5RR6SnQYKluMoJ61w03yIT1ezGFXn"
       crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
       integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
@@ -52,9 +56,22 @@
         width: 0%;
       }
 
+      li.L0,
+      li.L1,
+      li.L2,
+      li.L3,
+      li.L5,
+      li.L6,
+      li.L7,
+      li.L8 {
+        list-style-type: decimal !important;
+      }
+
     </style>
-    <script type="text/javascript">
+    <script>
       $(function() {
+        prettyPrint();
+
         const version = $('#version');
 
         $.get('/api/version', function(data) {
@@ -297,14 +314,22 @@
     <div class="container">
       <div class="page-header">
         <h1>Deliverables Analyzer ${project.version}</h1>
-        <h4 id="version"></h4>
+        <h5 id="version"></h5>
       </div>
       <div class="form-container">
         <form id="analyzeForm" class="form-horizontal">
           <div class="form-group">
             <label for="url">URL</label><input id="url" class="form-control input-lg" type="text" />
-            <label for="config">Config</label><textarea id="config" class="form-control textarea-lg"
-              rows="24"></textarea>
+            <label for="config">Config</label>
+            <details>
+              <summary>Example</summary>
+              <pre class="prettyprint linenums:1"><code class="language-json">{
+  "archive_extensions" : [ "dll", "dylib", "ear", "jar", "jdocbook", "jdocbook-style", "kar", "plugin", "pom", "rar", "sar", "so", "war", "xml" ],
+  "archive_types" : [ "jar", "xml", "pom", "so", "dll", "dylib" ],
+  "excludes" : [ "^(?!.*/pom\\.xml$).*/.*\\.xml$" ]
+}</code></pre>
+            </details>
+            <textarea id="config" class="form-control textarea-lg" rows="24"></textarea>
             <button id="submitButton" type="submit" class="btn btn-primary btn-lg">Analyze</button>
             <div class="progress c1">
               <div id="progressbar" class="progress-bar c2" role="progressbar" aria-valuenow="0" aria-valuemin="0"
