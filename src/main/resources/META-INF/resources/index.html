@@ -20,6 +20,7 @@
   <head>
     <title>Deliverables Analyzer</title>
     <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" type="text/css"
       href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.59.5/css/patternfly.min.css"
@@ -42,17 +43,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.59.5/js/patternfly.min.js"
       integrity="sha384-3eAK2Q6H2vfFZqS7Wx3RCTBf4rj/1Dfs6OlP0iDq5wkkZyoMas2r2WZpuKp53aVQ"
       crossorigin="anonymous"></script>
-    <style type="text/css">
+    <style>
       .c1 {
-        padding-left: 3em;
-        padding-right: 3em;
-      }
-
-      .c2 {
         height: 32px;
       }
 
-      .c3 {
+      .c2 {
         width: 0%;
       }
 
@@ -74,15 +70,19 @@
         const input = $('#url');
         const submitButton = $('#submitButton');
         const errorAlert = $('#errorAlert');
+        const errorAlertMessage = $('#errorAlertMessage');
         const urlAlert = $('#urlAlert');
+        const urlAlertMessage = $('#urlAlertMessage');
         const form = $('#analyzeForm');
         const progress = $('#progress');
 
         form.submit(function(event) {
           event.preventDefault();
 
-          urlAlert.html('').hide();
-          errorAlert.html('').hide();
+          urlAlert.hide();
+          urlAlertMessage.html('');
+          errorAlert.hide();
+          errorAlertMessage.html('');
 
           if (table != null) {
             builds.hide();
@@ -93,7 +93,8 @@
           const url = input.val();
 
           if (url == null || url.trim().length == 0) {
-            urlAlert.html('URL cannot be empty').show().alert();
+            urlAlertMessage.html('URL cannot be empty');
+            urlAlert.show().alert();
 
             return;
           }
@@ -103,7 +104,8 @@
           try {
             u = new URL(url);
           } catch (error) {
-            urlAlert.html('Invalid URL: ' + url + ': ' + error).show().alert();
+            urlAlertMessage.html('Invalid URL: ' + url + ': ' + error);
+            urlAlert.show().alert();
 
             return;
           }
@@ -111,7 +113,8 @@
           const protocol = u.protocol;
 
           if (protocol != 'http:' && protocol != 'https:') {
-            urlAlert.html('Invalid URL protocol: ' + protocol).show().alert();
+            urlAlertMessage.html('Invalid URL protocol: ' + protocol)
+            urlAlert.show().alert();
 
             return;
           }
@@ -135,7 +138,8 @@
             const location = jqXHR.getResponseHeader('Location');
 
             if (location == null) {
-              errorAlert.html('Fatal error getting Location').show().alert();
+              errorAlertMessage.html('Fatal error getting Location');
+              errorAlert.show().alert();
               submitButton.attr('disabled', false).text('Analyze');
               input.attr('disabled', false);
               return;
@@ -180,7 +184,8 @@
                 input.attr('disabled', false);
                 submitButton.attr('disabled', false).text('Analyze');
               }).fail(function() {
-                errorAlert.html('Fatal error getting configuration').show().alert();
+                errorAlertMessage.html('Fatal error getting configuration');
+                errorAlert.show().alert();
                 submitButton.attr('disabled', false).text('Analyze');
                 input.attr('disabled', false);
               });
@@ -207,14 +212,16 @@
               errorMessage.cause_stack_trace.toString().replace(/,/g, '<br \/>');
           }
 
-          errorAlert.html(msg).show().alert();
+          errorAlertMessage.html(msg);
+          errorAlert.show().alert();
           input.attr('disabled', false);
           submitButton.attr('disabled', false).text('Analyze');
         }
 
         function handle(config, data) {
           if (!data.hasOwnProperty('builds')) {
-            errorAlert.html('Found zero builds').show().alert();
+            errorAlertMessage.html('Found zero builds');
+            errorAlert.show().alert();
 
             return;
           }
@@ -287,24 +294,26 @@
     </script>
   </head>
   <body>
-    <div class="container-fluid c1">
+    <div class="container">
       <div class="page-header">
         <h1>Deliverables Analyzer ${project.version}</h1>
         <h4 id="version"></h4>
       </div>
-      <div class="container-fluid form-container">
+      <div class="form-container">
         <form id="analyzeForm" class="form-horizontal">
           <div class="form-group">
             <label for="url">URL</label><input id="url" class="form-control input-lg" type="text" />
             <label for="config">Config</label><textarea id="config" class="form-control textarea-lg"
               rows="24"></textarea>
             <button id="submitButton" type="submit" class="btn btn-primary btn-lg">Analyze</button>
-            <div class="progress c2">
-              <div id="progressbar" class="progress-bar c3" role="progressbar" aria-valuenow="0" aria-valuemin="0"
+            <div class="progress c1">
+              <div id="progressbar" class="progress-bar c2" role="progressbar" aria-valuenow="0" aria-valuemin="0"
                 aria-valuemax="100">
               </div>
             </div>
             <div id="urlAlert" class="alert alert-danger collapse">
+              <span class="pficon pficon-error-circle-o"></span>
+              <p id="urlAlertMessage"></p>
             </div>
           </div>
         </form>
@@ -326,6 +335,8 @@
         </table>
       </div>
       <div id="errorAlert" class="alert alert-danger collapse">
+        <span class="pficon pficon-error-circle-o"></span>
+        <p id="errorAlertMessage"></p>
       </div>
     </div>
   </body>
