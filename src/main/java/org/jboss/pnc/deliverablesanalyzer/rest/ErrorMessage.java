@@ -60,8 +60,7 @@ public class ErrorMessage {
 
         if (exception.getCause() != null) {
             this.causeStackTrace.addAll(
-                    Arrays.asList(exception.getCause().getStackTrace())
-                            .stream()
+                    Arrays.stream(exception.getCause().getStackTrace())
                             .map(StackTraceElement::toString)
                             .collect(Collectors.toUnmodifiableList()));
         }
@@ -70,8 +69,7 @@ public class ErrorMessage {
         this.reason = status.getReasonPhrase();
         this.code = status.getStatusCode();
         this.stackTrace.addAll(
-                Arrays.asList(exception.getStackTrace())
-                        .stream()
+                Arrays.stream(exception.getStackTrace())
                         .map(StackTraceElement::toString)
                         .collect(Collectors.toUnmodifiableList()));
     }

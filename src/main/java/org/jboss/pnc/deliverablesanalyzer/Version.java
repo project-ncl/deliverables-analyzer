@@ -58,7 +58,7 @@ public final class Version {
             }
         }
 
-        Object value = properties.get(name);
+        String value = properties.getProperty(name);
 
         if (value == null) {
             return unknown;

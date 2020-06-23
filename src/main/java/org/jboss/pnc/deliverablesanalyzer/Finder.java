@@ -17,7 +17,6 @@ package org.jboss.pnc.deliverablesanalyzer;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -36,11 +35,6 @@ import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.vfs2.FileContent;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.VFS;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
@@ -78,10 +72,6 @@ public class Finder {
 
     private BuildConfig config;
 
-    private DistributionAnalyzer analyzer;
-
-    private BuildFinder buildFinder;
-
     public Finder() throws IOException {
         config = setupBuildConfig();
     }
@@ -102,23 +92,7 @@ public class Finder {
         }
     }
 
-    private BuildConfig setupBuildConfig() throws IOException {
-        BuildConfig defaults = BuildConfig.load(Finder.class.getClassLoader());
-
-        if (configFile.exists()) {
-            if (defaults == null) {
-                config = BuildConfig.load(configFile);
-            } else {
-                config = BuildConfig.merge(defaults, configFile);
-            }
-        } else {
-            if (defaults == null) {
-                config = new BuildConfig();
-            } else {
-                config = defaults;
-            }
-        }
-
+    private void setKojiHubURL(BuildConfig config) throws IOException {
         Optional<String> optionalKojiHubURL = ConfigProvider.getConfig().getOptionalValue("koji.hub.url", String.class);
 
         if (optionalKojiHubURL.isPresent()) {
@@ -131,7 +105,9 @@ public class Finder {
                 throw new IOException("Bad Koji hub URL: " + s, e);
             }
         }
+    }
 
+    private void setKojiWebURL(BuildConfig config) throws IOException {
         Optional<String> optionalKojiWebURL = ConfigProvider.getConfig().getOptionalValue("koji.web.url", String.class);
 
         if (optionalKojiWebURL.isPresent()) {
@@ -154,7 +130,9 @@ public class Finder {
                 throw new IOException("Bad Koji web URL: " + s, e);
             }
         }
+    }
 
+    private void setPncURL(BuildConfig config) throws IOException {
         Optional<String> optionalPncURL = ConfigProvider.getConfig().getOptionalValue("pnc.url", String.class);
 
         if (optionalPncURL.isPresent()) {
@@ -167,6 +145,29 @@ public class Finder {
                 throw new IOException("Bad PNC URL: " + s, e);
             }
         }
+
+    }
+
+    private BuildConfig setupBuildConfig() throws IOException {
+        BuildConfig defaults = BuildConfig.load(Finder.class.getClassLoader());
+
+        if (configFile.exists()) {
+            if (defaults == null) {
+                config = BuildConfig.load(configFile);
+            } else {
+                config = BuildConfig.merge(defaults, configFile);
+            }
+        } else {
+            if (defaults == null) {
+                config = new BuildConfig();
+            } else {
+                config = defaults;
+            }
+        }
+
+        setKojiHubURL(config);
+        setKojiWebURL(config);
+        setPncURL(config);
 
         // XXX: Force output directory since it defaults to "." which usually isn't the best
         Path tmpDir = Files.createTempDirectory("deliverables-analyzer-");
@@ -304,30 +305,8 @@ public class Finder {
             BuildFinderListener buildFinderListener) throws IOException, KojiClientException {
         FinderResult result;
         ExecutorService pool = null;
-        FileSystemManager manager = VFS.getManager();
 
-        LOGGER.info("Getting URL: {}", url);
-
-        try (FileObject fo = manager.resolveFile(url)) {
-            File tempDirectory = Files.createTempDirectory("deliverables-analyzer-").toFile();
-
-            tempDirectory.deleteOnExit();
-
-            // XXX: See <https://issues.apache.org/jira/browse/VFS-443>
-            // XXX: There is no way to get the cached FileObject as a File, so we copy it
-            // XXX: We may be able to change DistributionAnalyzer to accept FileObject's
-            File file = new File(tempDirectory, fo.getName().getBaseName());
-
-            file.deleteOnExit();
-
-            try (FileContent fc = fo.getContent(); InputStream is = fc.getInputStream()) {
-                LOGGER.info("Copy: {} -> {}", url, file);
-
-                FileUtils.copyInputStreamToFile(is, file);
-            }
-
-            List<File> inputs = Collections.singletonList(file);
-
+        try {
             if (cacheManager == null && !config.getDisableCache()) {
                 LOGGER.info("Initializing {} {} cache", Version.getBrandName(), Version.getVersion());
 
@@ -348,13 +327,15 @@ public class Finder {
 
             pool = Executors.newFixedThreadPool(nThreads);
 
+            List<String> files = Collections.singletonList(url.toExternalForm());
+
             LOGGER.info(
                     "Starting distribution analysis for {} with config {} and cache manager {}",
-                    inputs,
+                    files,
                     config,
                     cacheManager != null ? cacheManager.getName() : "disabled");
 
-            analyzer = new DistributionAnalyzer(inputs, config, cacheManager);
+            DistributionAnalyzer analyzer = new DistributionAnalyzer(files, config, cacheManager);
 
             analyzer.setListener(distributionAnalyzerListener);
 
@@ -390,6 +371,7 @@ public class Finder {
 
         try (KojiClientSession session = new KojiClientSession(kojiHubURL)) {
             URL pncURL = config.getPncURL();
+            BuildFinder buildFinder;
 
             if (pncURL == null) {
                 LOGGER.warn("PNC support disabled because PNC URL is not set");

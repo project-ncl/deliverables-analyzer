@@ -137,8 +137,10 @@
           }
 
           const progressbar = $('#progressbar');
+          var percent = 0;
 
           progressbar.css('width', '0%').attr('aria-valuenow', 0);
+          progressbar.html(percent + '%');
 
           const config = $('#config')
 
@@ -164,34 +166,37 @@
 
             const id = location.split('/').pop();
             const max = 290000;
-            const timeout = 1000;
-            const interval = 3000;
+            const interval = 1000;
             var t = 0;
             var intervalID;
 
-            setTimeout(function() {
-              intervalID = setInterval(function() {
-                $.getJSON('/api/analyze/statuses/' + id, function(data) {
-                  t += interval;
+            intervalID = setInterval(function() {
+              $.getJSON('/api/analyze/statuses/' + id, function(data) {
+                t += interval;
 
-                  const percent = data.percent;
-                  progressbar.css('width', percent + '%').attr('aria-valuenow', percent);
-                  progressbar.html(percent + '%');
+                percent = data.percent;
+                progressbar.css('width', percent + '%').attr('aria-valuenow', percent);
+                progressbar.html(percent + '%');
 
-                  if (percent === 100 || t >= max) {
-                    clearInterval(intervalID);
-                  }
-                }).fail(function() {
+                if (percent === 100 || t >= max) {
                   clearInterval(intervalID);
-                });
-              }, interval);
-            }, timeout);
+                }
+              }).fail(function() {
+                clearInterval(intervalID);
+              });
+            }, interval);
 
             $.getJSON(location).done(function(data) {
               $.getJSON('/api/analyze/configs/' + id, function(config) {
                 clearInterval(intervalID);
 
                 handle(config, data);
+
+                if (percent != 100) {
+                  percent = 100;
+                  progressbar.css('width', percent + '%').attr('aria-valuenow', percent);
+                  progressbar.html(percent + '%');
+                }
 
                 if (table != null) {
                   table.draw();

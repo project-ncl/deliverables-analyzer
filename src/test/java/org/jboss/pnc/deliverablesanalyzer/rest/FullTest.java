@@ -113,7 +113,7 @@ public class FullTest {
                 .untilAsserted(
                         () -> RestAssured.when().get(location).then().statusCode(Response.Status.OK.getStatusCode()));
 
-        FinderResult result = given().log()
+        given().log()
                 .all()
                 .accept(MediaType.APPLICATION_JSON)
                 .when()
@@ -123,10 +123,9 @@ public class FullTest {
                 .all()
                 .assertThat()
                 .statusCode(Response.Status.OK.getStatusCode())
+                .body("builds.size()", is(greaterThan(0)))
                 .extract()
                 .response()
                 .as(FinderResult.class);
-
-        assertThat(result.getBuilds().size(), is(greaterThan(0)));
     }
 }

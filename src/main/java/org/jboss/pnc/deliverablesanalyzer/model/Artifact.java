@@ -189,6 +189,6 @@ public class Artifact {
     }
 
     public enum Type {
-        @JsonProperty("maven") MAVEN, @JsonProperty("npm") NPM;
+        @JsonProperty("maven") MAVEN, @JsonProperty("npm") NPM
     }
 }

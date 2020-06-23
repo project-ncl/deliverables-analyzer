@@ -39,64 +39,67 @@ public class FinderStatus implements DistributionAnalyzerListener, BuildFinderLi
     @JsonIgnore
     @NotNull
     @PositiveOrZero
-    private AtomicInteger d;
+    private final AtomicInteger done;
 
     @JsonIgnore
     @NotNull
-    private AtomicInteger t;
+    private final AtomicInteger total;
 
     @JsonIgnore
     @NotNull
-    private final Map<String, BuildCheckedEvent> h;
+    private final Map<String, BuildCheckedEvent> map;
 
     public FinderStatus() {
-        d = new AtomicInteger(0);
-        t = new AtomicInteger(-1);
-        h = new ConcurrentHashMap<>();
+        done = new AtomicInteger(0);
+        total = new AtomicInteger(-1);
+        map = new ConcurrentHashMap<>();
     }
 
     @PositiveOrZero
     public int getPercent() {
-        int ti = t.intValue();
-        int di = d.intValue();
+        int totalInt = total.intValue();
+        int doneInt = done.intValue();
 
-        if (ti <= 0 || di == 0) {
+        if (totalInt <= 0 || doneInt == 0) {
             return 0;
         }
 
-        if (di > ti) {
-            LOGGER.error("Number of checked checksums {} cannot be greater than total {}", boldRed(di), boldRed(ti));
-            di = ti;
+        if (doneInt > totalInt) {
+            LOGGER.error(
+                    "Number of checked checksums {} cannot be greater than total {}",
+                    boldRed(doneInt),
+                    boldRed(totalInt));
+            doneInt = totalInt;
         }
 
-        int percent = (int) (((double) di / (double) ti) * 100);
+        int percent = (int) (((double) doneInt / (double) totalInt) * 100);
 
-        LOGGER.debug("Progress: {} / {} = {}%", di, ti, percent);
+        LOGGER.debug("Progress: {} / {} = {}%", doneInt, totalInt, percent);
 
         return percent;
     }
 
     @Override
     public void buildChecked(BuildCheckedEvent event) {
-        int di = d.intValue();
-        int ti = t.intValue();
+        int totalInt = total.intValue();
+        int doneInt = done.intValue();
 
-        if (di >= 0 && ti >= 0 && di == ti) {
-            h.clear();
+        if (totalInt >= 0 && doneInt == totalInt) {
+            map.clear();
             return;
         }
 
         LOGGER.debug("Checksum: {}, Build system: {}", event.getChecksum(), event.getBuildSystem());
 
         // FIXME: Hash map needed because we get multiple events for the same checksum
-        h.computeIfAbsent(event.getChecksum().getFilename(), k -> {
-            d.incrementAndGet();
+        map.computeIfAbsent(event.getChecksum().getFilename(), k -> {
+            done.incrementAndGet();
             return event;
         });
     }
 
     @Override
     public void checksumsComputed(ChecksumsComputedEvent event) {
-        t.set(event.getCount());
+        total.set(event.getCount());
     }
 }

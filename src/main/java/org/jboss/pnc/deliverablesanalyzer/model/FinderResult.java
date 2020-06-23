@@ -54,15 +54,15 @@ public class FinderResult {
 
     @NotNull
     @Valid
-    private Set<Build> builds;
+    private final Set<Build> builds;
 
     @NotNull
     @Valid
-    private Set<Artifact> notFoundArtifacts;
+    private final Set<Artifact> notFoundArtifacts;
 
     @NotNull
     @Valid
-    private BuildStatistics statistics;
+    private final BuildStatistics statistics;
 
     public FinderResult() {
         this.builds = Collections.emptySet();
@@ -175,12 +175,18 @@ public class FinderResult {
 
         for (KojiLocalArchive localArchive : localArchives) {
             Artifact artifact = createNotFoundArtifact(localArchive);
+
             artifacts.add(artifact);
-            LOGGER.info(
-                    "Not found artifact: {} / {} ({})",
-                    ++archiveCount,
-                    numArchives,
-                    artifact.getFilesNotBuiltFromSource());
+
+            archiveCount++;
+
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(
+                        "Not found artifact: {} / {} ({})",
+                        archiveCount,
+                        numArchives,
+                        artifact.getFilesNotBuiltFromSource());
+            }
         }
 
         return Collections.unmodifiableSet(artifacts);
@@ -202,9 +208,9 @@ public class FinderResult {
         build.setBuildSystemType(buildSystemType);
 
         if (build.getBuildSystemType().equals(BuildSystemType.PNC)) {
-            build.setPncId(Long.valueOf(kojiBuild.getBuildInfo().getId()));
+            build.setPncId((long) kojiBuild.getBuildInfo().getId());
         } else {
-            build.setKojiId(Long.valueOf(kojiBuild.getBuildInfo().getId()));
+            build.setKojiId((long) kojiBuild.getBuildInfo().getId());
         }
 
         build.setSource(kojiBuild.getSource());
@@ -281,19 +287,23 @@ public class FinderResult {
         for (Map.Entry<BuildSystemInteger, KojiBuild> entry : entrySet) {
             BuildSystemInteger buildSystemInteger = entry.getKey();
 
-            if (buildSystemInteger.getValue().equals(Integer.valueOf(0))) {
+            if (buildSystemInteger.getValue().equals(0)) {
                 continue;
             }
 
             KojiBuild kojiBuild = entry.getValue();
             Build build = createBuild(buildSystemInteger, kojiBuild);
 
-            LOGGER.info(
-                    "Build: {} / {} ({}.{})",
-                    ++buildCount,
-                    numBuilds,
-                    build.getIdentifier(),
-                    build.getBuildSystemType());
+            if (LOGGER.isInfoEnabled()) {
+                buildCount++;
+
+                LOGGER.info(
+                        "Build: {} / {} ({}.{})",
+                        buildCount,
+                        numBuilds,
+                        build.getIdentifier(),
+                        build.getBuildSystemType());
+            }
 
             List<KojiLocalArchive> localArchives = kojiBuild.getArchives();
             int numArchives = localArchives.size();
@@ -304,7 +314,11 @@ public class FinderResult {
 
                 build.getArtifacts().add(artifact);
 
-                LOGGER.info("Artifact: {} / {} ({})", ++archiveCount, numArchives, artifact.getIdentifier());
+                if (LOGGER.isInfoEnabled()) {
+                    archiveCount++;
+
+                    LOGGER.info("Artifact: {} / {} ({})", archiveCount, numArchives, artifact.getIdentifier());
+                }
             }
 
             buildList.add(build);
