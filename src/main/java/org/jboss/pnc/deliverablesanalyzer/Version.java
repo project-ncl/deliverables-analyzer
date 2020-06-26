@@ -28,13 +28,13 @@ public final class Version {
 
     public static final String APP_PROPERTIES = "app.properties";
 
-    private static Properties properties;
+    private static final Properties PROPERTIES;
 
     static {
-        properties = new Properties();
+        PROPERTIES = new Properties();
 
         try (InputStream is = ApplicationLifecycle.class.getClassLoader().getResourceAsStream(APP_PROPERTIES)) {
-            properties.load(is);
+            PROPERTIES.load(is);
         } catch (IOException | NullPointerException e) {
             LOGGER.error("Failed to load file: {}", APP_PROPERTIES, e);
         }
@@ -55,7 +55,7 @@ public final class Version {
     }
 
     private static String getAppProperty(String name) {
-        return properties.getProperty(name, "unknown");
+        return PROPERTIES.getProperty(name, "unknown");
     }
 
     private static String getVersionNumber() {
