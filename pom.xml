@@ -246,13 +246,14 @@
           <artifactId>sortpom-maven-plugin</artifactId>
           <version>${version.com.github.ekryd.sortpom}</version>
           <configuration>
-            <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-            <lineSeparator>\n</lineSeparator>
             <encoding>${project.build.sourceEncoding}</encoding>
-            <sortProperties>true</sortProperties>
+            <expandEmptyElements>false</expandEmptyElements>
             <keepBlankLines>true</keepBlankLines>
+            <lineSeparator>\n</lineSeparator>
+            <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
             <sortDependencies>scope,groupId,artifactId</sortDependencies>
             <sortPlugins>scope,groupId,artifactId</sortPlugins>
+            <sortProperties>true</sortProperties>
           </configuration>
         </plugin>
         <plugin>
@@ -898,7 +899,7 @@ limitations under the License.]]></inlineHeader>
                         </goals>
                       </pluginExecutionFilter>
                       <action>
-                        <ignore></ignore>
+                        <ignore />
                       </action>
                     </pluginExecution>
                     <pluginExecution>
