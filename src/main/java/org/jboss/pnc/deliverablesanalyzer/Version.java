@@ -20,9 +20,25 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import org.jboss.pnc.build.finder.core.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class Version {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Version.class);
+
+    public static final String APP_PROPERTIES = "app.properties";
+
     private static Properties properties;
+
+    static {
+        properties = new Properties();
+
+        try (InputStream is = ApplicationLifecycle.class.getClassLoader().getResourceAsStream(APP_PROPERTIES)) {
+            properties.load(is);
+        } catch (IOException | NullPointerException e) {
+            LOGGER.error("Failed to load file: {}", APP_PROPERTIES, e);
+        }
+    }
 
     private Version() {
 
@@ -39,27 +55,7 @@ public final class Version {
     }
 
     private static String getAppProperty(String name) {
-        final String unknown = "unknown";
-
-        if (properties == null) {
-            properties = new Properties();
-
-            try (InputStream is = ApplicationLifecycle.class.getClassLoader().getResourceAsStream("app.properties")) {
-                if (is != null) {
-                    properties.load(is);
-                }
-            } catch (IOException e) {
-                return unknown;
-            }
-        }
-
-        String value = properties.getProperty(name);
-
-        if (value == null) {
-            return unknown;
-        }
-
-        return value;
+        return properties.getProperty(name, "unknown");
     }
 
     private static String getVersionNumber() {
