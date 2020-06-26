@@ -42,16 +42,11 @@ public final class Version {
         final String unknown = "unknown";
 
         if (properties == null) {
-            try {
-                try (InputStream stream = ApplicationLifecycle.class.getClassLoader()
-                        .getResourceAsStream("app.properties")) {
-                    if (stream == null) {
-                        return unknown;
-                    }
+            properties = new Properties();
 
-                    properties = new Properties();
-
-                    properties.load(stream);
+            try (InputStream is = ApplicationLifecycle.class.getClassLoader().getResourceAsStream("app.properties")) {
+                if (is != null) {
+                    properties.load(is);
                 }
             } catch (IOException e) {
                 return unknown;
@@ -64,7 +59,7 @@ public final class Version {
             return unknown;
         }
 
-        return value.toString();
+        return value;
     }
 
     private static String getVersionNumber() {
