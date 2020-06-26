@@ -179,6 +179,7 @@ public class Finder {
 
     private static void deletePath(Path path) {
         LOGGER.info("Delete: {}", path);
+
         try {
             Files.delete(path);
         } catch (IOException e) {
@@ -344,9 +345,13 @@ public class Finder {
 
             LOGGER.info("Done finding builds for {}", url);
         } finally {
-            LOGGER.info("Cleanup after finding URL: {}", url);
+            boolean isClean = cleanup(config.getOutputDirectory(), cacheManager, pool);
 
-            cleanup(config.getOutputDirectory(), cacheManager, pool);
+            if (isClean) {
+                LOGGER.info("Cleanup after finding URL: {}", url);
+            } else {
+                LOGGER.warn("Cleanup failed after finding URL: {}", url);
+            }
         }
 
         return result;
