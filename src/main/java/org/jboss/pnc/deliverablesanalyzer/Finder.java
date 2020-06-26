@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -158,11 +159,7 @@ public class Finder {
                 config = BuildConfig.merge(defaults, configFile);
             }
         } else {
-            if (defaults == null) {
-                config = new BuildConfig();
-            } else {
-                config = defaults;
-            }
+            config = Objects.requireNonNullElse(defaults, new BuildConfig());
         }
 
         setKojiHubURL(config);
