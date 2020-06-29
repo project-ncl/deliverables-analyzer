@@ -50,9 +50,8 @@ public class ErrorMessage {
     public ErrorMessage(Exception exception) {
         this.exception = exception;
         Response.Status status;
-        boolean isWAE = exception instanceof WebApplicationException;
 
-        if (isWAE) {
+        if (exception instanceof WebApplicationException) {
             status = ((WebApplicationException) exception).getResponse().getStatusInfo().toEnum();
         } else {
             status = Response.Status.INTERNAL_SERVER_ERROR;

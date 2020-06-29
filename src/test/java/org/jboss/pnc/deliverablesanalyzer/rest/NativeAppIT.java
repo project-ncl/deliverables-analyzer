@@ -15,17 +15,9 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import io.quarkus.test.junit.NativeImageTest;
 
-@Provider
-public class ErrorMapper implements ExceptionMapper<Exception> {
-    @Override
-    public Response toResponse(Exception exception) {
-        var errorMessage = new ErrorMessage(exception);
+@NativeImageTest
+class NativeAppIT extends AppTest {
 
-        return Response.status(errorMessage.getCode()).type(MediaType.APPLICATION_JSON).entity(errorMessage).build();
-    }
 }

@@ -47,13 +47,13 @@ import io.restassured.config.ObjectMapperConfig;
 import io.restassured.config.RestAssuredConfig;
 
 @QuarkusTest
-public class FullTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FullTest.class);
+class AppTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppTest.class);
 
     private static final String URL = System.getProperty("distribution.url");
 
     @BeforeAll
-    public static void init() {
+    static void init() {
         assertNotNull(URL, "You must set property distribution.url");
 
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
@@ -67,8 +67,8 @@ public class FullTest {
     }
 
     @Test
-    public void testVersion() {
-        String version = given().log()
+    void testVersion() {
+        var version = given().log()
                 .all()
                 .accept(MediaType.TEXT_PLAIN)
                 .when()
@@ -89,8 +89,8 @@ public class FullTest {
     }
 
     @Test
-    public void testCreated() {
-        String location = given().log()
+    void testCreated() {
+        var location = given().log()
                 .all()
                 .redirects()
                 .follow(false)

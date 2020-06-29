@@ -99,7 +99,7 @@ public class FinderResult {
     }
 
     private void setArtifactChecksums(Artifact artifact, Collection<Checksum> checksums) {
-        for (Checksum checksum : checksums) {
+        for (var checksum : checksums) {
             switch (checksum.getType()) {
                 case md5:
                     artifact.setMd5(checksum.getValue());
@@ -117,12 +117,12 @@ public class FinderResult {
     }
 
     private MavenArtifact createMavenArtifact(KojiArchiveInfo archiveInfo) {
-        String groupId = archiveInfo.getGroupId();
-        String artifactId = archiveInfo.getArtifactId();
-        String type = archiveInfo.getExtension() != null ? archiveInfo.getExtension() : "";
-        String version = archiveInfo.getVersion();
-        String classifier = archiveInfo.getClassifier() != null ? archiveInfo.getClassifier() : "";
-        MavenArtifact mavenArtifact = new MavenArtifact();
+        var groupId = archiveInfo.getGroupId();
+        var artifactId = archiveInfo.getArtifactId();
+        var type = archiveInfo.getExtension() != null ? archiveInfo.getExtension() : "";
+        var version = archiveInfo.getVersion();
+        var classifier = archiveInfo.getClassifier() != null ? archiveInfo.getClassifier() : "";
+        var mavenArtifact = new MavenArtifact();
 
         mavenArtifact.setGroupId(groupId);
         mavenArtifact.setArtifactId(artifactId);
@@ -134,9 +134,9 @@ public class FinderResult {
     }
 
     private NpmArtifact createNpmArtifact(KojiArchiveInfo archiveInfo) {
-        String name = archiveInfo.getArtifactId();
-        String version = archiveInfo.getVersion();
-        NpmArtifact npmArtifact = new NpmArtifact();
+        var name = archiveInfo.getArtifactId();
+        var version = archiveInfo.getVersion();
+        var npmArtifact = new NpmArtifact();
 
         npmArtifact.setName(name);
         npmArtifact.setVersion(version);
@@ -145,7 +145,7 @@ public class FinderResult {
     }
 
     private Artifact createNotFoundArtifact(KojiLocalArchive localArchive) {
-        Artifact artifact = new Artifact();
+        var artifact = new Artifact();
 
         setArtifactChecksums(artifact, localArchive.getChecksums());
 
@@ -156,25 +156,25 @@ public class FinderResult {
     }
 
     private Set<Artifact> getNotFoundArtifacts(Map<BuildSystemInteger, KojiBuild> builds) {
-        int buildsSize = builds.size();
+        var buildsSize = builds.size();
 
         if (buildsSize == 0) {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
 
-        KojiBuild buildZero = builds.get(new BuildSystemInteger(0));
-        List<KojiLocalArchive> localArchives = buildZero.getArchives();
-        int numArchives = localArchives.size();
+        var buildZero = builds.get(new BuildSystemInteger(0));
+        var localArchives = buildZero.getArchives();
+        var numArchives = localArchives.size();
 
         if (numArchives == 0) {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
 
-        Set<Artifact> artifacts = new LinkedHashSet<>(numArchives);
-        int archiveCount = 0;
+        var artifacts = new LinkedHashSet<Artifact>(numArchives);
+        var archiveCount = 0;
 
-        for (KojiLocalArchive localArchive : localArchives) {
-            Artifact artifact = createNotFoundArtifact(localArchive);
+        for (var localArchive : localArchives) {
+            var artifact = createNotFoundArtifact(localArchive);
 
             artifacts.add(artifact);
 
@@ -201,8 +201,8 @@ public class FinderResult {
             buildSystemType = BuildSystemType.KOJI;
         }
 
-        String identifier = kojiBuild.getBuildInfo().getNvr();
-        Build build = new Build();
+        var identifier = kojiBuild.getBuildInfo().getNvr();
+        var build = new Build();
 
         build.setIdentifier(identifier);
         build.setBuildSystemType(buildSystemType);
@@ -220,10 +220,10 @@ public class FinderResult {
     }
 
     private Artifact createArtifact(KojiLocalArchive localArchive, Build build) {
-        KojiArchiveInfo archiveInfo = localArchive.getArchive();
-        MavenArtifact mavenArtifact = null;
-        NpmArtifact npmArtifact = null;
-        String artifactIdentifier;
+        var archiveInfo = localArchive.getArchive();
+        var mavenArtifact = (MavenArtifact) null;
+        var npmArtifact = (NpmArtifact) null;
+        var artifactIdentifier = (String) null;
 
         if (archiveInfo.getBuildType().equals("maven")) {
             mavenArtifact = createMavenArtifact(archiveInfo);
@@ -237,7 +237,7 @@ public class FinderResult {
                             + archiveInfo.getBuildType());
         }
 
-        Artifact artifact = new Artifact();
+        var artifact = new Artifact();
 
         artifact.setIdentifier(artifactIdentifier);
         artifact.setBuildSystemType(build.getBuildSystemType());
@@ -273,16 +273,16 @@ public class FinderResult {
     }
 
     private Set<Build> getFoundBuilds(Map<BuildSystemInteger, KojiBuild> builds) {
-        int buildsSize = builds.size();
+        var buildsSize = builds.size();
 
         if (buildsSize <= 1) {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
 
-        int numBuilds = buildsSize - 1;
-        Set<Build> buildList = new LinkedHashSet<>(numBuilds);
-        int buildCount = 0;
-        Set<Map.Entry<BuildSystemInteger, KojiBuild>> entrySet = builds.entrySet();
+        var numBuilds = buildsSize - 1;
+        var buildList = new LinkedHashSet<Build>(numBuilds);
+        var buildCount = 0;
+        var entrySet = builds.entrySet();
 
         for (Map.Entry<BuildSystemInteger, KojiBuild> entry : entrySet) {
             BuildSystemInteger buildSystemInteger = entry.getKey();
@@ -291,8 +291,8 @@ public class FinderResult {
                 continue;
             }
 
-            KojiBuild kojiBuild = entry.getValue();
-            Build build = createBuild(buildSystemInteger, kojiBuild);
+            var kojiBuild = entry.getValue();
+            var build = createBuild(buildSystemInteger, kojiBuild);
 
             if (LOGGER.isInfoEnabled()) {
                 buildCount++;
@@ -305,12 +305,12 @@ public class FinderResult {
                         build.getBuildSystemType());
             }
 
-            List<KojiLocalArchive> localArchives = kojiBuild.getArchives();
-            int numArchives = localArchives.size();
-            int archiveCount = 0;
+            var localArchives = kojiBuild.getArchives();
+            var numArchives = localArchives.size();
+            var archiveCount = 0;
 
             for (KojiLocalArchive localArchive : localArchives) {
-                Artifact artifact = createArtifact(localArchive, build);
+                var artifact = createArtifact(localArchive, build);
 
                 build.getArtifacts().add(artifact);
 
@@ -328,7 +328,7 @@ public class FinderResult {
     }
 
     private List<KojiBuild> getBuildsAsList(Map<BuildSystemInteger, KojiBuild> builds) {
-        List<KojiBuild> kojiBuildList = new ArrayList<>(builds.values());
+        var kojiBuildList = new ArrayList<>(builds.values());
 
         kojiBuildList.sort(Comparator.comparingInt(KojiBuild::getId));
 

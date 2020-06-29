@@ -24,11 +24,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,9 +35,7 @@ import java.util.stream.Stream;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.infinispan.commons.util.Version;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.DefaultCacheManager;
@@ -48,7 +43,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.BuildFinder;
 import org.jboss.pnc.build.finder.core.BuildFinderListener;
-import org.jboss.pnc.build.finder.core.BuildSystemInteger;
 import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.ConfigDefaults;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
@@ -78,7 +72,7 @@ public class Finder {
     }
 
     private void ensureConfigurationDirectoryExists() throws IOException {
-        Path configPath = Paths.get(ConfigDefaults.CONFIG_PATH);
+        var configPath = Paths.get(ConfigDefaults.CONFIG_PATH);
 
         LOGGER.info("Configuration directory is: {}", configPath);
 
@@ -94,13 +88,13 @@ public class Finder {
     }
 
     private void setKojiHubURL(BuildConfig config) throws IOException {
-        Optional<String> optionalKojiHubURL = ConfigProvider.getConfig().getOptionalValue("koji.hub.url", String.class);
+        var optionalKojiHubURL = ConfigProvider.getConfig().getOptionalValue("koji.hub.url", String.class);
 
         if (optionalKojiHubURL.isPresent()) {
-            String s = optionalKojiHubURL.get();
+            var s = optionalKojiHubURL.get();
 
             try {
-                URL kojiHubURL = new URL(s);
+                var kojiHubURL = new URL(s);
                 config.setKojiHubURL(kojiHubURL);
             } catch (MalformedURLException e) {
                 throw new IOException("Bad Koji hub URL: " + s, e);
@@ -109,23 +103,23 @@ public class Finder {
     }
 
     private void setKojiWebURL(BuildConfig config) throws IOException {
-        Optional<String> optionalKojiWebURL = ConfigProvider.getConfig().getOptionalValue("koji.web.url", String.class);
+        var optionalKojiWebURL = ConfigProvider.getConfig().getOptionalValue("koji.web.url", String.class);
 
         if (optionalKojiWebURL.isPresent()) {
-            String s = optionalKojiWebURL.get();
+            var s = optionalKojiWebURL.get();
 
             try {
-                URL kojiWebURL = new URL(s);
+                var kojiWebURL = new URL(s);
                 config.setKojiWebURL(kojiWebURL);
             } catch (MalformedURLException e) {
                 throw new IOException("Bad Koji web URL: " + s, e);
             }
         } else if (config.getKojiWebURL() == null && config.getKojiHubURL() != null) {
             // XXX: hack for missing koji.web.url
-            String s = config.getKojiHubURL().toExternalForm().replace("hub.", "web.").replace("hub", "");
+            var s = config.getKojiHubURL().toExternalForm().replace("hub.", "web.").replace("hub", "");
 
             try {
-                URL kojiWebURL = new URL(s);
+                var kojiWebURL = new URL(s);
                 config.setKojiWebURL(kojiWebURL);
             } catch (MalformedURLException e) {
                 throw new IOException("Bad Koji web URL: " + s, e);
@@ -134,13 +128,13 @@ public class Finder {
     }
 
     private void setPncURL(BuildConfig config) throws IOException {
-        Optional<String> optionalPncURL = ConfigProvider.getConfig().getOptionalValue("pnc.url", String.class);
+        var optionalPncURL = ConfigProvider.getConfig().getOptionalValue("pnc.url", String.class);
 
         if (optionalPncURL.isPresent()) {
-            String s = optionalPncURL.get();
+            var s = optionalPncURL.get();
 
             try {
-                URL pncURL = new URL(s);
+                var pncURL = new URL(s);
                 config.setPncURL(pncURL);
             } catch (MalformedURLException e) {
                 throw new IOException("Bad PNC URL: " + s, e);
@@ -150,7 +144,7 @@ public class Finder {
     }
 
     private BuildConfig setupBuildConfig() throws IOException {
-        BuildConfig defaults = BuildConfig.load(Finder.class.getClassLoader());
+        var defaults = BuildConfig.load(Finder.class.getClassLoader());
 
         if (configFile.exists()) {
             if (defaults == null) {
@@ -167,7 +161,7 @@ public class Finder {
         setPncURL(config);
 
         // XXX: Force output directory since it defaults to "." which usually isn't the best
-        Path tmpDir = Files.createTempDirectory("deliverables-analyzer-");
+        var tmpDir = Files.createTempDirectory("deliverables-analyzer-");
 
         config.setOutputDirectory(tmpDir.toAbsolutePath().toString());
 
@@ -188,8 +182,8 @@ public class Finder {
     private void initCaches(BuildConfig config) throws IOException {
         ensureConfigurationDirectoryExists();
 
-        Path locationPath = Paths.get(ConfigDefaults.CONFIG_PATH, "cache");
-        String location = locationPath.toAbsolutePath().toString();
+        var locationPath = Paths.get(ConfigDefaults.CONFIG_PATH, "cache");
+        var location = locationPath.toAbsolutePath().toString();
 
         LOGGER.info("Cache location is: {}", location);
 
@@ -209,8 +203,8 @@ public class Finder {
             throw new IOException("Cache location is not writable: " + locationPath);
         }
 
-        KojiBuild.KojiBuildExternalizer externalizer = new KojiBuild.KojiBuildExternalizer();
-        GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
+        var externalizer = new KojiBuild.KojiBuildExternalizer();
+        var globalConfig = new GlobalConfigurationBuilder();
 
         globalConfig.globalState()
                 .persistentLocation(location)
@@ -221,7 +215,7 @@ public class Finder {
                 .addRegexp(".*")
                 .create();
 
-        Configuration configuration = new ConfigurationBuilder().expiration()
+        var configuration = new ConfigurationBuilder().expiration()
                 .lifespan(config.getCacheLifespan())
                 .maxIdle(config.getCacheMaxIdle())
                 .wakeUpInterval(-1L)
@@ -236,13 +230,13 @@ public class Finder {
                 .location(location)
                 .build();
 
-        Set<ChecksumType> checksumTypes = config.getChecksumTypes();
-        GlobalConfiguration globalConfiguration = globalConfig.build();
+        var checksumTypes = config.getChecksumTypes();
+        var globalConfiguration = globalConfig.build();
         cacheManager = new DefaultCacheManager(globalConfiguration);
 
         LOGGER.info("Setting up caches for checksum types size: {}", checksumTypes.size());
 
-        for (ChecksumType checksumType : checksumTypes) {
+        for (var checksumType : checksumTypes) {
             cacheManager.defineConfiguration("files-" + checksumType, configuration);
             cacheManager.defineConfiguration("checksums-" + checksumType, configuration);
             cacheManager.defineConfiguration("checksums-pnc-" + checksumType, configuration);
@@ -254,7 +248,7 @@ public class Finder {
     }
 
     private boolean cleanup(String directory, EmbeddedCacheManager cacheManager, ExecutorService pool) {
-        boolean success = cleanupOutput(directory);
+        var success = cleanupOutput(directory);
 
         success |= cleanupCache(cacheManager);
         success |= cleanupPool(pool);
@@ -263,7 +257,7 @@ public class Finder {
     }
 
     private boolean cleanupOutput(String directory) {
-        Path outputDirectory = Paths.get(directory);
+        var outputDirectory = Paths.get(directory);
 
         try (Stream<Path> stream = Files.walk(outputDirectory)) {
             stream.sorted(Comparator.reverseOrder()).forEach(Finder::deletePath);
@@ -301,8 +295,8 @@ public class Finder {
             URL url,
             DistributionAnalyzerListener distributionAnalyzerListener,
             BuildFinderListener buildFinderListener) throws IOException, KojiClientException {
-        FinderResult result;
-        ExecutorService pool = null;
+        var result = (FinderResult) null;
+        var pool = (ExecutorService) null;
 
         try {
             if (cacheManager == null && !config.getDisableCache()) {
@@ -319,13 +313,13 @@ public class Finder {
                 LOGGER.info("Cache disabled");
             }
 
-            int nThreads = 1 + config.getChecksumTypes().size();
+            var nThreads = 1 + config.getChecksumTypes().size();
 
             LOGGER.info("Setting up fixed thread pool of size: {}", nThreads);
 
             pool = Executors.newFixedThreadPool(nThreads);
 
-            List<String> files = Collections.singletonList(url.toExternalForm());
+            var files = Collections.singletonList(url.toExternalForm());
 
             LOGGER.info(
                     "Starting distribution analysis for {} with config {} and cache manager {}",
@@ -333,16 +327,16 @@ public class Finder {
                     config,
                     cacheManager != null ? cacheManager.getName() : "disabled");
 
-            DistributionAnalyzer analyzer = new DistributionAnalyzer(files, config, cacheManager);
+            var analyzer = new DistributionAnalyzer(files, config, cacheManager);
 
             analyzer.setListener(distributionAnalyzerListener);
 
-            Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum = pool.submit(analyzer);
+            var futureChecksum = pool.submit(analyzer);
             result = findBuilds(id, url, analyzer, pool, futureChecksum, buildFinderListener);
 
             LOGGER.info("Done finding builds for {}", url);
         } finally {
-            boolean isClean = cleanup(config.getOutputDirectory(), cacheManager, pool);
+            var isClean = cleanup(config.getOutputDirectory(), cacheManager, pool);
 
             if (isClean) {
                 LOGGER.info("Cleanup after finding URL: {}", url);
@@ -361,7 +355,7 @@ public class Finder {
             ExecutorService pool,
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum,
             BuildFinderListener buildFinderListener) throws KojiClientException {
-        URL kojiHubURL = config.getKojiHubURL();
+        var kojiHubURL = config.getKojiHubURL();
 
         LOGGER.info("Koji Hub URL: {}", kojiHubURL);
 
@@ -371,9 +365,9 @@ public class Finder {
 
         LOGGER.info("Initializing Koji client session with URL {}", kojiHubURL);
 
-        try (KojiClientSession session = new KojiClientSession(kojiHubURL)) {
-            URL pncURL = config.getPncURL();
-            BuildFinder buildFinder;
+        try (var session = new KojiClientSession(kojiHubURL)) {
+            var pncURL = config.getPncURL();
+            var buildFinder = (BuildFinder) null;
 
             if (pncURL == null) {
                 LOGGER.warn("PNC support disabled because PNC URL is not set");
@@ -386,20 +380,20 @@ public class Finder {
 
             buildFinder.setListener(buildFinderListener);
 
-            Future<Map<BuildSystemInteger, KojiBuild>> futureBuilds = pool.submit(buildFinder);
+            var futureBuilds = pool.submit(buildFinder);
 
             try {
-                Map<ChecksumType, MultiValuedMap<String, String>> checksums = futureChecksum.get();
-                Map<BuildSystemInteger, KojiBuild> builds = futureBuilds.get();
+                var checksums = futureChecksum.get();
+                var builds = futureBuilds.get();
 
                 if (LOGGER.isInfoEnabled()) {
-                    int size = builds.size();
-                    int numBuilds = size >= 1 ? size - 1 : 0;
+                    var size = builds.size();
+                    var numBuilds = size >= 1 ? size - 1 : 0;
 
                     LOGGER.info("Got {} checksum types and {} builds", checksums.size(), numBuilds);
                 }
 
-                FinderResult result = new FinderResult(id, url, builds);
+                var result = new FinderResult(id, url, builds);
 
                 LOGGER.info("Returning result for {}", url);
 

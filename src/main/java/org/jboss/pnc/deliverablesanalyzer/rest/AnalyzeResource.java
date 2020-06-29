@@ -18,7 +18,6 @@ package org.jboss.pnc.deliverablesanalyzer.rest;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -116,7 +115,7 @@ public class AnalyzeResource implements AnalyzeService {
                     schema = @Schema(type = SchemaType.STRING),
                     required = true,
                     style = ParameterStyle.SIMPLE) @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id) {
-        BuildConfig config = configs.get(id);
+        var config = configs.get(id);
 
         if (config == null) {
             LOGGER.info("Config id {} is null. Returning Not Found", id);
@@ -151,7 +150,7 @@ public class AnalyzeResource implements AnalyzeService {
                     schema = @Schema(type = SchemaType.STRING),
                     required = true,
                     style = ParameterStyle.SIMPLE) @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id) {
-        FinderStatus status = statuses.get(id);
+        var status = statuses.get(id);
 
         if (status == null) {
             LOGGER.info("Status id {} is null. Returning Not Found", id);
@@ -198,7 +197,7 @@ public class AnalyzeResource implements AnalyzeService {
                     schema = @Schema(type = SchemaType.STRING),
                     required = true,
                     style = ParameterStyle.SIMPLE) @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id) {
-        CompletionStage<FinderResult> futureResult = results.get(id);
+        var futureResult = results.get(id);
 
         if (futureResult == null) {
             LOGGER.info("Result id {} is null. Returning Not Found", id);
@@ -207,7 +206,7 @@ public class AnalyzeResource implements AnalyzeService {
 
         LOGGER.info("Result id {} is {}", id, futureResult);
 
-        CompletableFuture<FinderResult> completableFuture = futureResult.toCompletableFuture();
+        var completableFuture = futureResult.toCompletableFuture();
 
         if (completableFuture.isCancelled() || completableFuture.isCompletedExceptionally()) {
             LOGGER.info("Removing abnormal result id {} from cache so that it can be submitted again", id);
@@ -293,18 +292,18 @@ public class AnalyzeResource implements AnalyzeService {
                     schema = @Schema(type = SchemaType.STRING),
                     required = true,
                     style = ParameterStyle.SIMPLE) String config) {
-        URI uri = URI.create(url).normalize();
-        String normalizedUrl = uri.toString();
+        var uri = URI.create(url).normalize();
+        var normalizedUrl = uri.toString();
         // XXX: Hash URL instead of file contents so that we don't have to download the file
-        String sha256 = DigestUtils.sha256Hex(normalizedUrl);
-        String id = sha256.substring(0, 8);
+        var sha256 = DigestUtils.sha256Hex(normalizedUrl);
+        var id = sha256.substring(0, 8);
 
         try {
-            Finder finder = new Finder();
-            BuildConfig config1 = finder.getBuildConfig();
+            var finder = new Finder();
+            var config1 = finder.getBuildConfig();
 
             if (config != null) {
-                BuildConfig config2 = BuildConfig.load(config);
+                var config2 = BuildConfig.load(config);
 
                 if (config2.getExcludes() != null) {
                     config1.setExcludes(config2.getExcludes());
@@ -322,7 +321,7 @@ public class AnalyzeResource implements AnalyzeService {
             results.computeIfAbsent(id, k -> pool.supplyAsync(() -> {
                 configs.putIfAbsent(id, config1);
 
-                FinderStatus status = new FinderStatus();
+                var status = new FinderStatus();
 
                 statuses.putIfAbsent(id, status);
 
@@ -336,7 +335,7 @@ public class AnalyzeResource implements AnalyzeService {
             throw new InternalServerErrorException(e);
         }
 
-        String location = uriInfo.getAbsolutePathBuilder()
+        var location = uriInfo.getAbsolutePathBuilder()
                 .path("results")
                 .path("{id}")
                 .resolveTemplate("id", id)

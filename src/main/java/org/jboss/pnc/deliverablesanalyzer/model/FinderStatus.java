@@ -57,8 +57,8 @@ public class FinderStatus implements DistributionAnalyzerListener, BuildFinderLi
 
     @PositiveOrZero
     public int getPercent() {
-        int totalInt = total.intValue();
-        int doneInt = done.intValue();
+        var totalInt = total.intValue();
+        var doneInt = done.intValue();
 
         if (totalInt <= 0 || doneInt == 0) {
             return 0;
@@ -72,7 +72,7 @@ public class FinderStatus implements DistributionAnalyzerListener, BuildFinderLi
             doneInt = totalInt;
         }
 
-        int percent = (int) (((double) doneInt / (double) totalInt) * 100);
+        var percent = (int) (((double) doneInt / (double) totalInt) * 100);
 
         LOGGER.debug("Progress: {} / {} = {}%", doneInt, totalInt, percent);
 
@@ -81,8 +81,8 @@ public class FinderStatus implements DistributionAnalyzerListener, BuildFinderLi
 
     @Override
     public void buildChecked(BuildCheckedEvent event) {
-        int totalInt = total.intValue();
-        int doneInt = done.intValue();
+        var totalInt = total.intValue();
+        var doneInt = done.intValue();
 
         if (totalInt >= 0 && doneInt == totalInt) {
             map.clear();
