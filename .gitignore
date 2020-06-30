@@ -30,3 +30,6 @@ target/
 .mvn/
 mvnw
 mvnw.cmd
+
+# formatter-maven-plugin
+.cache/
