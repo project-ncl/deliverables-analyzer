@@ -170,7 +170,7 @@ public class FinderResult {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
 
-        var artifacts = new LinkedHashSet<Artifact>(numArchives);
+        var artifacts = (Set<Artifact>) new LinkedHashSet<Artifact>(numArchives);
         var archiveCount = 0;
 
         for (var localArchive : localArchives) {
@@ -207,13 +207,16 @@ public class FinderResult {
         build.setIdentifier(identifier);
         build.setBuildSystemType(buildSystemType);
 
-        if (build.getBuildSystemType().equals(BuildSystemType.PNC)) {
+        if (build.getBuildSystemType() == BuildSystemType.PNC) {
             build.setPncId((long) kojiBuild.getBuildInfo().getId());
         } else {
             build.setKojiId((long) kojiBuild.getBuildInfo().getId());
         }
 
-        build.setSource(kojiBuild.getSource());
+        if (kojiBuild.getSource().isPresent()) {
+            build.setSource(kojiBuild.getSource().get());
+        }
+
         build.setBuiltFromSource(!kojiBuild.isImport());
 
         return build;
@@ -242,16 +245,16 @@ public class FinderResult {
         artifact.setIdentifier(artifactIdentifier);
         artifact.setBuildSystemType(build.getBuildSystemType());
 
-        if (!localArchive.isBuiltFromSource()) {
+        if (localArchive.isBuiltFromSource()) {
+            artifact.setBuiltFromSource(build.getBuiltFromSource());
+        } else {
             artifact.setBuiltFromSource(Boolean.FALSE);
             artifact.getFilesNotBuiltFromSource().addAll(localArchive.getUnmatchedFilenames());
-        } else {
-            artifact.setBuiltFromSource(build.getBuiltFromSource());
         }
 
         setArtifactChecksums(artifact, localArchive.getChecksums());
 
-        if (build.getBuildSystemType().equals(BuildSystemType.PNC)) {
+        if (build.getBuildSystemType() == BuildSystemType.PNC) {
             artifact.setPncId(Long.valueOf(archiveInfo.getArchiveId()));
         } else {
             artifact.setKojiId(Long.valueOf(archiveInfo.getArchiveId()));
