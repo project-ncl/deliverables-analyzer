@@ -17,6 +17,7 @@ package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,25 +50,27 @@ public class ErrorMessage {
 
     public ErrorMessage(Exception exception) {
         this.exception = exception;
-        Response.Status status;
+        Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
 
         if (exception instanceof WebApplicationException) {
-            status = ((WebApplicationException) exception).getResponse().getStatusInfo().toEnum();
-        } else {
-            status = Response.Status.INTERNAL_SERVER_ERROR;
+            var e = (WebApplicationException) exception;
+
+            try (var response = e.getResponse()) {
+                status = response.getStatusInfo().toEnum();
+            }
         }
 
         if (exception.getCause() != null) {
-            this.causeStackTrace.addAll(
+            causeStackTrace.addAll(
                     Arrays.stream(exception.getCause().getStackTrace())
                             .map(StackTraceElement::toString)
                             .collect(Collectors.toUnmodifiableList()));
         }
 
-        this.message = exception.getMessage();
-        this.reason = status.getReasonPhrase();
-        this.code = status.getStatusCode();
-        this.stackTrace.addAll(
+        message = exception.getMessage();
+        reason = status.getReasonPhrase();
+        code = status.getStatusCode();
+        stackTrace.addAll(
                 Arrays.stream(exception.getStackTrace())
                         .map(StackTraceElement::toString)
                         .collect(Collectors.toUnmodifiableList()));
@@ -91,10 +94,10 @@ public class ErrorMessage {
     }
 
     public List<String> getStackTrace() {
-        return stackTrace;
+        return Collections.unmodifiableList(stackTrace);
     }
 
     public List<String> getCauseStackTrace() {
-        return causeStackTrace;
+        return Collections.unmodifiableList(causeStackTrace);
     }
 }
