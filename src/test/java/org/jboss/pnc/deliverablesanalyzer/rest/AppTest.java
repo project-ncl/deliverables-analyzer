@@ -52,6 +52,10 @@ class AppTest {
 
     private static final String URL = System.getProperty("distribution.url");
 
+    private static final long TIMEOUT_MINUTES = 10L;
+
+    private static final long POLL_INTERVAL_SECONDS = 30L;
+
     @BeforeAll
     static void init() {
         assertNotNull(URL, "You must set property distribution.url");
@@ -108,8 +112,8 @@ class AppTest {
 
         assertThat(location, is(not(emptyOrNullString())));
 
-        await().atMost(Duration.ofMinutes(10L))
-                .pollInterval(Duration.ofSeconds(30L))
+        await().atMost(Duration.ofMinutes(TIMEOUT_MINUTES))
+                .pollInterval(Duration.ofSeconds(POLL_INTERVAL_SECONDS))
                 .untilAsserted(
                         () -> RestAssured.when().get(location).then().statusCode(Response.Status.OK.getStatusCode()));
 

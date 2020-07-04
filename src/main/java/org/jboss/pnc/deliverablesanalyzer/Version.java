@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 public final class Version {
     private static final Logger LOGGER = LoggerFactory.getLogger(Version.class);
 
-    public static final String APP_PROPERTIES = "app.properties";
+    private static final String APP_PROPERTIES = "app.properties";
 
     private static final Properties PROPERTIES;
 
