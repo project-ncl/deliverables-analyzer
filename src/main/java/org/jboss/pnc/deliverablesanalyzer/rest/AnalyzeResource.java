@@ -300,7 +300,7 @@ public class AnalyzeResource implements AnalyzeService {
 
         try {
             var finder = new Finder();
-            var config1 = finder.getBuildConfig();
+            var config1 = finder.getConfig();
 
             if (config != null) {
                 var config2 = BuildConfig.load(config);

@@ -408,7 +408,7 @@ public class Finder {
         return null;
     }
 
-    public BuildConfig getBuildConfig() {
+    public BuildConfig getConfig() {
         return config;
     }
 }
