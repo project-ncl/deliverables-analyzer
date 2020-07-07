@@ -92,10 +92,14 @@ public class MavenArtifact {
 
     @JsonIgnore
     public String getIdentifier() {
+        String gav;
+
         if (classifier != null && !classifier.isEmpty()) {
-            return String.join(":", groupId, artifactId, type, version, classifier);
+            gav = String.join(":", groupId, artifactId, type, version, classifier);
         } else {
-            return String.join(":", groupId, artifactId, type, version);
+            gav = String.join(":", groupId, artifactId, type, version);
         }
+
+        return gav;
     }
 }

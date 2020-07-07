@@ -37,6 +37,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationChildBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -71,7 +72,7 @@ public class Finder {
         config = setupBuildConfig();
     }
 
-    private void ensureConfigurationDirectoryExists() throws IOException {
+    private static void ensureConfigurationDirectoryExists() throws IOException {
         var configPath = Paths.get(ConfigDefaults.CONFIG_PATH);
 
         LOGGER.info("Configuration directory is: {}", configPath);
@@ -87,7 +88,7 @@ public class Finder {
         }
     }
 
-    private void setKojiHubURL(BuildConfig config) throws IOException {
+    private static void setKojiHubURL(BuildConfig config) throws IOException {
         var optionalKojiHubURL = ConfigProvider.getConfig().getOptionalValue("koji.hub.url", String.class);
 
         if (optionalKojiHubURL.isPresent()) {
@@ -102,7 +103,7 @@ public class Finder {
         }
     }
 
-    private void setKojiWebURL(BuildConfig config) throws IOException {
+    private static void setKojiWebURL(BuildConfig config) throws IOException {
         var optionalKojiWebURL = ConfigProvider.getConfig().getOptionalValue("koji.web.url", String.class);
 
         if (optionalKojiWebURL.isPresent()) {
@@ -127,7 +128,7 @@ public class Finder {
         }
     }
 
-    private void setPncURL(BuildConfig config) throws IOException {
+    private static void setPncURL(BuildConfig config) throws IOException {
         var optionalPncURL = ConfigProvider.getConfig().getOptionalValue("pnc.url", String.class);
 
         if (optionalPncURL.isPresent()) {
@@ -204,7 +205,7 @@ public class Finder {
         }
 
         var externalizer = new KojiBuild.KojiBuildExternalizer();
-        var globalConfig = new GlobalConfigurationBuilder();
+        GlobalConfigurationChildBuilder globalConfig = new GlobalConfigurationBuilder();
 
         globalConfig.globalState()
                 .persistentLocation(location)
@@ -247,7 +248,7 @@ public class Finder {
         cacheManager.defineConfiguration("builds-pnc", configuration);
     }
 
-    private boolean cleanup(String directory, EmbeddedCacheManager cacheManager, ExecutorService pool) {
+    private static boolean cleanup(String directory, EmbeddedCacheManager cacheManager, ExecutorService pool) {
         var success = cleanupOutput(directory);
 
         success |= cleanupCache(cacheManager);
@@ -256,7 +257,7 @@ public class Finder {
         return success;
     }
 
-    private boolean cleanupOutput(String directory) {
+    private static boolean cleanupOutput(String directory) {
         var outputDirectory = Paths.get(directory);
 
         try (Stream<Path> stream = Files.walk(outputDirectory)) {
@@ -269,7 +270,7 @@ public class Finder {
         return true;
     }
 
-    private boolean cleanupCache(EmbeddedCacheManager cacheManager) {
+    private static boolean cleanupCache(EmbeddedCacheManager cacheManager) {
         if (cacheManager != null) {
             try {
                 cacheManager.close();
@@ -282,7 +283,7 @@ public class Finder {
         return true;
     }
 
-    private boolean cleanupPool(ExecutorService pool) {
+    private static boolean cleanupPool(ExecutorService pool) {
         if (pool != null) {
             Utils.shutdownAndAwaitTermination(pool);
         }

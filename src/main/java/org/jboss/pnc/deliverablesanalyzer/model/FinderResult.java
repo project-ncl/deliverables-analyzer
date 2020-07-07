@@ -17,7 +17,6 @@ package org.jboss.pnc.deliverablesanalyzer.model;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -98,7 +97,7 @@ public class FinderResult {
         return statistics;
     }
 
-    private void setArtifactChecksums(Artifact artifact, Collection<Checksum> checksums) {
+    private static void setArtifactChecksums(Artifact artifact, Iterable<Checksum> checksums) {
         for (var checksum : checksums) {
             switch (checksum.getType()) {
                 case md5:
@@ -116,7 +115,7 @@ public class FinderResult {
         }
     }
 
-    private MavenArtifact createMavenArtifact(KojiArchiveInfo archiveInfo) {
+    private static MavenArtifact createMavenArtifact(KojiArchiveInfo archiveInfo) {
         var groupId = archiveInfo.getGroupId();
         var artifactId = archiveInfo.getArtifactId();
         var type = archiveInfo.getExtension() != null ? archiveInfo.getExtension() : "";
@@ -133,7 +132,7 @@ public class FinderResult {
         return mavenArtifact;
     }
 
-    private NpmArtifact createNpmArtifact(KojiArchiveInfo archiveInfo) {
+    private static NpmArtifact createNpmArtifact(KojiArchiveInfo archiveInfo) {
         var name = archiveInfo.getArtifactId();
         var version = archiveInfo.getVersion();
         var npmArtifact = new NpmArtifact();
@@ -144,7 +143,7 @@ public class FinderResult {
         return npmArtifact;
     }
 
-    private Artifact createNotFoundArtifact(KojiLocalArchive localArchive) {
+    private static Artifact createNotFoundArtifact(KojiLocalArchive localArchive) {
         var artifact = new Artifact();
 
         setArtifactChecksums(artifact, localArchive.getChecksums());
@@ -155,7 +154,7 @@ public class FinderResult {
         return artifact;
     }
 
-    private Set<Artifact> getNotFoundArtifacts(Map<BuildSystemInteger, KojiBuild> builds) {
+    private static Set<Artifact> getNotFoundArtifacts(Map<BuildSystemInteger, KojiBuild> builds) {
         var buildsSize = builds.size();
 
         if (buildsSize == 0) {
@@ -192,10 +191,10 @@ public class FinderResult {
         return Collections.unmodifiableSet(artifacts);
     }
 
-    private Build createBuild(BuildSystemInteger buildSystemInteger, KojiBuild kojiBuild) {
+    private static Build createBuild(BuildSystemInteger buildSystemInteger, KojiBuild kojiBuild) {
         BuildSystemType buildSystemType;
 
-        if (buildSystemInteger.getBuildSystem().equals(BuildSystem.pnc)) {
+        if (buildSystemInteger.getBuildSystem() == BuildSystem.pnc) {
             buildSystemType = BuildSystemType.PNC;
         } else {
             buildSystemType = BuildSystemType.KOJI;
@@ -222,16 +221,16 @@ public class FinderResult {
         return build;
     }
 
-    private Artifact createArtifact(KojiLocalArchive localArchive, Build build) {
+    private static Artifact createArtifact(KojiLocalArchive localArchive, Build build) {
         var archiveInfo = localArchive.getArchive();
         var mavenArtifact = (MavenArtifact) null;
         var npmArtifact = (NpmArtifact) null;
         var artifactIdentifier = (String) null;
 
-        if (archiveInfo.getBuildType().equals("maven")) {
+        if ("maven".equals(archiveInfo.getBuildType())) {
             mavenArtifact = createMavenArtifact(archiveInfo);
             artifactIdentifier = mavenArtifact.getIdentifier();
-        } else if (archiveInfo.getBuildType().equals("npm")) {
+        } else if ("npm".equals(archiveInfo.getBuildType())) {
             npmArtifact = createNpmArtifact(archiveInfo);
             artifactIdentifier = npmArtifact.getIdentifier();
         } else {
@@ -275,7 +274,7 @@ public class FinderResult {
         return artifact;
     }
 
-    private Set<Build> getFoundBuilds(Map<BuildSystemInteger, KojiBuild> builds) {
+    private static Set<Build> getFoundBuilds(Map<BuildSystemInteger, KojiBuild> builds) {
         var buildsSize = builds.size();
 
         if (buildsSize <= 1) {
@@ -283,7 +282,7 @@ public class FinderResult {
         }
 
         var numBuilds = buildsSize - 1;
-        var buildList = new LinkedHashSet<Build>(numBuilds);
+        var buildList = (Set<Build>) new LinkedHashSet<Build>(numBuilds);
         var buildCount = 0;
         var entrySet = builds.entrySet();
 
@@ -330,8 +329,8 @@ public class FinderResult {
         return Collections.unmodifiableSet(buildList);
     }
 
-    private List<KojiBuild> getBuildsAsList(Map<BuildSystemInteger, KojiBuild> builds) {
-        var kojiBuildList = new ArrayList<>(builds.values());
+    private static List<KojiBuild> getBuildsAsList(Map<BuildSystemInteger, KojiBuild> builds) {
+        var kojiBuildList = (List<KojiBuild>) new ArrayList<>(builds.values());
 
         kojiBuildList.sort(Comparator.comparingInt(KojiBuild::getId));
 
