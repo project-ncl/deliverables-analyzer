@@ -212,9 +212,7 @@ public class FinderResult {
             build.setKojiId((long) kojiBuild.getBuildInfo().getId());
         }
 
-        if (kojiBuild.getSource().isPresent()) {
-            build.setSource(kojiBuild.getSource().get());
-        }
+        build.setSource(kojiBuild.getSource().orElse(null));
 
         build.setBuiltFromSource(!kojiBuild.isImport());
 
