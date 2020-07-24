@@ -72,7 +72,7 @@ import com.redhat.red.build.koji.KojiClientException;
 public class AnalyzeResource implements AnalyzeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeResource.class);
 
-    @ConfigProperty(name = "analyze.results.timeout", defaultValue = "290000")
+    @ConfigProperty(name = "analyze.results.timeout", defaultValue = "3590000")
     Long timeout;
 
     @Inject
