@@ -212,16 +212,25 @@
                 input.attr('disabled', false);
               });
             }).fail(function(jqXHR, textStatus, errorThrown) {
-              handle_error(jqXHR, textStatus, errorThrown);
+              handleError(jqXHR, textStatus, errorThrown);
             });
           }).fail(function(jqXHR, textStatus, errorThrown) {
-            handle_error(jqXHR, textStatus, errorThrown);
+            handleError(jqXHR, textStatus, errorThrown);
           });
         });
 
-        function handle_error(jqXHR, textStatus, errorThrown) {
+        function handleError(jqXHR, textStatus, errorThrown) {
           const responseText = jqXHR.responseText;
-          const errorMessage = JSON.parse(responseText);
+
+          try {
+            const errorMessage = JSON.parse(responseText);
+            handleErrorMessage(errorMessage);
+          } catch (e) {
+            console.log('Got non-JSON response: ' + responseText);
+          }
+        }
+
+        function handleErrorMessage(errorMessage) {
           let msg = 'Error ' + errorMessage.code + ': ' + errorMessage.reason + '<br \/>' + errorMessage.message +
             '<br \/>';
 
