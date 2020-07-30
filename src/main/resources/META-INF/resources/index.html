@@ -93,6 +93,8 @@
         const form = $('#analyzeForm');
         const progress = $('#progress');
 
+        var intervalID;
+
         form.submit(function(event) {
           event.preventDefault();
 
@@ -168,7 +170,6 @@
             const max = 3600000 - 10000;
             const interval = 1000;
             var t = 0;
-            var intervalID;
 
             intervalID = setInterval(function() {
               $.getJSON('/api/analyze/statuses/' + id, function(data) {
@@ -220,7 +221,9 @@
         });
 
         function handleError(jqXHR, textStatus, errorThrown) {
-          clearInterval(intervalID);
+          if (typeof intervalID == 'number') {
+            clearInterval(intervalID);
+          }
 
           input.attr('disabled', false);
           submitButton.attr('disabled', false).text('Analyze');
