@@ -220,17 +220,24 @@
         });
 
         function handleError(jqXHR, textStatus, errorThrown) {
+          clearInterval(intervalID);
+
+          input.attr('disabled', false);
+          submitButton.attr('disabled', false).text('Analyze');
+
           const responseText = jqXHR.responseText;
 
           try {
             const errorMessage = JSON.parse(responseText);
-            handleErrorMessage(errorMessage);
+            let msg = handleJSONErrorMessage(errorMessage);
+            displayErrorMessage(msg);
           } catch (e) {
-            console.log('Got non-JSON response: ' + responseText);
+            let msg = responseText === undefined ? e.name + ': ' + e.message : responseText; // TODO: strip HTML
+            displayErrorMessage(msg);
           }
         }
 
-        function handleErrorMessage(errorMessage) {
+        function handleJSONErrorMessage(errorMessage) {
           let msg = 'Error ' + errorMessage.code + ': ' + errorMessage.reason + '<br \/>' + errorMessage.message +
             '<br \/>';
 
@@ -243,10 +250,13 @@
               errorMessage.cause_stack_trace.toString().replace(/,/g, '<br \/>');
           }
 
+
+          return msg;
+        }
+
+        function displayErrorMessage(msg) {
           errorAlertMessage.html(msg);
           errorAlert.show().alert();
-          input.attr('disabled', false);
-          submitButton.attr('disabled', false).text('Analyze');
         }
 
         function handle(config, data) {
