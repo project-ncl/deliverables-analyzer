@@ -52,7 +52,6 @@ import org.jboss.pnc.build.finder.core.Utils;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiClientSession;
 import org.jboss.pnc.build.finder.pnc.client.HashMapCachingPncClient;
-import org.jboss.pnc.build.finder.pnc.client.PncClient;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -366,17 +365,18 @@ public class Finder {
 
         LOGGER.info("Initializing Koji client session with URL {}", kojiHubURL);
 
-        try (var session = new KojiClientSession(kojiHubURL)) {
-            var pncURL = config.getPncURL();
+        var pncURL = config.getPncURL();
+
+        try (var session = new KojiClientSession(kojiHubURL);
+                var pncClient = pncURL != null ? new HashMapCachingPncClient(config) : null) {
             var buildFinder = (BuildFinder) null;
 
-            if (pncURL == null) {
-                LOGGER.warn("PNC support disabled because PNC URL is not set");
+            if (pncClient == null) {
+                LOGGER.warn("Initializing Build Finder with PNC support disabled because PNC URL is not set");
                 buildFinder = new BuildFinder(session, config, analyzer, cacheManager);
             } else {
-                LOGGER.info("Initializing PNC client with URL {}", pncURL);
-                PncClient pncclient = new HashMapCachingPncClient(config);
-                buildFinder = new BuildFinder(session, config, analyzer, cacheManager, pncclient);
+                LOGGER.info("Initializing Build Finder PNC client with URL {}", pncURL);
+                buildFinder = new BuildFinder(session, config, analyzer, cacheManager, pncClient);
             }
 
             buildFinder.setListener(buildFinderListener);
@@ -404,6 +404,8 @@ public class Finder {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+        } catch (Exception e) {
+            throw new KojiClientException("Got Exception", e);
         }
 
         return null;
