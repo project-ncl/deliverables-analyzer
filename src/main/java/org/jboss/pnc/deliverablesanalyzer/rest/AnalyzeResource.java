@@ -23,36 +23,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.annotation.security.PermitAll;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Pattern;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.ws.rs.ServiceUnavailableException;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.enums.ParameterStyle;
-import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
-import org.eclipse.microprofile.openapi.annotations.headers.Header;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.hibernate.validator.constraints.URL;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.BuildConfigCache;
 import org.jboss.pnc.deliverablesanalyzer.Finder;
@@ -60,15 +42,12 @@ import org.jboss.pnc.deliverablesanalyzer.ResultCache;
 import org.jboss.pnc.deliverablesanalyzer.StatusCache;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderStatus;
-import org.jboss.resteasy.annotations.jaxrs.FormParam;
-import org.jboss.resteasy.annotations.jaxrs.PathParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.KojiClientException;
 
 @ApplicationScoped
-@Path("analyze")
 public class AnalyzeResource implements AnalyzeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeResource.class);
 
@@ -91,30 +70,7 @@ public class AnalyzeResource implements AnalyzeService {
     UriInfo uriInfo;
 
     @Override
-    @Operation(summary = "Get build config", description = "Get build config.")
-    @APIResponse(
-            responseCode = "200",
-            description = "Got current build config",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(type = SchemaType.OBJECT, implementation = BuildConfig.class)))
-    @APIResponse(
-            responseCode = "404",
-            description = "Config not found.",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErrorMessage.class)))
-    @GET
-    @Path("configs/{id}")
-    @PermitAll
-    @Produces(MediaType.APPLICATION_JSON)
-    public BuildConfig configs(
-            @NotEmpty @Parameter(
-                    name = "id",
-                    description = "Config identifier",
-                    schema = @Schema(type = SchemaType.STRING),
-                    required = true,
-                    style = ParameterStyle.SIMPLE) @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id) {
+    public BuildConfig configs(String id) {
         var config = configs.get(id);
 
         if (config == null) {
@@ -126,30 +82,7 @@ public class AnalyzeResource implements AnalyzeService {
     }
 
     @Override
-    @Operation(summary = "Get status", description = "Get status.")
-    @APIResponse(
-            responseCode = "200",
-            description = "Got current status",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(type = SchemaType.OBJECT, implementation = BuildConfig.class)))
-    @APIResponse(
-            responseCode = "404",
-            description = "Status not found.",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErrorMessage.class)))
-    @GET
-    @Path("statuses/{id}")
-    @PermitAll
-    @Produces(MediaType.APPLICATION_JSON)
-    public FinderStatus statuses(
-            @NotEmpty @Parameter(
-                    name = "id",
-                    description = "Status identifier",
-                    schema = @Schema(type = SchemaType.STRING),
-                    required = true,
-                    style = ParameterStyle.SIMPLE) @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id) {
+    public FinderStatus statuses(String id) {
         var status = statuses.get(id);
 
         if (status == null) {
@@ -161,42 +94,7 @@ public class AnalyzeResource implements AnalyzeService {
     }
 
     @Override
-    @Operation(summary = "Get result", description = "Get result.")
-    @APIResponse(
-            responseCode = "200",
-            description = "Result OK",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(type = SchemaType.OBJECT, implementation = FinderResult.class)))
-    @APIResponse(
-            responseCode = "404",
-            description = "Result not found.",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErrorMessage.class)))
-    @APIResponse(
-            responseCode = "500",
-            description = "Error getting result.",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErrorMessage.class)))
-    @APIResponse(
-            responseCode = "503",
-            description = "Timeout getting result. Try again later.",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErrorMessage.class)))
-    @GET
-    @Path("results/{id}")
-    @PermitAll
-    @Produces(MediaType.APPLICATION_JSON)
-    public FinderResult results(
-            @NotEmpty @Parameter(
-                    name = "id",
-                    description = "Result identifier",
-                    schema = @Schema(type = SchemaType.STRING),
-                    required = true,
-                    style = ParameterStyle.SIMPLE) @Pattern(regexp = "^[a-f0-9]{8}$") @PathParam String id) {
+    public FinderResult results(String id) {
         var futureResult = results.get(id);
 
         if (futureResult == null) {
@@ -248,50 +146,7 @@ public class AnalyzeResource implements AnalyzeService {
     }
 
     @Override
-    @Operation(summary = "Analyze a URL", description = "Analyze a URL.")
-    @APIResponse(
-            responseCode = "201",
-            description = "Created.",
-            headers = @Header(
-                    name = "Location",
-                    description = "URL containing result generated by this request.",
-                    schema = @Schema(type = SchemaType.STRING),
-                    required = true))
-    @APIResponse(
-            responseCode = "400",
-            description = "Bad URL protocol or syntax.",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErrorMessage.class)))
-    @APIResponse(
-            responseCode = "500",
-            description = "Error during find.",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErrorMessage.class)))
-    @Parameter(
-            name = "url",
-            description = "The URL of the file to analyze",
-            schema = @Schema(type = SchemaType.STRING),
-            required = true,
-            style = ParameterStyle.FORM)
-    @POST
-    @PermitAll
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response analyze(
-            @NotEmpty @FormParam @Parameter(
-                    name = "url",
-                    description = "URL to analyze",
-                    schema = @Schema(type = SchemaType.STRING),
-                    required = true,
-                    style = ParameterStyle.SIMPLE) @URL(regexp = "^http(s)?:.*") String url,
-            @FormParam @Parameter(
-                    name = "config",
-                    description = "Build config",
-                    schema = @Schema(type = SchemaType.STRING),
-                    required = true,
-                    style = ParameterStyle.SIMPLE) String config) {
+    public Response analyze(String url, String config) {
         var uri = URI.create(url).normalize();
         var normalizedUrl = uri.toString();
         // XXX: Hash URL instead of file contents so that we don't have to download the file
