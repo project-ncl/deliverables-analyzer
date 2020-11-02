@@ -15,9 +15,7 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,7 +23,6 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,7 +30,6 @@ import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import org.apache.commons.collections4.MultiValuedMap;
-import org.eclipse.microprofile.config.ConfigProvider;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -61,14 +57,12 @@ import com.redhat.red.build.koji.KojiClientException;
 public class Finder {
     private static final Logger LOGGER = LoggerFactory.getLogger(Finder.class);
 
-    private final File configFile = new File(ConfigDefaults.CONFIG);
-
     private DefaultCacheManager cacheManager;
 
     private BuildConfig config;
 
     public Finder() throws IOException {
-        config = setupBuildConfig();
+        config = ConfigProvider.getConfig();
     }
 
     private static void ensureConfigurationDirectoryExists() throws IOException {
@@ -85,87 +79,6 @@ public class Finder {
 
             Files.createDirectory(configPath);
         }
-    }
-
-    private static void setKojiHubURL(BuildConfig config) throws IOException {
-        var optionalKojiHubURL = ConfigProvider.getConfig().getOptionalValue("koji.hub.url", String.class);
-
-        if (optionalKojiHubURL.isPresent()) {
-            var s = optionalKojiHubURL.get();
-
-            try {
-                var kojiHubURL = new URL(s);
-                config.setKojiHubURL(kojiHubURL);
-            } catch (MalformedURLException e) {
-                throw new IOException("Bad Koji hub URL: " + s, e);
-            }
-        }
-    }
-
-    private static void setKojiWebURL(BuildConfig config) throws IOException {
-        var optionalKojiWebURL = ConfigProvider.getConfig().getOptionalValue("koji.web.url", String.class);
-
-        if (optionalKojiWebURL.isPresent()) {
-            var s = optionalKojiWebURL.get();
-
-            try {
-                var kojiWebURL = new URL(s);
-                config.setKojiWebURL(kojiWebURL);
-            } catch (MalformedURLException e) {
-                throw new IOException("Bad Koji web URL: " + s, e);
-            }
-        } else if (config.getKojiWebURL() == null && config.getKojiHubURL() != null) {
-            // XXX: hack for missing koji.web.url
-            var s = config.getKojiHubURL().toExternalForm().replace("hub.", "web.").replace("hub", "");
-
-            try {
-                var kojiWebURL = new URL(s);
-                config.setKojiWebURL(kojiWebURL);
-            } catch (MalformedURLException e) {
-                throw new IOException("Bad Koji web URL: " + s, e);
-            }
-        }
-    }
-
-    private static void setPncURL(BuildConfig config) throws IOException {
-        var optionalPncURL = ConfigProvider.getConfig().getOptionalValue("pnc.url", String.class);
-
-        if (optionalPncURL.isPresent()) {
-            var s = optionalPncURL.get();
-
-            try {
-                var pncURL = new URL(s);
-                config.setPncURL(pncURL);
-            } catch (MalformedURLException e) {
-                throw new IOException("Bad PNC URL: " + s, e);
-            }
-        }
-
-    }
-
-    private BuildConfig setupBuildConfig() throws IOException {
-        var defaults = BuildConfig.load(Finder.class.getClassLoader());
-
-        if (configFile.exists()) {
-            if (defaults == null) {
-                config = BuildConfig.load(configFile);
-            } else {
-                config = BuildConfig.merge(defaults, configFile);
-            }
-        } else {
-            config = Objects.requireNonNullElse(defaults, new BuildConfig());
-        }
-
-        setKojiHubURL(config);
-        setKojiWebURL(config);
-        setPncURL(config);
-
-        // XXX: Force output directory since it defaults to "." which usually isn't the best
-        var tmpDir = Files.createTempDirectory("deliverables-analyzer-");
-
-        config.setOutputDirectory(tmpDir.toAbsolutePath().toString());
-
-        return config;
     }
 
     private static void deletePath(Path path) {
