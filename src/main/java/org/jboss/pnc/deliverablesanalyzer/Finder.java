@@ -46,7 +46,6 @@ import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzerListener;
 import org.jboss.pnc.build.finder.core.Utils;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
-import org.jboss.pnc.build.finder.koji.KojiClientSession;
 import org.jboss.pnc.build.finder.pnc.client.HashMapCachingPncClient;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.slf4j.Logger;
@@ -60,6 +59,8 @@ public class Finder {
     private DefaultCacheManager cacheManager;
 
     private BuildConfig config;
+
+    private KojiProvider kojiProvider = new KojiProvider();
 
     public Finder() throws IOException {
         config = ConfigProvider.getConfig();
@@ -268,19 +269,10 @@ public class Finder {
             ExecutorService pool,
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum,
             BuildFinderListener buildFinderListener) throws KojiClientException {
-        var kojiHubURL = config.getKojiHubURL();
-
-        LOGGER.info("Koji Hub URL: {}", kojiHubURL);
-
-        if (kojiHubURL == null) {
-            throw new KojiClientException("Koji hub URL is not set");
-        }
-
-        LOGGER.info("Initializing Koji client session with URL {}", kojiHubURL);
 
         var pncURL = config.getPncURL();
 
-        try (var session = new KojiClientSession(kojiHubURL);
+        try (var session = kojiProvider.createSession();
                 var pncClient = pncURL != null ? new HashMapCachingPncClient(config) : null) {
             var buildFinder = (BuildFinder) null;
 
