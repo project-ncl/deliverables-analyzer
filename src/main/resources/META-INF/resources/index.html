@@ -273,9 +273,9 @@
           table = builds.DataTable({
             data: data.builds,
             columns: [
-              { data: 'identifier' },
+              { data: 'build_system_type' },
               {
-                data: 'koji_id', defaultContent: '',
+                data: 'brew_id', defaultContent: '',
                 render: function(data, type) {
                   if (data == null) {
                     return '';
@@ -302,9 +302,6 @@
                   return data;
                 }
               },
-              { data: 'built_from_source' },
-              { data: 'source', defaultContent: '' },
-              { data: 'build_system_type' },
               {
                 data: 'artifacts',
                 render: function(data, type) {
@@ -314,10 +311,10 @@
                     for (i = 0; i < data.length; i++) {
                       a = data[i];
                       text += '<li>';
-                      if (a.koji_id != null) {
-                        text += '<a href="' + config.koji_web_url + '/archiveinfo?archiveID=' + a.koji_id + '">' + a.identifier + '<\/a>';
+                      if (a.brew_id != null) {
+                        text += '<a href="' + config.koji_web_url + '/archiveinfo?archiveID=' + a.brew_id + '">' + a.filename + '<\/a>';
                       } else if (a.pnc_id != null) {
-                        text += '<a href="' + config.pnc_url + '/pnc-web/#/artifacts/' + a.pnc_id + '">' + a.identifier + '<\/a>';
+                        text += '<a href="' + config.pnc_url + '/pnc-web/#/artifacts/' + a.pnc_id + '">' + a.filename + '<\/a>';
                       }
 
                       text += '<\/li>';
@@ -375,13 +372,10 @@
           <caption>Builds</caption>
           <thead>
             <tr>
-              <th id="identifier" scope="col">Identifier</th>
-              <th id="koji_id" scope="col">Koji ID</th>
-              <th id="pnc_id" scope="col">PNC ID</th>
-              <th id="built_from_source" scope="col">Built from Source</th>
-              <th id="source" scope="col">Source</th>
-              <th id="build_system" scope="col">Build System</th>
-              <th id="artifacts" scope="col">Artifacts</th>
+                <th id="build_system_type" scope="col">Build system type</th>
+                <th id="brew_id" scope="col">Brew ID</th>
+                <th id="pnc_id" scope="col">PNC ID</th>
+                <th id="artifacts" scope="col">Artifacts</th>
             </tr>
           </thead>
         </table>

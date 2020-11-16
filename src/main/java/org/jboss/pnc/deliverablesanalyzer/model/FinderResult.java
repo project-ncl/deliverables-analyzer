@@ -19,11 +19,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
@@ -31,10 +31,14 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.ws.rs.BadRequestException;
 
+import org.jboss.pnc.api.deliverablesanalyzer.dto.Artifact;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.Build;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact;
 import org.jboss.pnc.build.finder.core.BuildStatistics;
 import org.jboss.pnc.build.finder.core.BuildSystem;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
-import org.jboss.pnc.build.finder.core.Checksum;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiLocalArchive;
 import org.slf4j.Logger;
@@ -97,17 +101,22 @@ public class FinderResult {
         return statistics;
     }
 
-    private static void setArtifactChecksums(Artifact artifact, Iterable<Checksum> checksums) {
-        for (var checksum : checksums) {
+    private static void setCommonArtifactFields(Artifact.ArtifactBuilder builder, KojiLocalArchive archive) {
+        KojiArchiveInfo archiveInfo = archive.getArchive();
+        long size = archiveInfo.getSize() == null ? -1 : archiveInfo.getSize(); // TODO after NCL-6230 don't default to
+                                                                                // -1, use what's given
+        builder.filename(archiveInfo.getFilename()).size(size);
+
+        for (var checksum : archive.getChecksums()) {
             switch (checksum.getType()) {
                 case md5:
-                    artifact.setMd5(checksum.getValue());
+                    builder.md5(checksum.getValue());
                     break;
                 case sha1:
-                    artifact.setSha1(checksum.getValue());
+                    builder.sha1(checksum.getValue());
                     break;
                 case sha256:
-                    artifact.setSha256(checksum.getValue());
+                    builder.sha256(checksum.getValue());
                     break;
                 default:
                     break;
@@ -115,43 +124,23 @@ public class FinderResult {
         }
     }
 
-    private static MavenArtifact createMavenArtifact(KojiArchiveInfo archiveInfo) {
-        var groupId = archiveInfo.getGroupId();
-        var artifactId = archiveInfo.getArtifactId();
-        var type = archiveInfo.getExtension() != null ? archiveInfo.getExtension() : "";
-        var version = archiveInfo.getVersion();
-        var classifier = archiveInfo.getClassifier() != null ? archiveInfo.getClassifier() : "";
-        var mavenArtifact = new MavenArtifact();
-
-        mavenArtifact.setGroupId(groupId);
-        mavenArtifact.setArtifactId(artifactId);
-        mavenArtifact.setType(type);
-        mavenArtifact.setVersion(version);
-        mavenArtifact.setClassifier(classifier);
-
-        return mavenArtifact;
+    private static MavenArtifact.MavenArtifactBuilder createMavenArtifact(KojiArchiveInfo archiveInfo) {
+        return MavenArtifact.builder()
+                .groupId(archiveInfo.getGroupId())
+                .artifactId(archiveInfo.getArtifactId())
+                .type(archiveInfo.getExtension())
+                .version(archiveInfo.getVersion())
+                .classifier(archiveInfo.getClassifier());
     }
 
-    private static NpmArtifact createNpmArtifact(KojiArchiveInfo archiveInfo) {
-        var name = archiveInfo.getArtifactId();
-        var version = archiveInfo.getVersion();
-        var npmArtifact = new NpmArtifact();
-
-        npmArtifact.setName(name);
-        npmArtifact.setVersion(version);
-
-        return npmArtifact;
+    private static NPMArtifact.NPMArtifactBuilder createNpmArtifact(KojiArchiveInfo archiveInfo) {
+        return NPMArtifact.builder().name(archiveInfo.getArtifactId()).version(archiveInfo.getVersion());
     }
 
     private static Artifact createNotFoundArtifact(KojiLocalArchive localArchive) {
-        var artifact = new Artifact();
-
-        setArtifactChecksums(artifact, localArchive.getChecksums());
-
-        artifact.setBuiltFromSource(Boolean.FALSE);
-        artifact.setFilesNotBuiltFromSource(new TreeSet<>(localArchive.getFilenames()));
-
-        return artifact;
+        var builder = Artifact.builder().builtFromSource(false);
+        setCommonArtifactFields(builder, localArchive);
+        return builder.build();
     }
 
     private static Set<Artifact> getNotFoundArtifacts(Map<BuildSystemInteger, KojiBuild> builds) {
@@ -169,7 +158,7 @@ public class FinderResult {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
 
-        var artifacts = (Set<Artifact>) new LinkedHashSet<Artifact>(numArchives);
+        var artifacts = new LinkedHashSet<Artifact>(numArchives);
         var archiveCount = 0;
 
         for (var localArchive : localArchives) {
@@ -180,96 +169,60 @@ public class FinderResult {
             archiveCount++;
 
             if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(
-                        "Not found artifact: {} / {} ({})",
-                        archiveCount,
-                        numArchives,
-                        artifact.getFilesNotBuiltFromSource());
+                LOGGER.info("Not found artifact: {} / {} ({})", archiveCount, numArchives, localArchive.getFilenames());
             }
         }
 
         return Collections.unmodifiableSet(artifacts);
     }
 
-    private static Build createBuild(BuildSystemInteger buildSystemInteger, KojiBuild kojiBuild) {
-        BuildSystemType buildSystemType;
-
+    private static Build createBuild(
+            BuildSystemInteger buildSystemInteger,
+            KojiBuild kojiBuild,
+            Set<Artifact> artifacts) {
+        Build.Builder builder = Build.builder();
         if (buildSystemInteger.getBuildSystem() == BuildSystem.pnc) {
-            buildSystemType = BuildSystemType.PNC;
+            builder.buildSystemType(BuildSystemType.PNC);
+            builder.pncId(Integer.toString(kojiBuild.getBuildInfo().getId()));
         } else {
-            buildSystemType = BuildSystemType.KOJI;
+            builder.buildSystemType(BuildSystemType.BREW);
+            builder.brewId((long) kojiBuild.getBuildInfo().getId());
+            builder.brewNVR(kojiBuild.getBuildInfo().getNvr());
         }
-
-        var identifier = kojiBuild.getBuildInfo().getNvr();
-        var build = new Build();
-
-        build.setIdentifier(identifier);
-        build.setBuildSystemType(buildSystemType);
-
-        if (build.getBuildSystemType() == BuildSystemType.PNC) {
-            build.setPncId((long) kojiBuild.getBuildInfo().getId());
-        } else {
-            build.setKojiId((long) kojiBuild.getBuildInfo().getId());
-        }
-
-        build.setSource(kojiBuild.getSource().orElse(null));
-
-        build.setBuiltFromSource(!kojiBuild.isImport());
-
-        return build;
+        return builder.artifacts(artifacts).build();
     }
 
-    private static Artifact createArtifact(KojiLocalArchive localArchive, Build build) {
+    private static Artifact createArtifact(KojiLocalArchive localArchive, BuildSystem buildSystem, boolean imported) {
         var archiveInfo = localArchive.getArchive();
-        var mavenArtifact = (MavenArtifact) null;
-        var npmArtifact = (NpmArtifact) null;
-        var artifactIdentifier = (String) null;
 
+        Artifact.ArtifactBuilder builder;
         if ("maven".equals(archiveInfo.getBuildType())) {
-            mavenArtifact = createMavenArtifact(archiveInfo);
-            artifactIdentifier = mavenArtifact.getIdentifier();
+            builder = createMavenArtifact(archiveInfo);
         } else if ("npm".equals(archiveInfo.getBuildType())) {
-            npmArtifact = createNpmArtifact(archiveInfo);
-            artifactIdentifier = npmArtifact.getIdentifier();
+            builder = createNpmArtifact(archiveInfo);
         } else {
             throw new BadRequestException(
                     "Archive " + archiveInfo.getArtifactId() + " had unhandled artifact type: "
                             + archiveInfo.getBuildType());
         }
 
-        var artifact = new Artifact();
-
-        artifact.setIdentifier(artifactIdentifier);
-        artifact.setBuildSystemType(build.getBuildSystemType());
-
-        if (localArchive.isBuiltFromSource()) {
-            artifact.setBuiltFromSource(build.getBuiltFromSource());
-        } else {
-            artifact.setBuiltFromSource(Boolean.FALSE);
-            artifact.getFilesNotBuiltFromSource().addAll(localArchive.getUnmatchedFilenames());
+        switch (buildSystem) {
+            case pnc:
+                builder.buildSystemType(BuildSystemType.PNC);
+                builder.pncId(archiveInfo.getArchiveId().toString());
+                break;
+            case koji:
+                builder.buildSystemType(BuildSystemType.BREW);
+                builder.brewId(archiveInfo.getArchiveId().longValue());
+                break;
+            default:
+                throw new IllegalArgumentException("Unknonw build system " + buildSystem);
         }
+        builder.builtFromSource(localArchive.isBuiltFromSource() && !imported);
 
-        setArtifactChecksums(artifact, localArchive.getChecksums());
+        setCommonArtifactFields(builder, localArchive);
 
-        if (build.getBuildSystemType() == BuildSystemType.PNC) {
-            artifact.setPncId(Long.valueOf(archiveInfo.getArchiveId()));
-        } else {
-            artifact.setKojiId(Long.valueOf(archiveInfo.getArchiveId()));
-        }
-
-        artifact.setBuild(build);
-
-        if (mavenArtifact != null) {
-            mavenArtifact.setArtifact(artifact);
-            artifact.setMavenArtifact(mavenArtifact);
-            artifact.setType(Artifact.Type.MAVEN);
-        } else {
-            npmArtifact.setArtifact(artifact);
-            artifact.setNpmArtifact(npmArtifact);
-            artifact.setType(Artifact.Type.NPM);
-        }
-
-        return artifact;
+        return builder.build();
     }
 
     private static Set<Build> getFoundBuilds(Map<BuildSystemInteger, KojiBuild> builds) {
@@ -280,7 +233,7 @@ public class FinderResult {
         }
 
         var numBuilds = buildsSize - 1;
-        var buildList = (Set<Build>) new LinkedHashSet<Build>(numBuilds);
+        var buildList = new LinkedHashSet<Build>(numBuilds);
         var buildCount = 0;
         var entrySet = builds.entrySet();
 
@@ -292,33 +245,54 @@ public class FinderResult {
             }
 
             var kojiBuild = entry.getValue();
-            var build = createBuild(buildSystemInteger, kojiBuild);
+            var localArchives = kojiBuild.getArchives();
+
+            var numArchives = localArchives.size();
+            var archiveCount = 0;
+
+            var artifacts = new HashSet<Artifact>();
+            for (KojiLocalArchive localArchive : localArchives) {
+                var artifact = createArtifact(localArchive, buildSystemInteger.getBuildSystem(), kojiBuild.isImport());
+
+                artifacts.add(artifact);
+
+                if (LOGGER.isInfoEnabled()) {
+                    archiveCount++;
+                    String identifier;
+                    switch (artifact.getBuildSystemType()) {
+                        case BREW:
+                            identifier = "Brew#" + artifact.getBrewId();
+                            break;
+                        case PNC:
+                            identifier = "PNC#" + artifact.getPncId();
+                            break;
+                        default:
+                            identifier = "Unkown#-1";
+                            break;
+                    }
+                    LOGGER.info("Artifact: {} / {} ({})", archiveCount, numArchives, identifier);
+                }
+            }
+
+            var build = createBuild(buildSystemInteger, kojiBuild, artifacts);
 
             if (LOGGER.isInfoEnabled()) {
                 buildCount++;
 
-                LOGGER.info(
-                        "Build: {} / {} ({}.{})",
-                        buildCount,
-                        numBuilds,
-                        build.getIdentifier(),
-                        build.getBuildSystemType());
-            }
-
-            var localArchives = kojiBuild.getArchives();
-            var numArchives = localArchives.size();
-            var archiveCount = 0;
-
-            for (KojiLocalArchive localArchive : localArchives) {
-                var artifact = createArtifact(localArchive, build);
-
-                build.getArtifacts().add(artifact);
-
-                if (LOGGER.isInfoEnabled()) {
-                    archiveCount++;
-
-                    LOGGER.info("Artifact: {} / {} ({})", archiveCount, numArchives, artifact.getIdentifier());
+                String identifier;
+                switch (build.getBuildSystemType()) {
+                    case BREW:
+                        identifier = "Brew#" + build.getBrewId();
+                        break;
+                    case PNC:
+                        identifier = "PNC#" + build.getPncId();
+                        break;
+                    default:
+                        identifier = "Unkown#-1";
+                        break;
                 }
+
+                LOGGER.info("Build: {} / {} ({})", buildCount, numBuilds, identifier);
             }
 
             buildList.add(build);
