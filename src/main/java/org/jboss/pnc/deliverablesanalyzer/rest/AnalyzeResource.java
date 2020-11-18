@@ -37,6 +37,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.BuildConfigCache;
+import org.jboss.pnc.deliverablesanalyzer.ConfigProvider;
 import org.jboss.pnc.deliverablesanalyzer.Finder;
 import org.jboss.pnc.deliverablesanalyzer.ResultCache;
 import org.jboss.pnc.deliverablesanalyzer.StatusCache;
@@ -155,7 +156,7 @@ public class AnalyzeResource implements AnalyzeService {
 
         try {
             var finder = new Finder();
-            var config1 = finder.getConfig();
+            var config1 = BuildConfig.copy(ConfigProvider.getConfig());
 
             if (config != null) {
                 var config2 = BuildConfig.load(config);
@@ -181,7 +182,7 @@ public class AnalyzeResource implements AnalyzeService {
                 statuses.putIfAbsent(id, status);
 
                 try {
-                    return finder.find(id, uri.toURL(), status, status);
+                    return finder.find(id, uri.toURL(), status, status, config1);
                 } catch (IOException | KojiClientException e) {
                     throw new InternalServerErrorException(e);
                 }

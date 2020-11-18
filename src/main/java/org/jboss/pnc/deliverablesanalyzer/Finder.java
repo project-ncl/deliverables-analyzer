@@ -208,7 +208,8 @@ public class Finder {
             String id,
             URL url,
             DistributionAnalyzerListener distributionAnalyzerListener,
-            BuildFinderListener buildFinderListener) throws IOException, KojiClientException {
+            BuildFinderListener buildFinderListener,
+            BuildConfig specificConfig) throws IOException, KojiClientException {
         var result = (FinderResult) null;
         var pool = (ExecutorService) null;
 
@@ -238,10 +239,10 @@ public class Finder {
             LOGGER.info(
                     "Starting distribution analysis for {} with config {} and cache manager {}",
                     files,
-                    config,
+                    specificConfig,
                     cacheManager != null ? cacheManager.getName() : "disabled");
 
-            var analyzer = new DistributionAnalyzer(files, config, cacheManager);
+            var analyzer = new DistributionAnalyzer(files, specificConfig, cacheManager);
 
             analyzer.setListener(distributionAnalyzerListener);
 
@@ -314,9 +315,5 @@ public class Finder {
         }
 
         return null;
-    }
-
-    public BuildConfig getConfig() {
-        return config;
     }
 }
