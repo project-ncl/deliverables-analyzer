@@ -15,9 +15,12 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import java.io.IOException;
+import javax.enterprise.inject.Disposes;
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
 
 import org.jboss.pnc.build.finder.core.BuildConfig;
+import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.build.finder.koji.KojiClientSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,15 +34,11 @@ import com.redhat.red.build.koji.KojiClientException;
 public class KojiProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KojiProvider.class);
-    private BuildConfig config;
+    @Inject
+    BuildConfig config;
 
-    public KojiProvider() throws IOException {
-        config = ConfigProvider.getConfig();
-    }
-
-    // @Produces
-    public KojiClientSession createSession() throws KojiClientException {
-
+    @Produces
+    public ClientSession createSession() throws KojiClientException {
         var kojiHubURL = config.getKojiHubURL();
         if (kojiHubURL == null) {
             throw new KojiClientException("Koji hub URL is not set");
@@ -47,7 +46,9 @@ public class KojiProvider {
         LOGGER.info("Initializing Koji client session with URL {}", kojiHubURL);
         return new KojiClientSession(kojiHubURL);
     }
-    /*
-     * public void close(@Disposes KojiClientSession session) { session.close(); }
-     */
+
+    public void close(@Disposes KojiClientSession session) {
+        session.close();
+    }
+
 }

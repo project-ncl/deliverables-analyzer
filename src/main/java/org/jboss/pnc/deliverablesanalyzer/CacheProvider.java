@@ -19,6 +19,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import javax.enterprise.inject.Disposes;
+import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -41,10 +45,6 @@ public class CacheProvider {
     @Inject
     BuildConfig config;
 
-    public CacheProvider() throws IOException {
-        config = ConfigProvider.getConfig();
-    }
-
     private static void ensureConfigurationDirectoryExists() throws IOException {
         var configPath = Paths.get(ConfigDefaults.CONFIG_PATH);
 
@@ -61,7 +61,7 @@ public class CacheProvider {
         }
     }
 
-    // @Produces
+    @Produces
     @SuppressWarnings("deprecation")
     public DefaultCacheManager initCaches() throws IOException {
         LOGGER.info("Initializing {} {} cache", Version.getBrandName(), Version.getVersion());
@@ -133,7 +133,7 @@ public class CacheProvider {
         return cacheManager;
     }
 
-    public void close(/* @Disposes */ DefaultCacheManager cacheManager) {
+    public void close(@Disposes DefaultCacheManager cacheManager) {
         try {
             cacheManager.close();
         } catch (IOException e) {

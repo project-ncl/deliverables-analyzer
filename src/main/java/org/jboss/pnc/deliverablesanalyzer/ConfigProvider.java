@@ -22,6 +22,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.util.Objects;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Produces;
+
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.ConfigDefaults;
 
@@ -29,21 +32,16 @@ import org.jboss.pnc.build.finder.core.ConfigDefaults;
  *
  * @author jbrazdil
  */
+@ApplicationScoped
 public class ConfigProvider {
 
     private static final String DEFAULT_CONFIG_LOCATION = "./" + ConfigDefaults.CONFIG_FILE;
     private final File configFile = new File(DEFAULT_CONFIG_LOCATION);
     private BuildConfig config;
 
-    private static BuildConfig INSTANCE;
-
-    public static BuildConfig getConfig() throws IOException {
-
-        if (INSTANCE == null) {
-            INSTANCE = (new ConfigProvider()).config;
-        }
-        return INSTANCE;
-
+    @Produces
+    public BuildConfig getConfig() {
+        return config;
     }
 
     public ConfigProvider() throws IOException {

@@ -24,12 +24,16 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.inject.Provider;
+
 import org.apache.commons.collections4.MultiValuedMap;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.BuildFinder;
@@ -37,7 +41,7 @@ import org.jboss.pnc.build.finder.core.BuildFinderListener;
 import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzerListener;
-import org.jboss.pnc.build.finder.core.Utils;
+import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.build.finder.pnc.client.HashMapCachingPncClient;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.slf4j.Logger;
@@ -45,37 +49,32 @@ import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.KojiClientException;
 
-public class Finder implements AutoCloseable {
+@ApplicationScoped
+public class Finder {
     private static final Logger LOGGER = LoggerFactory.getLogger(Finder.class);
 
     private DefaultCacheManager cacheManager;
 
-    private BuildConfig config;
+    @Inject
+    BuildConfig config;
 
-    private KojiProvider kojiProvider = new KojiProvider();
-    private CacheProvider cacheProvider = new CacheProvider();
+    @Inject
+    Provider<DefaultCacheManager> cacheProvider;
 
-    private ExecutorService pool;
+    @Inject
+    ManagedExecutor pool;
 
-    public Finder() throws IOException {
-        config = ConfigProvider.getConfig();
+    @Inject
+    ClientSession kojiSession;
 
-        var nThreads = 1 + config.getChecksumTypes().size();
-        LOGGER.info("Setting up fixed thread pool of size: {}", nThreads);
-        pool = Executors.newFixedThreadPool(nThreads);
-
+    @PostConstruct
+    public void init() throws IOException {
         if (!config.getDisableCache()) {
-            cacheManager = cacheProvider.initCaches();
+            cacheManager = cacheProvider.get();
             LOGGER.info("Initialized cache {}", cacheManager.getName());
         } else {
             LOGGER.info("Cache disabled");
         }
-    }
-
-    @Override
-    public void close() {
-        cleanupPool();
-        cleanupCache();
     }
 
     private static void deletePath(Path path) {
@@ -106,21 +105,6 @@ public class Finder implements AutoCloseable {
         return true;
     }
 
-    private boolean cleanupCache() {
-        if (cacheManager != null) {
-            cacheProvider.close(cacheManager);
-        }
-
-        return true;
-    }
-
-    private boolean cleanupPool() {
-        if (pool != null) {
-            Utils.shutdownAndAwaitTermination(pool);
-        }
-        return true;
-    }
-
     public FinderResult find(
             String id,
             URL url,
@@ -144,7 +128,7 @@ public class Finder implements AutoCloseable {
             analyzer.setListener(distributionAnalyzerListener);
 
             var futureChecksum = pool.submit(analyzer);
-            result = findBuilds(id, url, analyzer, pool, futureChecksum, buildFinderListener);
+            result = findBuilds(id, url, analyzer, futureChecksum, buildFinderListener);
 
             LOGGER.info("Done finding builds for {}", url);
         } finally {
@@ -164,22 +148,20 @@ public class Finder implements AutoCloseable {
             String id,
             URL url,
             DistributionAnalyzer analyzer,
-            ExecutorService pool,
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum,
             BuildFinderListener buildFinderListener) throws KojiClientException {
 
         var pncURL = config.getPncURL();
 
-        try (var session = kojiProvider.createSession();
-                var pncClient = pncURL != null ? new HashMapCachingPncClient(config) : null) {
+        try (var pncClient = pncURL != null ? new HashMapCachingPncClient(config) : null) {
             var buildFinder = (BuildFinder) null;
 
             if (pncClient == null) {
                 LOGGER.warn("Initializing Build Finder with PNC support disabled because PNC URL is not set");
-                buildFinder = new BuildFinder(session, config, analyzer, cacheManager);
+                buildFinder = new BuildFinder(kojiSession, config, analyzer, cacheManager);
             } else {
                 LOGGER.info("Initializing Build Finder PNC client with URL {}", pncURL);
-                buildFinder = new BuildFinder(session, config, analyzer, cacheManager, pncClient);
+                buildFinder = new BuildFinder(kojiSession, config, analyzer, cacheManager, pncClient);
             }
 
             buildFinder.setListener(buildFinderListener);

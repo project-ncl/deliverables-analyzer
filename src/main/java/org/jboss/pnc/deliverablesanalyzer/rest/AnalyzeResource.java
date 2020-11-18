@@ -37,7 +37,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.BuildConfigCache;
-import org.jboss.pnc.deliverablesanalyzer.ConfigProvider;
 import org.jboss.pnc.deliverablesanalyzer.Finder;
 import org.jboss.pnc.deliverablesanalyzer.ResultCache;
 import org.jboss.pnc.deliverablesanalyzer.StatusCache;
@@ -66,6 +65,12 @@ public class AnalyzeResource implements AnalyzeService {
 
     @Inject
     StatusCache<String, FinderStatus> statuses;
+
+    @Inject
+    Finder finder;
+
+    @Inject
+    BuildConfig applicationConfig;
 
     @Context
     UriInfo uriInfo;
@@ -154,34 +159,32 @@ public class AnalyzeResource implements AnalyzeService {
         var sha256 = DigestUtils.sha256Hex(normalizedUrl);
         var id = sha256.substring(0, 8);
 
-        try (var finder = new Finder()) {
-            var config1 = BuildConfig.copy(ConfigProvider.getConfig());
-
+        try {
+            var specificConfig = BuildConfig.copy(applicationConfig);
             if (config != null) {
                 var config2 = BuildConfig.load(config);
-
                 if (config2.getExcludes() != null) {
-                    config1.setExcludes(config2.getExcludes());
+                    specificConfig.setExcludes(config2.getExcludes());
                 }
 
                 if (config2.getArchiveExtensions() != null) {
-                    config1.setArchiveExtensions(config2.getArchiveExtensions());
+                    specificConfig.setArchiveExtensions(config2.getArchiveExtensions());
                 }
 
                 if (config2.getArchiveTypes() != null) {
-                    config1.setArchiveTypes(config2.getArchiveTypes());
+                    specificConfig.setArchiveTypes(config2.getArchiveTypes());
                 }
             }
 
             results.computeIfAbsent(id, k -> pool.supplyAsync(() -> {
-                configs.putIfAbsent(id, config1);
+                configs.putIfAbsent(id, specificConfig);
 
                 var status = new FinderStatus();
 
                 statuses.putIfAbsent(id, status);
 
                 try {
-                    return finder.find(id, uri.toURL(), status, status, config1);
+                    return finder.find(id, uri.toURL(), status, status, specificConfig);
                 } catch (IOException | KojiClientException e) {
                     throw new InternalServerErrorException(e);
                 }
