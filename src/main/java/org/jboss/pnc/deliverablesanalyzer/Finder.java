@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.KojiClientException;
 
-public class Finder {
+public class Finder implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Finder.class);
 
     private DefaultCacheManager cacheManager;
@@ -62,8 +62,19 @@ public class Finder {
 
     private KojiProvider kojiProvider = new KojiProvider();
 
+    private ExecutorService pool;
+
     public Finder() throws IOException {
         config = ConfigProvider.getConfig();
+
+        var nThreads = 1 + config.getChecksumTypes().size();
+        LOGGER.info("Setting up fixed thread pool of size: {}", nThreads);
+        pool = Executors.newFixedThreadPool(nThreads);
+    }
+
+    @Override
+    public void close() {
+        cleanupPool();
     }
 
     private static void ensureConfigurationDirectoryExists() throws IOException {
@@ -161,11 +172,10 @@ public class Finder {
         cacheManager.defineConfiguration("builds-pnc", configuration);
     }
 
-    private static boolean cleanup(String directory, EmbeddedCacheManager cacheManager, ExecutorService pool) {
+    private static boolean cleanup(String directory, EmbeddedCacheManager cacheManager) {
         var success = cleanupOutput(directory);
 
         success |= cleanupCache(cacheManager);
-        success |= cleanupPool(pool);
 
         return success;
     }
@@ -196,11 +206,10 @@ public class Finder {
         return true;
     }
 
-    private static boolean cleanupPool(ExecutorService pool) {
+    private boolean cleanupPool() {
         if (pool != null) {
             Utils.shutdownAndAwaitTermination(pool);
         }
-
         return true;
     }
 
@@ -211,7 +220,6 @@ public class Finder {
             BuildFinderListener buildFinderListener,
             BuildConfig specificConfig) throws IOException, KojiClientException {
         var result = (FinderResult) null;
-        var pool = (ExecutorService) null;
 
         try {
             if (cacheManager == null && !config.getDisableCache()) {
@@ -227,12 +235,6 @@ public class Finder {
             } else {
                 LOGGER.info("Cache disabled");
             }
-
-            var nThreads = 1 + config.getChecksumTypes().size();
-
-            LOGGER.info("Setting up fixed thread pool of size: {}", nThreads);
-
-            pool = Executors.newFixedThreadPool(nThreads);
 
             var files = Collections.singletonList(url.toExternalForm());
 
@@ -251,7 +253,7 @@ public class Finder {
 
             LOGGER.info("Done finding builds for {}", url);
         } finally {
-            var isClean = cleanup(config.getOutputDirectory(), cacheManager, pool);
+            var isClean = cleanup(config.getOutputDirectory(), cacheManager);
 
             if (isClean) {
                 LOGGER.info("Cleanup after finding URL: {}", url);

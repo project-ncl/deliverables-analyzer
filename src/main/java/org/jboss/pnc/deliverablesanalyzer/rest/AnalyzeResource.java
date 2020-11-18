@@ -154,8 +154,7 @@ public class AnalyzeResource implements AnalyzeService {
         var sha256 = DigestUtils.sha256Hex(normalizedUrl);
         var id = sha256.substring(0, 8);
 
-        try {
-            var finder = new Finder();
+        try (var finder = new Finder()) {
             var config1 = BuildConfig.copy(ConfigProvider.getConfig());
 
             if (config != null) {
