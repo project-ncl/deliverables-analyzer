@@ -30,22 +30,14 @@ import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import org.apache.commons.collections4.MultiValuedMap;
-import org.infinispan.commons.util.Version;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationChildBuilder;
-import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.BuildFinder;
 import org.jboss.pnc.build.finder.core.BuildFinderListener;
 import org.jboss.pnc.build.finder.core.ChecksumType;
-import org.jboss.pnc.build.finder.core.ConfigDefaults;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzerListener;
 import org.jboss.pnc.build.finder.core.Utils;
-import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.pnc.client.HashMapCachingPncClient;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.slf4j.Logger;
@@ -61,6 +53,7 @@ public class Finder implements AutoCloseable {
     private BuildConfig config;
 
     private KojiProvider kojiProvider = new KojiProvider();
+    private CacheProvider cacheProvider = new CacheProvider();
 
     private ExecutorService pool;
 
@@ -70,27 +63,19 @@ public class Finder implements AutoCloseable {
         var nThreads = 1 + config.getChecksumTypes().size();
         LOGGER.info("Setting up fixed thread pool of size: {}", nThreads);
         pool = Executors.newFixedThreadPool(nThreads);
+
+        if (!config.getDisableCache()) {
+            cacheManager = cacheProvider.initCaches();
+            LOGGER.info("Initialized cache {}", cacheManager.getName());
+        } else {
+            LOGGER.info("Cache disabled");
+        }
     }
 
     @Override
     public void close() {
         cleanupPool();
-    }
-
-    private static void ensureConfigurationDirectoryExists() throws IOException {
-        var configPath = Paths.get(ConfigDefaults.CONFIG_PATH);
-
-        LOGGER.info("Configuration directory is: {}", configPath);
-
-        if (Files.exists(configPath)) {
-            if (!Files.isDirectory(configPath)) {
-                throw new IOException("Configuration directory is not a directory: " + configPath);
-            }
-        } else {
-            LOGGER.info("Creating configuration directory: {}", configPath);
-
-            Files.createDirectory(configPath);
-        }
+        cleanupCache();
     }
 
     private static void deletePath(Path path) {
@@ -103,80 +88,8 @@ public class Finder implements AutoCloseable {
         }
     }
 
-    @SuppressWarnings("deprecation")
-    private void initCaches(BuildConfig config) throws IOException {
-        ensureConfigurationDirectoryExists();
-
-        var locationPath = Paths.get(ConfigDefaults.CONFIG_PATH, "cache");
-        var location = locationPath.toAbsolutePath().toString();
-
-        LOGGER.info("Cache location is: {}", location);
-
-        if (!Files.exists(locationPath)) {
-            Files.createDirectory(locationPath);
-        }
-
-        if (!Files.isDirectory(locationPath)) {
-            throw new IOException("Tried to set cache location to non-directory: " + locationPath);
-        }
-
-        if (!Files.isReadable(locationPath)) {
-            throw new IOException("Cache location is not readable: " + locationPath);
-        }
-
-        if (!Files.isWritable(locationPath)) {
-            throw new IOException("Cache location is not writable: " + locationPath);
-        }
-
-        var externalizer = new KojiBuild.KojiBuildExternalizer();
-        GlobalConfigurationChildBuilder globalConfig = new GlobalConfigurationBuilder();
-
-        globalConfig.globalState()
-                .persistentLocation(location)
-                .serialization()
-                .marshaller(new GenericJBossMarshaller())
-                .addAdvancedExternalizer(externalizer.getId(), externalizer)
-                .whiteList()
-                .addRegexp(".*")
-                .create();
-
-        var configuration = new ConfigurationBuilder().expiration()
-                .lifespan(config.getCacheLifespan())
-                .maxIdle(config.getCacheMaxIdle())
-                .wakeUpInterval(-1L)
-                .persistence()
-                .passivation(false)
-                .addSingleFileStore()
-                .segmented(true)
-                .shared(false)
-                .preload(true)
-                .fetchPersistentState(true)
-                .purgeOnStartup(false)
-                .location(location)
-                .build();
-
-        var checksumTypes = config.getChecksumTypes();
-        var globalConfiguration = globalConfig.build();
-        cacheManager = new DefaultCacheManager(globalConfiguration);
-
-        LOGGER.info("Setting up caches for checksum types size: {}", checksumTypes.size());
-
-        for (var checksumType : checksumTypes) {
-            cacheManager.defineConfiguration("files-" + checksumType, configuration);
-            cacheManager.defineConfiguration("checksums-" + checksumType, configuration);
-            cacheManager.defineConfiguration("checksums-pnc-" + checksumType, configuration);
-            cacheManager.defineConfiguration("rpms-" + checksumType, configuration);
-        }
-
-        cacheManager.defineConfiguration("builds", configuration);
-        cacheManager.defineConfiguration("builds-pnc", configuration);
-    }
-
-    private static boolean cleanup(String directory, EmbeddedCacheManager cacheManager) {
+    private static boolean cleanup(String directory) {
         var success = cleanupOutput(directory);
-
-        success |= cleanupCache(cacheManager);
-
         return success;
     }
 
@@ -193,14 +106,9 @@ public class Finder implements AutoCloseable {
         return true;
     }
 
-    private static boolean cleanupCache(EmbeddedCacheManager cacheManager) {
+    private boolean cleanupCache() {
         if (cacheManager != null) {
-            try {
-                cacheManager.close();
-            } catch (IOException e) {
-                LOGGER.warn("Failed to close cache manager {}", cacheManager.getCache().getName(), e);
-                return false;
-            }
+            cacheProvider.close(cacheManager);
         }
 
         return true;
@@ -222,19 +130,6 @@ public class Finder implements AutoCloseable {
         var result = (FinderResult) null;
 
         try {
-            if (cacheManager == null && !config.getDisableCache()) {
-                LOGGER.info("Initializing {} {} cache", Version.getBrandName(), Version.getVersion());
-
-                initCaches(config);
-
-                LOGGER.info(
-                        "Initialized {} {} cache {}",
-                        Version.getBrandName(),
-                        Version.getVersion(),
-                        cacheManager.getName());
-            } else {
-                LOGGER.info("Cache disabled");
-            }
 
             var files = Collections.singletonList(url.toExternalForm());
 
@@ -253,7 +148,7 @@ public class Finder implements AutoCloseable {
 
             LOGGER.info("Done finding builds for {}", url);
         } finally {
-            var isClean = cleanup(config.getOutputDirectory(), cacheManager);
+            var isClean = cleanup(config.getOutputDirectory());
 
             if (isClean) {
                 LOGGER.info("Cleanup after finding URL: {}", url);
