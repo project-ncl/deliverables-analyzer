@@ -17,7 +17,9 @@ package org.jboss.pnc.deliverablesanalyzer;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
@@ -25,11 +27,13 @@ import javax.inject.Inject;
 
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationChildBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.DefaultCacheManager;
 import org.jboss.pnc.build.finder.core.BuildConfig;
+import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.ConfigDefaults;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.slf4j.Logger;
@@ -46,7 +50,7 @@ public class CacheProvider {
     BuildConfig config;
 
     private static void ensureConfigurationDirectoryExists() throws IOException {
-        var configPath = Paths.get(ConfigDefaults.CONFIG_PATH);
+        Path configPath = Paths.get(ConfigDefaults.CONFIG_PATH);
 
         LOGGER.info("Configuration directory is: {}", configPath);
 
@@ -67,8 +71,8 @@ public class CacheProvider {
         LOGGER.info("Initializing {} {} cache", Version.getBrandName(), Version.getVersion());
         ensureConfigurationDirectoryExists();
 
-        var locationPath = Paths.get(ConfigDefaults.CONFIG_PATH, "cache");
-        var location = locationPath.toAbsolutePath().toString();
+        Path locationPath = Paths.get(ConfigDefaults.CONFIG_PATH, "cache");
+        String location = locationPath.toAbsolutePath().toString();
 
         LOGGER.info("Cache location is: {}", location);
 
@@ -88,7 +92,7 @@ public class CacheProvider {
             throw new IOException("Cache location is not writable: " + locationPath);
         }
 
-        var externalizer = new KojiBuild.KojiBuildExternalizer();
+        KojiBuild.KojiBuildExternalizer externalizer = new KojiBuild.KojiBuildExternalizer();
         GlobalConfigurationChildBuilder globalConfig = new GlobalConfigurationBuilder();
 
         globalConfig.globalState()
@@ -115,9 +119,9 @@ public class CacheProvider {
                 .location(location)
                 .build();
 
-        var checksumTypes = config.getChecksumTypes();
-        var globalConfiguration = globalConfig.build();
-        var cacheManager = new DefaultCacheManager(globalConfiguration);
+        Set<ChecksumType> checksumTypes = config.getChecksumTypes();
+        GlobalConfiguration globalConfiguration = globalConfig.build();
+        DefaultCacheManager cacheManager = new DefaultCacheManager(globalConfiguration);
 
         LOGGER.info("Setting up caches for checksum types size: {}", checksumTypes.size());
 

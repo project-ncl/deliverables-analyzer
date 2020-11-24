@@ -18,6 +18,7 @@ package org.jboss.pnc.deliverablesanalyzer.rest;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -77,7 +78,7 @@ public class AnalyzeResource implements AnalyzeService {
 
     @Override
     public BuildConfig configs(String id) {
-        var config = configs.get(id);
+        BuildConfig config = configs.get(id);
 
         if (config == null) {
             LOGGER.info("Config id {} is null. Returning Not Found", id);
@@ -89,7 +90,7 @@ public class AnalyzeResource implements AnalyzeService {
 
     @Override
     public FinderStatus statuses(String id) {
-        var status = statuses.get(id);
+        FinderStatus status = statuses.get(id);
 
         if (status == null) {
             LOGGER.info("Status id {} is null. Returning Not Found", id);
@@ -110,7 +111,7 @@ public class AnalyzeResource implements AnalyzeService {
 
         LOGGER.info("Result id {} is {}", id, futureResult);
 
-        var completableFuture = futureResult.toCompletableFuture();
+        CompletableFuture<FinderResult> completableFuture = futureResult.toCompletableFuture();
 
         if (completableFuture.isCancelled() || completableFuture.isCompletedExceptionally()) {
             LOGGER.info("Removing abnormal result id {} from cache so that it can be submitted again", id);
@@ -153,16 +154,16 @@ public class AnalyzeResource implements AnalyzeService {
 
     @Override
     public Response analyze(String url, String config) {
-        var uri = URI.create(url).normalize();
-        var normalizedUrl = uri.toString();
+        URI uri = URI.create(url).normalize();
+        String normalizedUrl = uri.toString();
         // XXX: Hash URL instead of file contents so that we don't have to download the file
-        var sha256 = DigestUtils.sha256Hex(normalizedUrl);
-        var id = sha256.substring(0, 8);
+        String sha256 = DigestUtils.sha256Hex(normalizedUrl);
+        String id = sha256.substring(0, 8);
 
         try {
-            var specificConfig = BuildConfig.copy(applicationConfig);
+            BuildConfig specificConfig = BuildConfig.copy(applicationConfig);
             if (config != null) {
-                var config2 = BuildConfig.load(config);
+                BuildConfig config2 = BuildConfig.load(config);
                 if (config2.getExcludes() != null) {
                     specificConfig.setExcludes(config2.getExcludes());
                 }
@@ -179,7 +180,7 @@ public class AnalyzeResource implements AnalyzeService {
             results.computeIfAbsent(id, k -> pool.supplyAsync(() -> {
                 configs.putIfAbsent(id, specificConfig);
 
-                var status = new FinderStatus();
+                FinderStatus status = new FinderStatus();
 
                 statuses.putIfAbsent(id, status);
 

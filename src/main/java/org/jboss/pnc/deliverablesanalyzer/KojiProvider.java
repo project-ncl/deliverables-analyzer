@@ -15,6 +15,8 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
+import java.net.URL;
+
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -39,7 +41,7 @@ public class KojiProvider {
 
     @Produces
     public ClientSession createSession() throws KojiClientException {
-        var kojiHubURL = config.getKojiHubURL();
+        URL kojiHubURL = config.getKojiHubURL();
         if (kojiHubURL == null) {
             throw new KojiClientException("Koji hub URL is not set");
         }

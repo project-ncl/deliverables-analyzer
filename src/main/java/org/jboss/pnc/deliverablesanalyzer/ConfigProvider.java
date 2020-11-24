@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -45,7 +47,7 @@ public class ConfigProvider {
     }
 
     public ConfigProvider() throws IOException {
-        var defaults = BuildConfig.load(ConfigProvider.class.getClassLoader());
+        BuildConfig defaults = BuildConfig.load(ConfigProvider.class.getClassLoader());
 
         if (configFile.exists()) {
             if (defaults == null) {
@@ -62,20 +64,20 @@ public class ConfigProvider {
         setPncURL(config);
 
         // XXX: Force output directory since it defaults to "." which usually isn't the best
-        var tmpDir = Files.createTempDirectory("deliverables-analyzer-");
+        Path tmpDir = Files.createTempDirectory("deliverables-analyzer-");
 
         config.setOutputDirectory(tmpDir.toAbsolutePath().toString());
     }
 
     private void setKojiHubURL(BuildConfig config) throws IOException {
-        var optionalKojiHubURL = org.eclipse.microprofile.config.ConfigProvider.getConfig()
+        Optional<String> optionalKojiHubURL = org.eclipse.microprofile.config.ConfigProvider.getConfig()
                 .getOptionalValue("koji.hub.url", String.class);
 
         if (optionalKojiHubURL.isPresent()) {
-            var s = optionalKojiHubURL.get();
+            String s = optionalKojiHubURL.get();
 
             try {
-                var kojiHubURL = new URL(s);
+                URL kojiHubURL = new URL(s);
                 config.setKojiHubURL(kojiHubURL);
             } catch (MalformedURLException e) {
                 throw new IOException("Bad Koji hub URL: " + s, e);
@@ -84,14 +86,14 @@ public class ConfigProvider {
     }
 
     private void setKojiWebURL(BuildConfig config) throws IOException {
-        var optionalKojiWebURL = org.eclipse.microprofile.config.ConfigProvider.getConfig()
+        Optional<String> optionalKojiWebURL = org.eclipse.microprofile.config.ConfigProvider.getConfig()
                 .getOptionalValue("koji.web.url", String.class);
 
         if (optionalKojiWebURL.isPresent()) {
-            var s = optionalKojiWebURL.get();
+            String s = optionalKojiWebURL.get();
 
             try {
-                var kojiWebURL = new URL(s);
+                URL kojiWebURL = new URL(s);
                 config.setKojiWebURL(kojiWebURL);
             } catch (MalformedURLException e) {
                 throw new IOException("Bad Koji web URL: " + s, e);
@@ -101,7 +103,7 @@ public class ConfigProvider {
             var s = config.getKojiHubURL().toExternalForm().replace("hub.", "web.").replace("hub", "");
 
             try {
-                var kojiWebURL = new URL(s);
+                URL kojiWebURL = new URL(s);
                 config.setKojiWebURL(kojiWebURL);
             } catch (MalformedURLException e) {
                 throw new IOException("Bad Koji web URL: " + s, e);
@@ -110,14 +112,14 @@ public class ConfigProvider {
     }
 
     private void setPncURL(BuildConfig config) throws IOException {
-        var optionalPncURL = org.eclipse.microprofile.config.ConfigProvider.getConfig()
+        Optional<String> optionalPncURL = org.eclipse.microprofile.config.ConfigProvider.getConfig()
                 .getOptionalValue("pnc.url", String.class);
 
         if (optionalPncURL.isPresent()) {
-            var s = optionalPncURL.get();
+            String s = optionalPncURL.get();
 
             try {
-                var pncURL = new URL(s);
+                URL pncURL = new URL(s);
                 config.setPncURL(pncURL);
             } catch (MalformedURLException e) {
                 throw new IOException("Bad PNC URL: " + s, e);

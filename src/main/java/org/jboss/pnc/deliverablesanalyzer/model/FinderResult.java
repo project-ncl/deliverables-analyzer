@@ -39,6 +39,7 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact;
 import org.jboss.pnc.build.finder.core.BuildStatistics;
 import org.jboss.pnc.build.finder.core.BuildSystem;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
+import org.jboss.pnc.build.finder.core.Checksum;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiLocalArchive;
 import org.slf4j.Logger;
@@ -107,7 +108,7 @@ public class FinderResult {
                                                                                 // -1, use what's given
         builder.filename(archiveInfo.getFilename()).size(size);
 
-        for (var checksum : archive.getChecksums()) {
+        for (Checksum checksum : archive.getChecksums()) {
             switch (checksum.getType()) {
                 case md5:
                     builder.md5(checksum.getValue());
@@ -144,24 +145,24 @@ public class FinderResult {
     }
 
     private static Set<Artifact> getNotFoundArtifacts(Map<BuildSystemInteger, KojiBuild> builds) {
-        var buildsSize = builds.size();
+        int buildsSize = builds.size();
 
         if (buildsSize == 0) {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
 
-        var buildZero = builds.get(new BuildSystemInteger(0));
-        var localArchives = buildZero.getArchives();
-        var numArchives = localArchives.size();
+        KojiBuild buildZero = builds.get(new BuildSystemInteger(0));
+        List<KojiLocalArchive> localArchives = buildZero.getArchives();
+        int numArchives = localArchives.size();
 
         if (numArchives == 0) {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
 
-        var artifacts = new LinkedHashSet<Artifact>(numArchives);
-        var archiveCount = 0;
+        Set<Artifact> artifacts = new LinkedHashSet<>(numArchives);
+        int archiveCount = 0;
 
-        for (var localArchive : localArchives) {
+        for (KojiLocalArchive localArchive : localArchives) {
             var artifact = createNotFoundArtifact(localArchive);
 
             artifacts.add(artifact);
@@ -193,7 +194,7 @@ public class FinderResult {
     }
 
     private static Artifact createArtifact(KojiLocalArchive localArchive, BuildSystem buildSystem, boolean imported) {
-        var archiveInfo = localArchive.getArchive();
+        KojiArchiveInfo archiveInfo = localArchive.getArchive();
 
         Artifact.ArtifactBuilder builder;
         if ("maven".equals(archiveInfo.getBuildType())) {
@@ -226,33 +227,35 @@ public class FinderResult {
     }
 
     private static Set<Build> getFoundBuilds(Map<BuildSystemInteger, KojiBuild> builds) {
-        var buildsSize = builds.size();
+        int buildsSize = builds.size();
 
         if (buildsSize <= 1) {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
 
-        var numBuilds = buildsSize - 1;
-        var buildList = new LinkedHashSet<Build>(numBuilds);
-        var buildCount = 0;
-        var entrySet = builds.entrySet();
+        int numBuilds = buildsSize - 1;
+        Set<Build> buildList = new LinkedHashSet<>(numBuilds);
+        int buildCount = 0;
 
-        for (Map.Entry<BuildSystemInteger, KojiBuild> entry : entrySet) {
+        for (Map.Entry<BuildSystemInteger, KojiBuild> entry : builds.entrySet()) {
             BuildSystemInteger buildSystemInteger = entry.getKey();
 
             if (buildSystemInteger.getValue().equals(0)) {
                 continue;
             }
 
-            var kojiBuild = entry.getValue();
-            var localArchives = kojiBuild.getArchives();
+            KojiBuild kojiBuild = entry.getValue();
+            List<KojiLocalArchive> localArchives = kojiBuild.getArchives();
 
-            var numArchives = localArchives.size();
-            var archiveCount = 0;
+            int numArchives = localArchives.size();
+            int archiveCount = 0;
 
-            var artifacts = new HashSet<Artifact>();
+            Set<Artifact> artifacts = new HashSet<>();
             for (KojiLocalArchive localArchive : localArchives) {
-                var artifact = createArtifact(localArchive, buildSystemInteger.getBuildSystem(), kojiBuild.isImport());
+                Artifact artifact = createArtifact(
+                        localArchive,
+                        buildSystemInteger.getBuildSystem(),
+                        kojiBuild.isImport());
 
                 artifacts.add(artifact);
 
@@ -274,7 +277,7 @@ public class FinderResult {
                 }
             }
 
-            var build = createBuild(buildSystemInteger, kojiBuild, artifacts);
+            Build build = createBuild(buildSystemInteger, kojiBuild, artifacts);
 
             if (LOGGER.isInfoEnabled()) {
                 buildCount++;
@@ -302,7 +305,7 @@ public class FinderResult {
     }
 
     private static List<KojiBuild> getBuildsAsList(Map<BuildSystemInteger, KojiBuild> builds) {
-        var kojiBuildList = (List<KojiBuild>) new ArrayList<>(builds.values());
+        List<KojiBuild> kojiBuildList = new ArrayList<>(builds.values());
 
         kojiBuildList.sort(Comparator.comparingInt(KojiBuild::getId));
 

@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -38,11 +39,14 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.BuildFinder;
 import org.jboss.pnc.build.finder.core.BuildFinderListener;
+import org.jboss.pnc.build.finder.core.BuildSystemInteger;
 import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzerListener;
 import org.jboss.pnc.build.finder.koji.ClientSession;
+import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.pnc.client.HashMapCachingPncClient;
+import org.jboss.pnc.build.finder.pnc.client.PncClient;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,12 +92,11 @@ public class Finder {
     }
 
     private static boolean cleanup(String directory) {
-        var success = cleanupOutput(directory);
-        return success;
+        return cleanupOutput(directory);
     }
 
     private static boolean cleanupOutput(String directory) {
-        var outputDirectory = Paths.get(directory);
+        Path outputDirectory = Paths.get(directory);
 
         try (Stream<Path> stream = Files.walk(outputDirectory)) {
             stream.sorted(Comparator.reverseOrder()).forEach(Finder::deletePath);
@@ -110,12 +113,12 @@ public class Finder {
             URL url,
             DistributionAnalyzerListener distributionAnalyzerListener,
             BuildFinderListener buildFinderListener,
-            BuildConfig specificConfig) throws IOException, KojiClientException {
-        var result = (FinderResult) null;
+            BuildConfig specificConfig) throws KojiClientException {
+
+        FinderResult result;
 
         try {
-
-            var files = Collections.singletonList(url.toExternalForm());
+            List<String> files = Collections.singletonList(url.toExternalForm());
 
             LOGGER.info(
                     "Starting distribution analysis for {} with config {} and cache manager {}",
@@ -123,16 +126,16 @@ public class Finder {
                     specificConfig,
                     cacheManager != null ? cacheManager.getName() : "disabled");
 
-            var analyzer = new DistributionAnalyzer(files, specificConfig, cacheManager);
+            DistributionAnalyzer analyzer = new DistributionAnalyzer(files, specificConfig, cacheManager);
 
             analyzer.setListener(distributionAnalyzerListener);
 
-            var futureChecksum = pool.submit(analyzer);
+            Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum = pool.submit(analyzer);
             result = findBuilds(id, url, analyzer, futureChecksum, buildFinderListener);
 
             LOGGER.info("Done finding builds for {}", url);
         } finally {
-            var isClean = cleanup(config.getOutputDirectory());
+            boolean isClean = cleanup(config.getOutputDirectory());
 
             if (isClean) {
                 LOGGER.info("Cleanup after finding URL: {}", url);
@@ -151,10 +154,10 @@ public class Finder {
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum,
             BuildFinderListener buildFinderListener) throws KojiClientException {
 
-        var pncURL = config.getPncURL();
+        URL pncURL = config.getPncURL();
 
-        try (var pncClient = pncURL != null ? new HashMapCachingPncClient(config) : null) {
-            var buildFinder = (BuildFinder) null;
+        try (PncClient pncClient = pncURL != null ? new HashMapCachingPncClient(config) : null) {
+            BuildFinder buildFinder;
 
             if (pncClient == null) {
                 LOGGER.warn("Initializing Build Finder with PNC support disabled because PNC URL is not set");
@@ -166,20 +169,20 @@ public class Finder {
 
             buildFinder.setListener(buildFinderListener);
 
-            var futureBuilds = pool.submit(buildFinder);
+            Future<Map<BuildSystemInteger, KojiBuild>> futureBuilds = pool.submit(buildFinder);
 
             try {
-                var checksums = futureChecksum.get();
-                var builds = futureBuilds.get();
+                Map<ChecksumType, MultiValuedMap<String, String>> checksums = futureChecksum.get();
+                Map<BuildSystemInteger, KojiBuild> builds = futureBuilds.get();
 
                 if (LOGGER.isInfoEnabled()) {
-                    var size = builds.size();
-                    var numBuilds = size >= 1 ? size - 1 : 0;
+                    int size = builds.size();
+                    int numBuilds = size >= 1 ? size - 1 : 0;
 
                     LOGGER.info("Got {} checksum types and {} builds", checksums.size(), numBuilds);
                 }
 
-                var result = new FinderResult(id, url, builds);
+                FinderResult result = new FinderResult(id, url, builds);
 
                 LOGGER.info("Returning result for {}", url);
 

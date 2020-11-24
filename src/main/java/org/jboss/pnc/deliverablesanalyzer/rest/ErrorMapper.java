@@ -24,7 +24,7 @@ import javax.ws.rs.ext.Provider;
 public class ErrorMapper implements ExceptionMapper<Exception> {
     @Override
     public Response toResponse(Exception exception) {
-        var errorMessage = new ErrorMessage(exception);
+        ErrorMessage errorMessage = new ErrorMessage(exception);
 
         return Response.status(errorMessage.getCode()).type(MediaType.APPLICATION_JSON).entity(errorMessage).build();
     }

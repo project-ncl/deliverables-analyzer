@@ -53,9 +53,9 @@ public class ErrorMessage {
         Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
 
         if (exception instanceof WebApplicationException) {
-            var e = (WebApplicationException) exception;
+            WebApplicationException e = (WebApplicationException) exception;
 
-            try (var response = e.getResponse()) {
+            try (Response response = e.getResponse()) {
                 status = response.getStatusInfo().toEnum();
             }
         }
