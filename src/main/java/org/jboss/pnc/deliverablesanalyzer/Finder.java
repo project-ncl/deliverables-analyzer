@@ -71,41 +71,17 @@ public class Finder {
     @Inject
     ClientSession kojiSession;
 
+    @Inject
+    Cleaner cleaner;
+
     @PostConstruct
-    public void init() throws IOException {
+    public void init() {
         if (!config.getDisableCache()) {
             cacheManager = cacheProvider.get();
             LOGGER.info("Initialized cache {}", cacheManager.getName());
         } else {
             LOGGER.info("Cache disabled");
         }
-    }
-
-    private static void deletePath(Path path) {
-        LOGGER.info("Delete: {}", path);
-
-        try {
-            Files.delete(path);
-        } catch (IOException e) {
-            LOGGER.warn("Failed to delete path {}", path, e);
-        }
-    }
-
-    private static boolean cleanup(String directory) {
-        return cleanupOutput(directory);
-    }
-
-    private static boolean cleanupOutput(String directory) {
-        Path outputDirectory = Paths.get(directory);
-
-        try (Stream<Path> stream = Files.walk(outputDirectory)) {
-            stream.sorted(Comparator.reverseOrder()).forEach(Finder::deletePath);
-        } catch (IOException e) {
-            LOGGER.warn("Failed while walking output directory {}", outputDirectory, e);
-            return false;
-        }
-
-        return true;
     }
 
     public FinderResult find(
@@ -135,7 +111,7 @@ public class Finder {
 
             LOGGER.info("Done finding builds for {}", url);
         } finally {
-            boolean isClean = cleanup(config.getOutputDirectory());
+            boolean isClean = cleaner.cleanup(config.getOutputDirectory());
 
             if (isClean) {
                 LOGGER.info("Cleanup after finding URL: {}", url);
