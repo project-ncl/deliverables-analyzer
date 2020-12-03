@@ -16,53 +16,38 @@
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import java.io.IOException;
-import java.net.URI;
-import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.ServiceUnavailableException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.context.ManagedExecutor;
+import org.jboss.pnc.api.deliverablesanalyzer.api.AnalyzeService;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisResult;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
+import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.build.finder.core.BuildConfig;
-import org.jboss.pnc.deliverablesanalyzer.BuildConfigCache;
 import org.jboss.pnc.deliverablesanalyzer.Finder;
-import org.jboss.pnc.deliverablesanalyzer.ResultCache;
 import org.jboss.pnc.deliverablesanalyzer.StatusCache;
-import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.redhat.red.build.koji.KojiClientException;
 
 @ApplicationScoped
 public class AnalyzeResource implements AnalyzeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeResource.class);
 
-    @ConfigProperty(name = "analyze.results.timeout", defaultValue = "3590000")
-    Long timeout;
-
     @Inject
-    ManagedExecutor pool;
-
-    @Inject
-    BuildConfigCache<String, BuildConfig> configs;
-
-    @Inject
-    ResultCache<String, CompletionStage<FinderResult>> results;
+    ManagedExecutor executor;
 
     @Inject
     StatusCache<String, FinderStatus> statuses;
@@ -73,133 +58,120 @@ public class AnalyzeResource implements AnalyzeService {
     @Inject
     BuildConfig applicationConfig;
 
+    @Inject
+    HeartbeatScheduler heartbeatScheduler;
+
+    @Inject
+    HttpClient httpClient;
+
     @Context
     UriInfo uriInfo;
 
     @Override
-    public BuildConfig configs(String id) {
-        BuildConfig config = configs.get(id);
-
-        if (config == null) {
-            LOGGER.info("Config id {} is null. Returning Not Found", id);
-            throw new NotFoundException("Config id " + id + " not found");
+    public Response cancel(String id) {
+        heartbeatScheduler.unsubscribeRequest(id);
+        if (finder.cancel(id)) {
+            return Response.ok().build();
         }
 
-        return config;
+        throw new NotFoundException("There was no operation running to be cancelled");
     }
 
     @Override
-    public FinderStatus statuses(String id) {
-        FinderStatus status = statuses.get(id);
+    public Response analyze(AnalyzePayload analyzePayload) {
+        List<String> urls = analyzePayload.getUrls();
+        LOGGER.info(
+                "Analysis request accepted: [urls: {}, config: {}, callback: {}, heartbeat: {}",
+                analyzePayload.getUrls(),
+                analyzePayload.getConfig(),
+                analyzePayload.getCallback(),
+                analyzePayload.getHeartbeat());
+        BuildConfig specificConfig = validateInputsLoadConfig(urls, analyzePayload.getConfig());
 
-        if (status == null) {
-            LOGGER.info("Status id {} is null. Returning Not Found", id);
-            throw new NotFoundException("Status id " + id + " not found");
+        String id = DigestUtils.sha256Hex(urls.get(0));
+        FinderStatus status = new FinderStatus();
+        statuses.putIfAbsent(id, status);
+
+        if (analyzePayload.getHeartbeat() != null) {
+            heartbeatScheduler.subscribeRequest(id, analyzePayload.getHeartbeat());
         }
 
-        return status;
-    }
-
-    @Override
-    public FinderResult results(String id) {
-        CompletionStage<FinderResult> futureResult = results.get(id);
-
-        if (futureResult == null) {
-            LOGGER.info("Result id {} is null. Returning Not Found", id);
-            throw new NotFoundException("Result id " + id + " not found");
-        }
-
-        LOGGER.info("Result id {} is {}", id, futureResult);
-
-        CompletableFuture<FinderResult> completableFuture = futureResult.toCompletableFuture();
-
-        if (completableFuture.isCancelled() || completableFuture.isCompletedExceptionally()) {
-            LOGGER.info("Removing abnormal result id {} from cache so that it can be submitted again", id);
-            results.remove(id);
-            configs.remove(id);
-            statuses.remove(id);
-            LOGGER.info("Result id {} is cancelled or completed exceptionally. Returning Server Error", id);
-            throw new InternalServerErrorException("Result id " + id + " was cancelled or completed exceptionally");
-        }
-
-        if (completableFuture.isDone()) {
+        executor.runAsync(() -> {
+            LOGGER.info("Analysis with ID {} was initiated. Starting analysis of these URLs: {}", id, urls);
+            AnalysisResult analysisResult = null;
             try {
-                LOGGER.info("Result id {} is done", id);
-                return completableFuture.get();
-            } catch (InterruptedException e) {
-                LOGGER.info("Result id {} is done, but was interrupted. Returning Server Error", id);
-                Thread.currentThread().interrupt();
-                throw new InternalServerErrorException(e);
-            } catch (ExecutionException e) {
-                LOGGER.info("Result id {} is done, but had exception thrown. Returning Server Error", id);
-                throw new InternalServerErrorException(e);
+                List<FinderResult> finderResults = finder.find(id, urls, status, status, specificConfig);
+                analysisResult = new AnalysisResult(finderResults);
+                LOGGER.debug("Analysis finished successfully. Analysis results: {}", analysisResult);
+            } catch (CancellationException ce) {
+                // The task was cancelled => don't send results using callback
+                LOGGER.info("Analysis with ID {} was cancelled. No callback will be performed. Exception: {}", id, ce);
+            } catch (Throwable e) {
+                analysisResult = new AnalysisResult(e);
+                LOGGER.warn("Analysis with ID {} failed due to {}", id, e);
             }
-        } else {
-            try {
-                LOGGER.info("Result id {} is not done yet. Waiting at most {} ms", id, timeout);
-                return completableFuture.get(timeout, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                LOGGER.info("Result id {} was interrupted. Returning Server Error", id);
-                Thread.currentThread().interrupt();
-                throw new InternalServerErrorException(e);
-            } catch (ExecutionException e) {
-                LOGGER.info("Result id {} had exception thrown. Returning Server Error", id);
-                throw new InternalServerErrorException(e);
-            } catch (TimeoutException e) {
-                LOGGER.info("Result id {} timed out. Returning Service Unavailable", id);
-                throw new ServiceUnavailableException(Duration.ofMinutes(5L).getSeconds(), e);
+
+            if (analysisResult != null) {
+                if (!performCallback(analyzePayload.getCallback(), analysisResult)) {
+                    heartbeatScheduler.unsubscribeRequest(id);
+                    LOGGER.info("Analysis with ID {} was finished, but callback couldn't be performed!", id);
+                    return;
+                }
             }
-        }
+
+            heartbeatScheduler.unsubscribeRequest(id);
+            LOGGER.info("Analysis with ID {} was successfully finished and callback was performed.", id);
+        });
+
+        return Response.ok().type(MediaType.TEXT_PLAIN_TYPE).entity(id).build();
     }
 
-    @Override
-    public Response analyze(String url, String config) {
-        URI uri = URI.create(url).normalize();
-        String normalizedUrl = uri.toString();
-        // XXX: Hash URL instead of file contents so that we don't have to download the file
-        String sha256 = DigestUtils.sha256Hex(normalizedUrl);
-        String id = sha256.substring(0, 8);
-
+    private boolean performCallback(Request callback, AnalysisResult result) {
         try {
-            BuildConfig specificConfig = BuildConfig.copy(applicationConfig);
-            if (config != null) {
-                BuildConfig config2 = BuildConfig.load(config);
-                if (config2.getExcludes() != null) {
-                    specificConfig.setExcludes(config2.getExcludes());
-                }
+            httpClient.performHttpRequest(callback, result);
+            return true;
+        } catch (Exception e) {
+            try {
+                httpClient.performHttpRequest(callback, result);
+                return true;
+            } catch (Exception ioException) {
+                LOGGER.warn("Unable to send results using callback!", ioException);
+                return false;
+            }
+        }
+    }
 
-                if (config2.getArchiveExtensions() != null) {
-                    specificConfig.setArchiveExtensions(config2.getArchiveExtensions());
-                }
+    private BuildConfig validateInputsLoadConfig(List<String> urls, String config) {
+        if (urls.isEmpty()) {
+            throw new BadRequestException("No URL was specified");
+        }
+        BuildConfig specificConfig;
+        try {
+            specificConfig = prepareConfig(config);
+        } catch (IOException e) {
+            throw new BadRequestException("The provided config couldn't be parsed!", e);
+        }
+        return specificConfig;
+    }
 
-                if (config2.getArchiveTypes() != null) {
-                    specificConfig.setArchiveTypes(config2.getArchiveTypes());
-                }
+    private BuildConfig prepareConfig(String rawConfig) throws IOException {
+        BuildConfig specificConfig = BuildConfig.copy(applicationConfig);
+
+        if (rawConfig != null) {
+            BuildConfig config = BuildConfig.load(rawConfig);
+            if (config.getExcludes() != null) {
+                specificConfig.setExcludes(config.getExcludes());
             }
 
-            results.computeIfAbsent(id, k -> pool.supplyAsync(() -> {
-                configs.putIfAbsent(id, specificConfig);
+            if (config.getArchiveExtensions() != null) {
+                specificConfig.setArchiveExtensions(config.getArchiveExtensions());
+            }
 
-                FinderStatus status = new FinderStatus();
-
-                statuses.putIfAbsent(id, status);
-
-                try {
-                    return finder.find(id, uri.toURL(), status, status, specificConfig);
-                } catch (IOException | KojiClientException e) {
-                    throw new InternalServerErrorException(e);
-                }
-            }));
-        } catch (IOException e) {
-            throw new InternalServerErrorException(e);
+            if (config.getArchiveTypes() != null) {
+                specificConfig.setArchiveTypes(config.getArchiveTypes());
+            }
         }
 
-        String location = uriInfo.getAbsolutePathBuilder()
-                .path("results")
-                .path("{id}")
-                .resolveTemplate("id", id)
-                .toTemplate();
-
-        return Response.created(URI.create(location).normalize()).entity(id).build();
+        return specificConfig;
     }
 }

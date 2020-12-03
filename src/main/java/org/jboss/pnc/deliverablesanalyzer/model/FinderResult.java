@@ -28,7 +28,6 @@ import java.util.Set;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import javax.ws.rs.BadRequestException;
 
 import org.jboss.pnc.api.deliverablesanalyzer.dto.Artifact;
@@ -51,7 +50,6 @@ public class FinderResult {
     private static final Logger LOGGER = LoggerFactory.getLogger(FinderResult.class);
 
     @NotEmpty
-    @Pattern(regexp = "^[a-f0-9]{8}$")
     private String id;
 
     private URL url;
