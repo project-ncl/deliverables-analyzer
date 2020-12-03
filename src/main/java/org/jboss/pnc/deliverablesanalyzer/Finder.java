@@ -15,18 +15,22 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import java.io.IOException;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
+
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -59,6 +63,11 @@ public class Finder {
 
     private DefaultCacheManager cacheManager;
 
+    private Map<String, CompletableFuture<List<FinderResult>>> runningOperations = new HashMap<>();
+
+    @Inject
+    ManagedExecutor executor;
+
     @Inject
     BuildConfig config;
 
@@ -84,13 +93,76 @@ public class Finder {
         }
     }
 
-    public FinderResult find(
+    public boolean cancel(String id) {
+        CompletableFuture<List<FinderResult>> future = runningOperations.get(id);
+
+        if (future != null) {
+            return future.cancel(true);
+        } else {
+            return false;
+        }
+    }
+
+    public List<FinderResult> find(
+            String id,
+            List<String> urls,
+            DistributionAnalyzerListener distributionAnalyzerListener,
+            BuildFinderListener buildFinderListener,
+            BuildConfig config) throws CancellationException, Throwable {
+
+        CompletableFuture<List<FinderResult>> future = urls.stream().map(url -> CompletableFuture.supplyAsync(() -> {
+            try {
+                return find(
+                        id,
+                        URI.create(url).normalize().toURL(),
+                        distributionAnalyzerListener,
+                        buildFinderListener,
+                        config);
+            } catch (KojiClientException | MalformedURLException e) {
+                throw new CompletionException(e);
+            }
+        }, executor)).collect(collectingAndThen(toList(), futures -> executeFutures(futures)));
+        runningOperations.put(id, future);
+
+        try {
+            return future.join();
+        } catch (CompletionException e) {
+            throw e.getCause();
+        }
+    }
+
+    /**
+     * Ensures, that all passed futures are executed and return is returned in one CompletableFuture once all complete.
+     * If a single future fails with an exception the returned future will complete exceptionally.
+     *
+     * @param initialFutures List of the futures
+     * @return A single future combining results of all the futures
+     */
+    private CompletableFuture<List<FinderResult>> executeFutures(List<CompletableFuture<FinderResult>> initialFutures) {
+        CompletableFuture<List<FinderResult>> result = initialFutures.stream()
+                .collect(
+                        collectingAndThen(
+                                toList(),
+                                // Creates a new CompletableFuture, which will complete, when all the included futures
+                                // are finished
+                                // and waits for it to complete
+                                futures -> CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                                        .thenApply(
+                                                ___ -> futures.stream()
+                                                        .map(CompletableFuture::join)
+                                                        .collect(Collectors.toList()))));
+
+        // Short circuit the execution if there is an exception thrown in any of the CompletableFutures
+        initialFutures.forEach(f -> f.handle((__, e) -> e != null && result.completeExceptionally(e)));
+        return result;
+    }
+
+    private FinderResult find(
             String id,
             URL url,
             DistributionAnalyzerListener distributionAnalyzerListener,
             BuildFinderListener buildFinderListener,
-            BuildConfig specificConfig) throws KojiClientException {
-
+            BuildConfig config) throws KojiClientException {
         FinderResult result;
 
         try {
@@ -99,11 +171,10 @@ public class Finder {
             LOGGER.info(
                     "Starting distribution analysis for {} with config {} and cache manager {}",
                     files,
-                    specificConfig,
+                    config,
                     cacheManager != null ? cacheManager.getName() : "disabled");
 
-            DistributionAnalyzer analyzer = new DistributionAnalyzer(files, specificConfig, cacheManager);
-
+            DistributionAnalyzer analyzer = new DistributionAnalyzer(files, config, cacheManager);
             analyzer.setListener(distributionAnalyzerListener);
 
             Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum = pool.submit(analyzer);
@@ -111,7 +182,10 @@ public class Finder {
 
             LOGGER.info("Done finding builds for {}", url);
         } finally {
-            boolean isClean = cleaner.cleanup(config.getOutputDirectory());
+            int a = 1 + 2;
+            // TODO async invocation, ensure it doesn't affect other running analysis on the pod and cleanup
+            // in case of cancel
+            boolean isClean = cleaner.cleanup(this.config.getOutputDirectory());
 
             if (isClean) {
                 LOGGER.info("Cleanup after finding URL: {}", url);
@@ -174,4 +248,20 @@ public class Finder {
 
         return null;
     }
+
+    /*
+     * { // TODO - invoke in parallel, support cancel List<FinderResult> r1 = new ArrayList(); for (String rawUrl :
+     * urls) { URL url = URI.create(rawUrl).normalize().toURL(); r1.add(find(id, url, distributionAnalyzerListener,
+     * buildFinderListener, config)); } }
+     */
+
+    /*
+     * { // Issues - throw exception from lambda, support cancel List<CompletableFuture<FinderResult>> futureResults =
+     * new ArrayList(); for (String rawUrl : urls) { futureResults.add(executor.supplyAsync(() -> { URL url =
+     * URI.create(rawUrl).normalize().toURL(); return find(id, url, distributionAnalyzerListener, buildFinderListener,
+     * config); })); }
+     *
+     * for (CompletableFuture<FinderResult> future : futureResults) { try { results.add(future.get()); } catch
+     * (InterruptedException | ExecutionException e) { e.printStackTrace(); } } }
+     */
 }
