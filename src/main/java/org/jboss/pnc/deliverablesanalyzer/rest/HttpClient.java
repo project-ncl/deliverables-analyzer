@@ -16,14 +16,30 @@
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import java.io.IOException;
+import java.security.InvalidParameterException;
+import java.util.Set;
 
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.HttpMethod;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
 import org.jboss.pnc.api.dto.Request;
+import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
+ * Simple HTTP client wrapper
+ *
  * @author Jakub Bartecek &lt;jbartece@redhat.com&gt;
  */
 @ApplicationScoped
@@ -31,13 +47,122 @@ public class HttpClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpClient.class);
 
-    public void performHttpRequest(Request request) throws IOException {
-        // TODO
-        throw new IOException("error!");
+    private Client client;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    public HttpClient() {
+        client = ClientBuilder.newBuilder().build();
     }
 
+    @PreDestroy
+    void predestroy() {
+        client.close();
+    }
+
+    /**
+     * Sends a request without an entity body The method validates if the remote endpoint responds with 200, otherwise
+     * IOException is thrown
+     *
+     * @param request Request details
+     * @throws IOException Thrown in case of the request failure
+     */
+    public void performHttpRequest(Request request) throws IOException {
+        LOGGER.debug("Performing HTTP request with these parameters: {}", request);
+
+        Response response = null;
+        try {
+            response = invokeHttpRequest(request, null);
+            validateResponse(response);
+        } finally {
+            if (response != null) {
+                response.close();
+            }
+        }
+    }
+
+    /**
+     * Sends a request with payload converted to JSON and application/json MIME type. The method validates if the remote
+     * endpoint responds with 200, otherwise IOException is thrown
+     *
+     * @param request Request details
+     * @param payload Payload to be converted to JSON
+     * @throws IOException Thrown in case of the request failure
+     */
     public void performHttpRequest(Request request, Object payload) throws IOException {
-        // TODO
-        throw new IOException("error!");
+        LOGGER.debug("Performing HTTP request with these parameters: {}", request);
+
+        Response response = null;
+        try {
+            Entity<String> entity = Entity.json(objectMapper.writeValueAsString(payload));
+            response = invokeHttpRequest(request, entity);
+            validateResponse(response);
+        } finally {
+            if (response != null) {
+                response.close();
+            }
+        }
+    }
+
+    private Response invokeHttpRequest(Request request, Entity<?> entity) throws IOException {
+        WebTarget target = client.target(request.getUrl().toString());
+        Invocation.Builder requestBuilder = target.request().headers(headersToMap(request.getHeaders()));
+
+        switch (request.getMethod().toUpperCase()) {
+            case HttpMethod.GET:
+                return requestBuilder.get();
+
+            case HttpMethod.POST:
+                if (entity == null) {
+                    throw new InvalidParameterException("No entity provided for POST method!");
+                }
+                return requestBuilder.post(entity);
+
+            case HttpMethod.PUT:
+                if (entity == null) {
+                    throw new InvalidParameterException("No entity provided for PUT method!");
+                }
+                return requestBuilder.put(entity);
+
+            case HttpMethod.DELETE:
+                return requestBuilder.delete();
+
+            case HttpMethod.OPTIONS:
+                return requestBuilder.options();
+
+            case HttpMethod.HEAD:
+                return requestBuilder.head();
+
+            default:
+                String failureMsg = String.format("Unsupported HTTP method provided: %s", request.getMethod());
+                LOGGER.warn(failureMsg);
+                throw new IOException(failureMsg);
+        }
+    }
+
+    private void validateResponse(Response response) throws IOException {
+        String responseEntity = response.readEntity(String.class);
+
+        if (response.getStatus() != 200) {
+            String failureMsg = String.format(
+                    "Http request failed! ResponseCode: %s, Entity: %s",
+                    response.getStatus(),
+                    responseEntity != null ? responseEntity : "");
+
+            LOGGER.warn(failureMsg);
+            throw new IOException(failureMsg);
+
+        } else {
+            LOGGER.debug(
+                    "Http request sent successfully. ResponseCode: {}, Entity: {}",
+                    response.getStatus(),
+                    responseEntity);
+        }
+    }
+
+    private MultivaluedMap<String, Object> headersToMap(Set<Request.Header> headers) {
+        MultivaluedMap<String, Object> map = new MultivaluedMapImpl<>();
+        headers.forEach(h -> map.add(h.getName(), h.getValue()));
+        return map;
     }
 }
