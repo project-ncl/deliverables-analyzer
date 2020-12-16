@@ -30,6 +30,7 @@ import java.time.Duration;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.http.params.CoreConnectionPNames;
 import org.jboss.pnc.deliverablesanalyzer.Version;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.junit.jupiter.api.BeforeAll;
@@ -43,6 +44,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
+import io.restassured.config.HttpClientConfig;
 import io.restassured.config.ObjectMapperConfig;
 import io.restassured.config.RestAssuredConfig;
 
@@ -52,7 +54,9 @@ class AppTest {
 
     private static final String URL = System.getProperty("distribution.url");
 
-    private static final long TIMEOUT_MINUTES = 10L;
+    private static final int TIMEOUT = 60000;
+
+    private static final long TIMEOUT_MINUTES = 15L;
 
     private static final long POLL_INTERVAL_SECONDS = 30L;
 
@@ -63,6 +67,10 @@ class AppTest {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 
         RestAssured.config = RestAssuredConfig.config()
+                .httpClient(
+                        HttpClientConfig.httpClientConfig()
+                                .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, TIMEOUT)
+                                .setParam(CoreConnectionPNames.SO_TIMEOUT, TIMEOUT))
                 .objectMapperConfig(
                         new ObjectMapperConfig().jackson2ObjectMapperFactory(
                                 (cls, charset) -> new ObjectMapper().findAndRegisterModules()
@@ -72,7 +80,7 @@ class AppTest {
 
     @Test
     void testVersion() {
-        var version = given().log()
+        String version = given().log()
                 .all()
                 .accept(MediaType.TEXT_PLAIN)
                 .when()
@@ -94,7 +102,7 @@ class AppTest {
 
     @Test
     void testCreated() {
-        var location = given().log()
+        String location = given().log()
                 .all()
                 .redirects()
                 .follow(false)
