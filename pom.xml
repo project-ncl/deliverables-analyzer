@@ -144,15 +144,15 @@
       <artifactId>quarkus-smallrye-openapi</artifactId>
     </dependency>
     <dependency>
-        <groupId>javax</groupId>
-        <artifactId>javaee-api</artifactId>
-        <version>8.0.1</version>
-        <type>jar</type>
+      <groupId>javax</groupId>
+      <artifactId>javaee-api</artifactId>
+      <version>8.0.1</version>
+      <type>jar</type>
     </dependency>
     <dependency>
-        <groupId>org.jboss.pnc</groupId>
-        <artifactId>pnc-api</artifactId>
-        <version>${version.org.jboss.pnc.pnc-api}</version>
+      <groupId>org.jboss.pnc</groupId>
+      <artifactId>pnc-api</artifactId>
+      <version>${version.org.jboss.pnc.pnc-api}</version>
     </dependency>
     <dependency>
       <groupId>org.jboss.pnc.build.finder</groupId>
