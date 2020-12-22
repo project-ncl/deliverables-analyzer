@@ -102,7 +102,7 @@ public class AnalyzeResource implements AnalyzeService {
 
     @Override
     public FinderResult results(String id) {
-        var futureResult = results.get(id);
+        CompletionStage<FinderResult> futureResult = results.get(id);
 
         if (futureResult == null) {
             LOGGER.info("Result id {} is null. Returning Not Found", id);
@@ -194,7 +194,7 @@ public class AnalyzeResource implements AnalyzeService {
             throw new InternalServerErrorException(e);
         }
 
-        var location = uriInfo.getAbsolutePathBuilder()
+        String location = uriInfo.getAbsolutePathBuilder()
                 .path("results")
                 .path("{id}")
                 .resolveTemplate("id", id)

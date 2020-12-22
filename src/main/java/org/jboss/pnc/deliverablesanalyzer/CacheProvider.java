@@ -26,6 +26,7 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import org.infinispan.commons.util.Version;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -44,8 +45,8 @@ import org.slf4j.LoggerFactory;
  * @author jbrazdil
  */
 public class CacheProvider {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheProvider.class);
+
     @Inject
     BuildConfig config;
 
@@ -104,7 +105,7 @@ public class CacheProvider {
                 .addRegexp(".*")
                 .create();
 
-        var configuration = new ConfigurationBuilder().expiration()
+        Configuration configuration = new ConfigurationBuilder().expiration()
                 .lifespan(config.getCacheLifespan())
                 .maxIdle(config.getCacheMaxIdle())
                 .wakeUpInterval(-1L)
@@ -125,7 +126,7 @@ public class CacheProvider {
 
         LOGGER.info("Setting up caches for checksum types size: {}", checksumTypes.size());
 
-        for (var checksumType : checksumTypes) {
+        for (ChecksumType checksumType : checksumTypes) {
             cacheManager.defineConfiguration("files-" + checksumType, configuration);
             cacheManager.defineConfiguration("checksums-" + checksumType, configuration);
             cacheManager.defineConfiguration("checksums-pnc-" + checksumType, configuration);

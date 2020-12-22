@@ -139,8 +139,10 @@ public class FinderResult {
     }
 
     private static Artifact createNotFoundArtifact(KojiLocalArchive localArchive) {
-        var builder = Artifact.builder().builtFromSource(false);
+        Artifact.ArtifactBuilder<?, ?> builder = Artifact.builder().builtFromSource(false);
+
         setCommonArtifactFields(builder, localArchive);
+
         return builder.build();
     }
 
@@ -163,7 +165,7 @@ public class FinderResult {
         int archiveCount = 0;
 
         for (KojiLocalArchive localArchive : localArchives) {
-            var artifact = createNotFoundArtifact(localArchive);
+            Artifact artifact = createNotFoundArtifact(localArchive);
 
             artifacts.add(artifact);
 

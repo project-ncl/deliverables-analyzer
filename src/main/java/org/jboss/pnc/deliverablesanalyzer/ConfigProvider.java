@@ -21,7 +21,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -56,7 +55,7 @@ public class ConfigProvider {
                 config = BuildConfig.merge(defaults, configFile);
             }
         } else {
-            config = Objects.requireNonNullElseGet(defaults, BuildConfig::new);
+            config = defaults != null ? defaults : new BuildConfig();
         }
 
         setKojiHubURL(config);
@@ -100,7 +99,7 @@ public class ConfigProvider {
             }
         } else if (config.getKojiWebURL() == null && config.getKojiHubURL() != null) {
             // XXX: hack for missing koji.web.url
-            var s = config.getKojiHubURL().toExternalForm().replace("hub.", "web.").replace("hub", "");
+            String s = config.getKojiHubURL().toExternalForm().replace("hub.", "web.").replace("hub", "");
 
             try {
                 URL kojiWebURL = new URL(s);

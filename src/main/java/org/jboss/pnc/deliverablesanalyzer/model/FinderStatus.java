@@ -72,7 +72,7 @@ public class FinderStatus implements DistributionAnalyzerListener, BuildFinderLi
             doneInt = totalInt;
         }
 
-        var percent = (int) (((double) doneInt / (double) totalInt) * 100.0D);
+        int percent = (int) (((double) doneInt / (double) totalInt) * 100.0D);
 
         LOGGER.debug("Progress: {} / {} = {}%", doneInt, totalInt, percent);
 

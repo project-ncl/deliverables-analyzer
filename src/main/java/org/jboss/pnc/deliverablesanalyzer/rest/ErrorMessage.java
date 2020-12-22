@@ -64,16 +64,14 @@ public class ErrorMessage {
             causeStackTrace.addAll(
                     Arrays.stream(exception.getCause().getStackTrace())
                             .map(StackTraceElement::toString)
-                            .collect(Collectors.toUnmodifiableList()));
+                            .collect(Collectors.toList()));
         }
 
         message = exception.getMessage();
         reason = status.getReasonPhrase();
         code = status.getStatusCode();
         stackTrace.addAll(
-                Arrays.stream(exception.getStackTrace())
-                        .map(StackTraceElement::toString)
-                        .collect(Collectors.toUnmodifiableList()));
+                Arrays.stream(exception.getStackTrace()).map(StackTraceElement::toString).collect(Collectors.toList()));
     }
 
     @JsonIgnore
