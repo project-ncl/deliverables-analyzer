@@ -1,0 +1,23 @@
+{
+  "archive-extensions" : [ "dll", "dylib", "ear", "jar", "jdocbook", "jdocbook-style", "kar", "plugin", "pom", "rar", "sar", "so", "war", "xml" ],
+  "archive-types" : [ "jar", "xml", "pom", "so", "dll", "dylib" ],
+  "build-systems" : [ "pnc", "koji" ],
+  "cache-lifespan" : 3600000,
+  "cache-max-idle" : 3600000,
+  "checksum-only" : false,
+  "checksum-type" : [ "sha1", "sha256", "md5" ],
+  "disable-cache" : true,
+  "disable-recursion" : false,
+  "excludes" : [ "^(?!.*/pom\\.xml$).*/.*\\.xml$" ],
+  "koji-hub-url" : "http://localhost:8084",
+  "koji-multicall-size" : 8,
+  "koji-num-threads" : 12,
+  "koji-web-url" : "http://localhost:88888",
+  "output-directory" : ".",
+  "pnc-connection-timeout" : -1,
+  "pnc-partition-size" : 18,
+  "pnc-read-timeout" : -1,
+  "pnc-url" : "http://localhost:8083",
+  "use-builds-file" : false,
+  "use-checksums-file" : false
+}
