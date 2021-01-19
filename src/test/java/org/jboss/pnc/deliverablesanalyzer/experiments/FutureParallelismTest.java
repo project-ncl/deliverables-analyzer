@@ -40,6 +40,9 @@ import com.redhat.red.build.koji.KojiClientException;
 
 import io.quarkus.test.junit.QuarkusTest;
 
+/**
+ * @author Jakub Bartecek
+ */
 @QuarkusTest
 @Disabled
 public class FutureParallelismTest {

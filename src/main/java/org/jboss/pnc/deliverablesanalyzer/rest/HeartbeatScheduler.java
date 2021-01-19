@@ -15,9 +15,8 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -41,14 +40,14 @@ public class HeartbeatScheduler {
     @Inject
     HttpClient httpClient;
 
-    private Map<String, Request> subscribedRequests = new HashMap<>();
+    private Map<String, Request> subscribedRequests = new ConcurrentHashMap<>();
 
     @Scheduled(every = "{heartbeatPeriod}")
     void performHeartbeats() {
         subscribedRequests.forEach((k, v) -> {
             try {
                 httpClient.performHttpRequest(v);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOGGER.warn("Heartbeat failed with an exception!", e);
             }
         });

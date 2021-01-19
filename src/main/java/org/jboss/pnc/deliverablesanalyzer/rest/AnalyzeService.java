@@ -15,10 +15,9 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
-import java.util.List;
-
 import javax.annotation.security.PermitAll;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -34,14 +33,14 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.deliverablesanalyzer.model.AnalyzePayload;
 
-@Path("analyze")
+@Path("/analyze")
 public interface AnalyzeService {
     @Operation(summary = "Cancels a running analysis", description = "Cancels a running analysis identified by an ID")
     @APIResponse(responseCode = "200", description = "Analysis was cancelled successfully.")
     @APIResponse(
-            responseCode = "400",
+            responseCode = "404",
             description = "No running analysis with the provided ID was not found.",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
@@ -85,27 +84,12 @@ public interface AnalyzeService {
     @PermitAll
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    Response analyze(
-            @NotEmpty @Parameter(
-                    name = "urls",
-                    description = "List of URLs to deliverables to analyze",
-                    schema = @Schema(type = SchemaType.OBJECT),
-                    required = true,
-                    style = ParameterStyle.SIMPLE) List<String> urls,
-            @Parameter(
-                    name = "config",
-                    description = "Optional configuration of the analyzer in JSON format",
-                    schema = @Schema(type = SchemaType.STRING),
-                    style = ParameterStyle.SIMPLE) String config,
-            @NotEmpty @Parameter(
-                    name = "callback",
-                    description = "Callback will be be performed once the analysis is finished",
-                    schema = @Schema(type = SchemaType.OBJECT),
-                    required = true,
-                    style = ParameterStyle.SIMPLE) Request callback,
-            @Parameter(
-                    name = "heartbeat",
-                    description = "If specified a heartbeat will be initiated in regular intervals",
-                    schema = @Schema(type = SchemaType.OBJECT),
-                    style = ParameterStyle.SIMPLE) Request heartbeat);
+    Response analyze(@NotNull @Parameter(
+                            name = "analyzePayload",
+                            description = "Starts an analysis of all the deliverables and performs a callback once the analysis is finished. "
+                                + "If heartbeat is specified an HTTP hearbeat will be issued to signal running operation."
+                                + "The analysis can be cancelled using the cancel endpoint and the analysis ID, which is returned by this endpoint."
+                                + "Users can specify an alternate config for the BuildFinder, which is used as the analysis engine internally."
+                                + "The callback is an object AnalysisResult as a JSON.",
+                            schema = @Schema(type = SchemaType.OBJECT)) AnalyzePayload analyzePayload);
 }
