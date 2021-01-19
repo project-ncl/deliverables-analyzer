@@ -21,8 +21,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 
 import javax.inject.Inject;
@@ -55,8 +55,8 @@ public class AnalyzeResourceTestAbstract {
     @Inject
     AnalyzeResource analyzeResource;
 
-    protected AnalyzeResourceTestAbstract() throws MalformedURLException {
-        callbackRequest = new Request("POST", new URL(callbackUrl));
+    protected AnalyzeResourceTestAbstract() throws URISyntaxException {
+        callbackRequest = new Request("POST", new URI(callbackUrl));
     }
 
     protected String stubThreeArtsZip(int delayMilis) {

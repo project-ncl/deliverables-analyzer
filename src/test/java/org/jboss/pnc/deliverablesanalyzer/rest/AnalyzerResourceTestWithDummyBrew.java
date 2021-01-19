@@ -27,6 +27,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -84,7 +85,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
         wiremock.resetAll();
     }
 
-    public AnalyzerResourceTestWithDummyBrew() throws MalformedURLException {
+    public AnalyzerResourceTestWithDummyBrew() throws URISyntaxException {
     }
 
     @Test

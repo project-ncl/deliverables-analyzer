@@ -84,12 +84,17 @@ public interface AnalyzeService {
     @PermitAll
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    Response analyze(@NotNull @Parameter(
-                            name = "analyzePayload",
-                            description = "Starts an analysis of all the deliverables and performs a callback once the analysis is finished. "
-                                + "If heartbeat is specified an HTTP hearbeat will be issued to signal running operation."
-                                + "The analysis can be cancelled using the cancel endpoint and the analysis ID, which is returned by this endpoint."
-                                + "Users can specify an alternate config for the BuildFinder, which is used as the analysis engine internally."
-                                + "The callback is an object AnalysisResult as a JSON.",
-                            schema = @Schema(type = SchemaType.OBJECT)) AnalyzePayload analyzePayload);
+    Response analyze(
+            @NotNull @Parameter(
+                    name = "analyzePayload",
+                    description = "Starts an analysis of all the deliverables and performs "
+                            + "a callback once the analysis is finished. "
+                            + "If heartbeat is specified an HTTP hearbeat will be issued "
+                            + "to signal running operation."
+                            + "The analysis can be cancelled using the cancel endpoint and the analysis ID, "
+                            + "which is returned by this endpoint."
+                            + "Users can specify an alternate config for the BuildFinder, which is used "
+                            + "as the analysis engine internally."
+                            + "The callback is an object AnalysisResult as a JSON.",
+                    schema = @Schema(type = SchemaType.OBJECT)) AnalyzePayload analyzePayload);
 }

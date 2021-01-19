@@ -30,14 +30,13 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.jboss.pnc.api.deliverablesanalyzer.api.AnalyzeService;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisResult;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.Finder;
 import org.jboss.pnc.deliverablesanalyzer.StatusCache;
+import org.jboss.pnc.deliverablesanalyzer.model.AnalysisResult;
+import org.jboss.pnc.deliverablesanalyzer.model.AnalyzePayload;
+import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -25,7 +25,7 @@ import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzePayload;
@@ -62,7 +62,7 @@ public class AnalyzeResourceTestWithMockedBrew extends AnalyzeResourceTestAbstra
         wiremock.resetAll();
     }
 
-    public AnalyzeResourceTestWithMockedBrew() throws MalformedURLException {
+    public AnalyzeResourceTestWithMockedBrew() throws URISyntaxException {
     }
 
     @Test

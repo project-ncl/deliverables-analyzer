@@ -26,8 +26,8 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.inject.Inject;
 import javax.ws.rs.ProcessingException;
@@ -77,7 +77,7 @@ public class HttpClientTest {
         // given
         String relativePath = "/testSimplePerformHttpRequest";
         String fullUrl = "http://localhost:8082" + relativePath;
-        Request request = new Request("GET", new URL(fullUrl));
+        Request request = new Request("GET", new URI(fullUrl));
         wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(200)));
 
         // when
@@ -88,11 +88,11 @@ public class HttpClientTest {
     }
 
     @Test
-    public void testSimplePerformHttpRequestFailsafe() throws MalformedURLException {
+    public void testSimplePerformHttpRequestFailsafe() throws URISyntaxException {
         // given
         String relativePath = "/testSimplePerformHttpRequest";
         String fullUrl = "http://localhost:8082" + relativePath;
-        Request request = new Request("GET", new URL(fullUrl + "anything"));
+        Request request = new Request("GET", new URI(fullUrl + "anything"));
         wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(200)));
 
         // when - then
@@ -102,10 +102,10 @@ public class HttpClientTest {
     }
 
     @Test
-    public void testSimplePerformHttpRequestConnectionRefusedFailsafe() throws MalformedURLException {
+    public void testSimplePerformHttpRequestConnectionRefusedFailsafe() throws URISyntaxException {
         // given
         String fullUrl = "http://localhost:80000/";
-        Request request = new Request("GET", new URL(fullUrl + "anything"));
+        Request request = new Request("GET", new URI(fullUrl + "anything"));
 
         // when - then
         assertThrows(ProcessingException.class, () -> {
@@ -119,7 +119,7 @@ public class HttpClientTest {
         String relativePath = "/testAdvancedPerformHttpRequest";
         String fullUrl = "http://localhost:8082" + relativePath;
 
-        Request request = new Request("POST", new URL(fullUrl));
+        Request request = new Request("POST", new URI(fullUrl));
 
         wiremock.stubFor(post(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(200)));
 

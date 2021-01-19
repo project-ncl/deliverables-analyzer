@@ -21,7 +21,6 @@ import java.util.Set;
 
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.HttpMethod;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -113,32 +112,29 @@ public class HttpClient {
     }
 
     private Response invokeHttpRequest(Request request, Entity<?> entity) throws IOException, ProcessingException {
-        WebTarget target = client.target(request.getUrl().toString());
+        WebTarget target = client.target(request.getUri().toString());
         Invocation.Builder requestBuilder = target.request().headers(headersToMap(request.getHeaders()));
 
-        switch (request.getMethod().toUpperCase()) {
-            case HttpMethod.GET:
+        switch (request.getMethod()) {
+            case GET:
                 return requestBuilder.get();
 
-            case HttpMethod.POST:
+            case POST:
                 if (entity == null) {
                     throw new InvalidParameterException("No entity provided for POST method!");
                 }
                 return requestBuilder.post(entity);
 
-            case HttpMethod.PUT:
+            case PUT:
                 if (entity == null) {
                     throw new InvalidParameterException("No entity provided for PUT method!");
                 }
                 return requestBuilder.put(entity);
 
-            case HttpMethod.DELETE:
+            case DELETE:
                 return requestBuilder.delete();
 
-            case HttpMethod.OPTIONS:
-                return requestBuilder.options();
-
-            case HttpMethod.HEAD:
+            case HEAD:
                 return requestBuilder.head();
 
             default:
