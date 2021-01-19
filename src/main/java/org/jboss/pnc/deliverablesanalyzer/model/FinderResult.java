@@ -311,4 +311,10 @@ public class FinderResult {
 
         return Collections.unmodifiableList(kojiBuildList);
     }
+
+    @Override
+    public String toString() {
+        return "FinderResult{" + "id='" + id + '\'' + ", url=" + url + ", builds=" + builds + ", notFoundArtifacts="
+                + notFoundArtifacts + ", statistics=" + statistics + '}';
+    }
 }

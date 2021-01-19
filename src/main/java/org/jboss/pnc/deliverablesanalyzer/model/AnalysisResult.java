@@ -44,4 +44,21 @@ public class AnalysisResult {
         success = false;
         this.errorCause = errorCause;
     }
+
+    public List<FinderResult> getResults() {
+        return results;
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public Throwable getErrorCause() {
+        return errorCause;
+    }
+
+    @Override
+    public String toString() {
+        return "AnalysisResult{" + "results=" + results + ", success=" + success + ", errorCause=" + errorCause + '}';
+    }
 }
