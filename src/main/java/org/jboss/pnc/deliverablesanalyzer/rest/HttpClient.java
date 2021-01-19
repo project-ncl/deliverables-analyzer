@@ -22,6 +22,7 @@ import java.util.Set;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.HttpMethod;
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -65,15 +66,18 @@ public class HttpClient {
      * IOException is thrown
      *
      * @param request Request details
-     * @throws IOException Thrown in case of the request failure
+     * @throws Exception Thrown in case of the request failure
      */
-    public void performHttpRequest(Request request) throws IOException {
+    public void performHttpRequest(Request request) throws Exception {
         LOGGER.debug("Performing HTTP request with these parameters: {}", request);
 
         Response response = null;
         try {
             response = invokeHttpRequest(request, null);
             validateResponse(response);
+        } catch (ProcessingException | IOException e) {
+            LOGGER.debug("HTTP request failed!", e);
+            throw e;
         } finally {
             if (response != null) {
                 response.close();
@@ -86,17 +90,21 @@ public class HttpClient {
      * endpoint responds with 200, otherwise IOException is thrown
      *
      * @param request Request details
-     * @param payload Payload to be converted to JSON
+     * @param payload Serializable object to be converted to JSON
      * @throws IOException Thrown in case of the request failure
      */
-    public void performHttpRequest(Request request, Object payload) throws IOException {
+    public void performHttpRequest(Request request, Object payload) throws Exception {
         LOGGER.debug("Performing HTTP request with these parameters: {}", request);
 
         Response response = null;
         try {
-            Entity<String> entity = Entity.json(objectMapper.writeValueAsString(payload));
+            String json = objectMapper.writeValueAsString(payload);
+            Entity<String> entity = Entity.json(json);
             response = invokeHttpRequest(request, entity);
             validateResponse(response);
+        } catch (ProcessingException | IOException e) {
+            LOGGER.debug("HTTP request failed!", e);
+            throw e;
         } finally {
             if (response != null) {
                 response.close();
@@ -104,7 +112,7 @@ public class HttpClient {
         }
     }
 
-    private Response invokeHttpRequest(Request request, Entity<?> entity) throws IOException {
+    private Response invokeHttpRequest(Request request, Entity<?> entity) throws IOException, ProcessingException {
         WebTarget target = client.target(request.getUrl().toString());
         Invocation.Builder requestBuilder = target.request().headers(headersToMap(request.getHeaders()));
 
