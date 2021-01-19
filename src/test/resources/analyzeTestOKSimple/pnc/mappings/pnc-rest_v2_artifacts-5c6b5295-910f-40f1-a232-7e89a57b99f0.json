@@ -1,0 +1,19 @@
+{
+  "id" : "5c6b5295-910f-40f1-a232-7e89a57b99f0",
+  "name" : "pnc-rest_v2_artifacts",
+  "request" : {
+    "url" : "/pnc-rest/v2/artifacts?pageSize=18&pageIndex=0&md5=fc97e71a3abc5b7876fc87f3d3be0988",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{\"pageIndex\":0,\"pageSize\":18,\"totalPages\":1,\"totalHits\":1,\"content\":[{\"id\":\"3018205\",\"identifier\":\"org.twitter4j:twitter4j-core:pom:4.0.7.redhat-00002\",\"artifactQuality\":\"NEW\",\"md5\":\"fc97e71a3abc5b7876fc87f3d3be0988\",\"sha1\":\"d61cf42f7e2d2e68fe6c20edde8d8e0e5841cccf\",\"sha256\":\"6b30db33e0003be8e5cc033188fcd6a9b0acceb198ac73db3594f1ff972d3c71\",\"filename\":\"twitter4j-core-4.0.7.redhat-00002.pom\",\"deployPath\":\"/org/twitter4j/twitter4j-core/4.0.7.redhat-00002/twitter4j-core-4.0.7.redhat-00002.pom\",\"importDate\":null,\"originUrl\":null,\"size\":10096,\"deployUrl\":\"http://indy.local/api/content/maven/hosted/pnc-builds/org/twitter4j/twitter4j-core/4.0.7.redhat-00002/twitter4j-core-4.0.7.redhat-00002.pom\",\"publicUrl\":\"http://indy.indy/api/content/maven/hosted/pnc-builds/org/twitter4j/twitter4j-core/4.0.7.redhat-00002/twitter4j-core-4.0.7.redhat-00002.pom\",\"creationTime\":null,\"modificationTime\":null,\"qualityLevelReason\":null,\"targetRepository\":{\"id\":\"3550\",\"temporaryRepo\":false,\"identifier\":\"indy-maven\",\"repositoryType\":\"MAVEN\",\"repositoryPath\":\"/api/content/maven/hosted/pnc-builds/\"},\"build\":{\"id\":\"40358\",\"submitTime\":\"2020-01-22T21:46:59.463Z\",\"startTime\":\"2020-01-22T21:46:59.466Z\",\"endTime\":\"2020-01-22T21:50:35.949Z\",\"progress\":\"FINISHED\",\"status\":\"SUCCESS\",\"buildContentId\":\"build-40358\",\"temporaryBuild\":false,\"scmUrl\":\"http://code.code/gerrit/Twitter4J/Twitter4J.git\",\"scmRevision\":\"206f8c61ef7eae0f163f256399532d98a1faa5e4\",\"scmTag\":\"4.0.7.redhat-00002\",\"buildOutputChecksum\":null,\"project\":{\"id\":\"579\",\"name\":\"twitter4j\",\"description\":null,\"issueTrackerUrl\":null,\"projectUrl\":null,\"engineeringTeam\":null,\"technicalLeader\":null},\"scmRepository\":{\"id\":\"640\",\"internalUrl\":\"git+ssh://code.engineering.redhat.com/Twitter4J/Twitter4J.git\",\"externalUrl\":\"https://github.com/Twitter4J/Twitter4J\",\"preBuildSyncEnabled\":true},\"environment\":{\"id\":\"11\",\"name\":\"OpenJDK 1.8; Mvn 3.5.4; Golang; Nodejs 6; npm 3\",\"description\":\"OpenJDK 1.8; Mvn 3.5.4; Golang; Nodejs 6; npm 3 [builder-rhel-7-j8-mvn3.5.4-golang-nodejs6-npm3:1.0.0]\",\"systemImageRepositoryUrl\":\"quay.io/rh-newcastle\",\"systemImageId\":\"builder-rhel-7-j8-mvn3.5.4-golang-nodejs6-npm3:1.0.0\",\"attributes\":{\"JDK\":\"1.8.0\",\"MAVEN\":\"3.5.4\",\"NPM\":\"3\",\"OS\":\"Linux\"},\"systemImageType\":\"DOCKER_IMAGE\",\"deprecated\":true,\"hidden\":false},\"attributes\":{\"BREW_BUILD_VERSION\":\"4.0.7.redhat-00002\",\"BREW_BUILD_NAME\":\"org.twitter4j:twitter4j\"},\"user\":{\"id\":\"2\",\"username\":\"dcheung\"},\"buildConfigRevision\":{\"id\":\"1874\",\"rev\":21948,\"name\":\"twitter4j\",\"buildScript\":\"mvn clean deploy -DskipTests\",\"scmRevision\":\"4.0.7\",\"creationTime\":\"2019-07-26T20:44:25.999Z\",\"modificationTime\":\"2020-01-21T08:44:51.722Z\",\"buildType\":\"MVN\",\"defaultAlignmentParams\":\"-DdependencySource=REST -DrepoRemovalBackup=repositories-backup.xml -DversionSuffixStrip= -DreportNonAligned=true\"},\"productMilestone\":null,\"groupBuild\":null,\"noRebuildCause\":null},\"creationUser\":null,\"modificationUser\":null}]}",
+    "headers" : {
+      "Date" : "Tue, 19 Jan 2021 09:59:54 GMT",
+      "Content-Type" : "application/json"
+    }
+  },
+  "uuid" : "5c6b5295-910f-40f1-a232-7e89a57b99f0",
+  "persistent" : true,
+  "insertionIndex" : 3
+}

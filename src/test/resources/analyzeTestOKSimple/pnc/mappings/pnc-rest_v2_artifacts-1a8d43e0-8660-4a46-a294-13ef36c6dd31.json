@@ -1,0 +1,22 @@
+{
+  "id" : "1a8d43e0-8660-4a46-a294-13ef36c6dd31",
+  "name" : "pnc-rest_v2_artifacts",
+  "request" : {
+    "url" : "/pnc-rest/v2/artifacts?pageSize=18&pageIndex=0&md5=2b2ae0cf8ef48e7cad31f75552e7b695",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{\"pageIndex\":0,\"pageSize\":18,\"totalPages\":0,\"totalHits\":0,\"content\":[]}",
+    "headers" : {
+      "Date" : "Tue, 19 Jan 2021 09:59:54 GMT",
+      "Content-Type" : "application/json"
+    }
+  },
+  "uuid" : "1a8d43e0-8660-4a46-a294-13ef36c6dd31",
+  "persistent" : true,
+  "scenarioName" : "scenario-4-pnc-rest-v2-artifacts",
+  "requiredScenarioState" : "Started",
+  "newScenarioState" : "scenario-4-pnc-rest-v2-artifacts-2",
+  "insertionIndex" : 8
+}

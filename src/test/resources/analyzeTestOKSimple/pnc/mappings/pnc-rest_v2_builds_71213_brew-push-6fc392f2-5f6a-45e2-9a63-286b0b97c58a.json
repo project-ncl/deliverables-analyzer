@@ -1,0 +1,19 @@
+{
+  "id" : "6fc392f2-5f6a-45e2-9a63-286b0b97c58a",
+  "name" : "pnc-rest_v2_builds_71213_brew-push",
+  "request" : {
+    "url" : "/pnc-rest/v2/builds/71213/brew-push",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 404,
+    "headers" : {
+      "Date" : "Tue, 19 Jan 2021 09:59:55 GMT",
+      "Set-Cookie" : "21cf32ae94efba0270d49e77db35fe3f=4d7bafea7cd940af6d13c973b8aa3928; path=/; HttpOnly",
+      "Cache-control" : "private"
+    }
+  },
+  "uuid" : "6fc392f2-5f6a-45e2-9a63-286b0b97c58a",
+  "persistent" : true,
+  "insertionIndex" : 13
+}

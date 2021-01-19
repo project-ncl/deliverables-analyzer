@@ -1,0 +1,21 @@
+{
+  "id" : "e50c7e37-cb4f-4698-af37-cf092a1dbbf3",
+  "name" : "pnc-rest_v2_product-milestones_896",
+  "request" : {
+    "url" : "/pnc-rest/v2/product-milestones/896",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{\"id\":\"896\",\"version\":\"7.9.0.CR1\",\"endDate\":null,\"startingDate\":\"2020-09-27T00:00:00Z\",\"plannedEndDate\":\"2020-09-28T00:00:00Z\",\"productVersion\":{\"id\":\"213\",\"version\":\"7.9\",\"attributes\":{\"BREW_TAG_PREFIX\":\"rhba-7.9-pnc\"}},\"productRelease\":null}",
+    "headers" : {
+      "Date" : "Tue, 19 Jan 2021 09:59:54 GMT",
+      "Content-Type" : "application/json",
+      "Set-Cookie" : "21cf32ae94efba0270d49e77db35fe3f=4d7bafea7cd940af6d13c973b8aa3928; path=/; HttpOnly",
+      "Cache-control" : "private"
+    }
+  },
+  "uuid" : "e50c7e37-cb4f-4698-af37-cf092a1dbbf3",
+  "persistent" : true,
+  "insertionIndex" : 11
+}

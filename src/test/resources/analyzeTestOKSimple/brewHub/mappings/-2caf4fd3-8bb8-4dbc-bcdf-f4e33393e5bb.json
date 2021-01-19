@@ -1,0 +1,24 @@
+{
+  "id" : "2caf4fd3-8bb8-4dbc-bcdf-f4e33393e5bb",
+  "name" : "",
+  "request" : {
+    "url" : "/",
+    "method" : "POST",
+    "bodyPatterns" : [ {
+      "equalToXml" : "<?xml version=\"1.0\" ?><methodCall><methodName>multiCall</methodName><params><param><value><array><data><value><struct><member><name>methodName</name><value><string>listTags</string></value></member><member><name>params</name><value><array><data><value><int>937531</int></value></data></array></value></member></struct></value></data></array></value></param></params></methodCall>"
+    } ]
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "<?xml version='1.0'?>\n<methodResponse>\n<params>\n<param>\n<value><array><data>\n<value><array><data>\n<value><array><data>\n</data></array></value>\n</data></array></value>\n</data></array></value>\n</param>\n</params>\n</methodResponse>\n",
+    "headers" : {
+      "Date" : "Tue, 19 Jan 2021 10:08:04 GMT",
+      "Server" : "Apache/2.4.37 (Red Hat Enterprise Linux) OpenSSL/1.1.1c mod_auth_gssapi/1.6.1 mod_fcgid/2.3.9 mod_wsgi/4.6.4 Python/3.6",
+      "Keep-Alive" : "timeout=5, max=100",
+      "Content-Type" : "text/xml"
+    }
+  },
+  "uuid" : "2caf4fd3-8bb8-4dbc-bcdf-f4e33393e5bb",
+  "persistent" : true,
+  "insertionIndex" : 7
+}

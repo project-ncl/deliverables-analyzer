@@ -1,0 +1,24 @@
+{
+  "id" : "4bc3a938-d01f-4204-8cea-3782951f2982",
+  "name" : "",
+  "request" : {
+    "url" : "/",
+    "method" : "POST",
+    "bodyPatterns" : [ {
+      "equalToXml" : "<?xml version=\"1.0\" ?><methodCall><methodName>multiCall</methodName><params><param><value><array><data><value><struct><member><name>methodName</name><value><string>getBuild</string></value></member><member><name>params</name><value><array><data><value><int>937531</int></value></data></array></value></member></struct></value></data></array></value></param></params></methodCall>"
+    } ]
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "<?xml version='1.0'?>\n<methodResponse>\n<params>\n<param>\n<value><array><data>\n<value><array><data>\n<value><struct>\n<member>\n<name>build_id</name>\n<value><int>937531</int></value>\n</member>\n<member>\n<name>cg_id</name>\n<value><nil/></value></member>\n<member>\n<name>completion_time</name>\n<value><string>2019-07-25 11:40:00.042566</string></value>\n</member>\n<member>\n<name>completion_ts</name>\n<value><double>1564054800.04257</double></value>\n</member>\n<member>\n<name>creation_event_id</name>\n<value><int>25695774</int></value>\n</member>\n<member>\n<name>creation_time</name>\n<value><string>2019-07-25 11:39:58.739626</string></value>\n</member>\n<member>\n<name>creation_ts</name>\n<value><double>1564054798.73963</double></value>\n</member>\n<member>\n<name>epoch</name>\n<value><nil/></value></member>\n<member>\n<name>extra</name>\n<value><nil/></value></member>\n<member>\n<name>id</name>\n<value><int>937531</int></value>\n</member>\n<member>\n<name>name</name>\n<value><string>org.uberfire-uberfire-parent</string></value>\n</member>\n<member>\n<name>nvr</name>\n<value><string>org.uberfire-uberfire-parent-2.20.0.Final_redhat_00003-1</string></value>\n</member>\n<member>\n<name>owner_id</name>\n<value><int>4890</int></value>\n</member>\n<member>\n<name>owner_name</name>\n<value><string>almorale</string></value>\n</member>\n<member>\n<name>package_id</name>\n<value><int>63744</int></value>\n</member>\n<member>\n<name>package_name</name>\n<value><string>org.uberfire-uberfire-parent</string></value>\n</member>\n<member>\n<name>release</name>\n<value><string>1</string></value>\n</member>\n<member>\n<name>source</name>\n<value><nil/></value></member>\n<member>\n<name>start_time</name>\n<value><string>2019-07-25 11:39:58.739626</string></value>\n</member>\n<member>\n<name>start_ts</name>\n<value><double>1564054798.73963</double></value>\n</member>\n<member>\n<name>state</name>\n<value><int>2</int></value>\n</member>\n<member>\n<name>task_id</name>\n<value><int>22779259</int></value>\n</member>\n<member>\n<name>version</name>\n<value><string>2.20.0.Final_redhat_00003</string></value>\n</member>\n<member>\n<name>volume_id</name>\n<value><int>0</int></value>\n</member>\n<member>\n<name>volume_name</name>\n<value><string>DEFAULT</string></value>\n</member>\n<member>\n<name>cg_name</name>\n<value><nil/></value></member>\n</struct></value>\n</data></array></value>\n</data></array></value>\n</param>\n</params>\n</methodResponse>\n",
+    "headers" : {
+      "Date" : "Tue, 19 Jan 2021 10:08:03 GMT",
+      "Server" : "Apache/2.4.37 (Red Hat Enterprise Linux) OpenSSL/1.1.1c mod_auth_gssapi/1.6.1 mod_fcgid/2.3.9 mod_wsgi/4.6.4 Python/3.6",
+      "Keep-Alive" : "timeout=5, max=96",
+      "Content-Type" : "text/xml"
+    }
+  },
+  "uuid" : "4bc3a938-d01f-4204-8cea-3782951f2982",
+  "persistent" : true,
+  "insertionIndex" : 5
+}

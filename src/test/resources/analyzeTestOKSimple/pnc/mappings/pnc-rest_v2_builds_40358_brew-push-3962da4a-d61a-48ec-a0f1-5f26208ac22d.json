@@ -1,0 +1,19 @@
+{
+  "id" : "3962da4a-d61a-48ec-a0f1-5f26208ac22d",
+  "name" : "pnc-rest_v2_builds_40358_brew-push",
+  "request" : {
+    "url" : "/pnc-rest/v2/builds/40358/brew-push",
+    "method" : "GET"
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "{\"id\":\"4879\",\"buildId\":\"40358\",\"status\":\"SUCCESS\",\"brewBuildId\":1109499,\"brewBuildUrl\":\"https://brewweb.engineering.redhat.com/brew/buildinfo?buildID=1109499\",\"logContext\":\"4879\",\"message\":null,\"productMilestoneCloseResult\":null}",
+    "headers" : {
+      "Date" : "Tue, 19 Jan 2021 09:59:56 GMT",
+      "Content-Type" : "application/json"
+    }
+  },
+  "uuid" : "3962da4a-d61a-48ec-a0f1-5f26208ac22d",
+  "persistent" : true,
+  "insertionIndex" : 14
+}

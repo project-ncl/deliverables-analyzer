@@ -1,0 +1,24 @@
+{
+  "id" : "9ca31624-7207-43db-8127-024182773d5b",
+  "name" : "",
+  "request" : {
+    "url" : "/",
+    "method" : "POST",
+    "bodyPatterns" : [ {
+      "equalToXml" : "<?xml version=\"1.0\" ?><methodCall><methodName>getAPIVersion</methodName><params></params></methodCall>"
+    } ]
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "<?xml version='1.0'?>\n<methodResponse>\n<params>\n<param>\n<value><int>1</int></value>\n</param>\n</params>\n</methodResponse>\n",
+    "headers" : {
+      "Date" : "Tue, 19 Jan 2021 10:07:56 GMT",
+      "Server" : "Apache/2.4.37 (Red Hat Enterprise Linux) OpenSSL/1.1.1c mod_auth_gssapi/1.6.1 mod_fcgid/2.3.9 mod_wsgi/4.6.4 Python/3.6",
+      "Keep-Alive" : "timeout=5, max=100",
+      "Content-Type" : "text/xml"
+    }
+  },
+  "uuid" : "9ca31624-7207-43db-8127-024182773d5b",
+  "persistent" : true,
+  "insertionIndex" : 1
+}

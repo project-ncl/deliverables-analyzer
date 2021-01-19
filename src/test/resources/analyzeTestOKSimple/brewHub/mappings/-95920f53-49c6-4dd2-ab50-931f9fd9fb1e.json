@@ -1,0 +1,24 @@
+{
+  "id" : "95920f53-49c6-4dd2-ab50-931f9fd9fb1e",
+  "name" : "",
+  "request" : {
+    "url" : "/",
+    "method" : "POST",
+    "bodyPatterns" : [ {
+      "equalToXml" : "<?xml version=\"1.0\" ?><methodCall><methodName>multiCall</methodName><params><param><value><array><data><value><struct><member><name>methodName</name><value><string>getMavenArchive</string></value></member><member><name>params</name><value><array><data><value><int>3204302</int></value></data></array></value></member></struct></value><value><struct><member><name>methodName</name><value><string>getMavenArchive</string></value></member><member><name>params</name><value><array><data><value><int>3204618</int></value></data></array></value></member></struct></value></data></array></value></param></params></methodCall>"
+    } ]
+  },
+  "response" : {
+    "status" : 200,
+    "body" : "<?xml version='1.0'?>\n<methodResponse>\n<params>\n<param>\n<value><array><data>\n<value><array><data>\n<value><struct>\n<member>\n<name>archive_id</name>\n<value><int>3204302</int></value>\n</member>\n<member>\n<name>group_id</name>\n<value><string>org.uberfire</string></value>\n</member>\n<member>\n<name>artifact_id</name>\n<value><string>uberfire-parent</string></value>\n</member>\n<member>\n<name>version</name>\n<value><string>2.20.0.Final-redhat-00003</string></value>\n</member>\n</struct></value>\n</data></array></value>\n<value><array><data>\n<value><struct>\n<member>\n<name>archive_id</name>\n<value><int>3204618</int></value>\n</member>\n<member>\n<name>group_id</name>\n<value><string>org.uberfire</string></value>\n</member>\n<member>\n<name>artifact_id</name>\n<value><string>uberfire-parent</string></value>\n</member>\n<member>\n<name>version</name>\n<value><string>2.20.0.Final-redhat-00003</string></value>\n</member>\n</struct></value>\n</data></array></value>\n</data></array></value>\n</param>\n</params>\n</methodResponse>\n",
+    "headers" : {
+      "Date" : "Tue, 19 Jan 2021 10:08:10 GMT",
+      "Server" : "Apache/2.4.37 (Red Hat Enterprise Linux) OpenSSL/1.1.1c mod_auth_gssapi/1.6.1 mod_fcgid/2.3.9 mod_wsgi/4.6.4 Python/3.6",
+      "Keep-Alive" : "timeout=5, max=99",
+      "Content-Type" : "text/xml"
+    }
+  },
+  "uuid" : "95920f53-49c6-4dd2-ab50-931f9fd9fb1e",
+  "persistent" : true,
+  "insertionIndex" : 10
+}
