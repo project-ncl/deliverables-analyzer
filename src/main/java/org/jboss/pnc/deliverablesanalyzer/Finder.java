@@ -20,11 +20,11 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -46,8 +46,8 @@ import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzerListener;
 import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
-import org.jboss.pnc.build.finder.pnc.client.HashMapCachingPncClient;
 import org.jboss.pnc.build.finder.pnc.client.PncClient;
+import org.jboss.pnc.build.finder.pnc.client.PncClientImpl;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ public class Finder {
 
     private DefaultCacheManager cacheManager;
 
-    private Map<String, CancelWrapper> runningOperations = new HashMap<>();
+    private Map<String, CancelWrapper> runningOperations = new ConcurrentHashMap<>();
 
     @Inject
     ManagedExecutor executor;
@@ -121,6 +121,8 @@ public class Finder {
             DistributionAnalyzerListener distributionAnalyzerListener,
             BuildFinderListener buildFinderListener,
             BuildConfig config) throws CancellationException, Throwable {
+        CancelWrapper cancelWrapper = new CancelWrapper();
+        runningOperations.put(id, cancelWrapper);
 
         List<Future<FinderResult>> submittedTasks = urls.stream().map(url -> executor.submit(() -> {
             LOGGER.debug("Analysis of URL " + url + " started.");
@@ -138,17 +140,16 @@ public class Finder {
             }
         })).collect(Collectors.toList());
 
-        CancelWrapper cancelWrapper = new CancelWrapper();
-        runningOperations.put(id, cancelWrapper);
-
         try {
             return awaitResults(submittedTasks, cancelWrapper);
         } catch (CancellationException e) {
-            LOGGER.info("Analysis " + id + " was cancelled", e);
+            LOGGER.debug("Analysis " + id + " was cancelled", e);
             throw e;
         } catch (ExecutionException e) {
-            LOGGER.info("Analysis " + id + " failed due to ", e);
+            LOGGER.debug("Analysis " + id + " failed due to ", e);
             throw e.getCause();
+        } finally {
+            runningOperations.remove(id);
         }
     }
 
@@ -236,7 +237,7 @@ public class Finder {
 
         URL pncURL = config.getPncURL();
 
-        try (PncClient pncClient = pncURL != null ? new HashMapCachingPncClient(config) : null) {
+        try (PncClient pncClient = pncURL != null ? new PncClientImpl(config) : null) {
             BuildFinder buildFinder;
 
             if (pncClient == null) {

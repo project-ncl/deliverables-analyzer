@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.KojiClientException;
 
+import io.quarkus.arc.DefaultBean;
+
 /**
  *
  * @author jbrazdil
@@ -40,7 +42,10 @@ public class KojiProvider {
     BuildConfig config;
 
     @Produces
+    @DefaultBean
     public ClientSession createSession() throws KojiClientException {
+        LOGGER.info("Using default Koji ClientSession");
+
         URL kojiHubURL = config.getKojiHubURL();
         if (kojiHubURL == null) {
             throw new KojiClientException("Koji hub URL is not set");
