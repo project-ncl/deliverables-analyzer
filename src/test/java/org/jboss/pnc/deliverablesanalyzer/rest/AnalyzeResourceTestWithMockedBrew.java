@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import org.jboss.pnc.deliverablesanalyzer.model.AnalyzePayload;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
