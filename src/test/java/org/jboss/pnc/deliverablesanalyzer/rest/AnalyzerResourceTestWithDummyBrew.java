@@ -26,9 +26,8 @@ import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +38,7 @@ import javax.enterprise.inject.Produces;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzePayload;
+import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +48,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.redhat.red.build.koji.KojiClientException;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveQuery;
@@ -89,7 +90,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
     }
 
     @Test
-    public void cancelTestSuccessful() throws InterruptedException {
+    public void cancelTestSuccessful() throws InterruptedException, JsonProcessingException {
         // Start analysis
         Response response = given()
                 .body(new AnalyzePayload(List.of(stubThreeArtsZip(1500)), null, callbackRequest, null))
@@ -98,12 +99,16 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
                 .post(analyzeUrl)
                 .thenReturn();
         assertEquals(200, response.getStatusCode());
-        String id = response.getBody().asString();
+
+        LOGGER.warn("AnalyzeResponse: " + response.getBody().asString());
+
+        AnalyzeResponse analyzeResponse = getAnalyzeResponse(response.getBody().asString());
+        LOGGER.warn("AnalyzeResponse: " + analyzeResponse);
 
         Thread.sleep(1000);
 
         // Cancel the running analysis
-        given().when().post("/api/analyze/" + id + "/cancel").then().statusCode(200);
+        given().when().post(analyzeResponse.getCancelRequest().getUri()).then().statusCode(200);
     }
 
     @Test
@@ -114,11 +119,11 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
     @Disabled // FIXME - disabled as it causes the tests to run infinitely. The tests passes, but the scheduler doesn't
               // finish.
     @Test
-    public void analyzeTestHeartBeat() throws InterruptedException, MalformedURLException {
+    public void analyzeTestHeartBeat() throws InterruptedException, JsonProcessingException, URISyntaxException {
         // given
         // Setup handler for heartbeat
         String heartbeatPath = "/heartbeat";
-        Request heartbeatRequest = new Request("GET", new URL(baseUrl + heartbeatPath));
+        Request heartbeatRequest = new Request("GET", new URI(baseUrl + heartbeatPath));
         wiremock.stubFor(get(urlEqualTo(heartbeatPath)).willReturn(aResponse().withStatus(200)));
 
         // when
@@ -130,7 +135,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
                 .post(analyzeUrl)
                 .thenReturn();
         assertEquals(200, response.getStatusCode());
-        String id = response.getBody().asString();
+        String id = getAnalysisId(response.getBody().asString());
 
         // then
         verifyCallback(() -> wiremock.verify(1, getRequestedFor(urlEqualTo(heartbeatPath))));
@@ -142,7 +147,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
     }
 
     @Test
-    public void analyzeTestMalformedUrlDirect() throws InterruptedException {
+    public void analyzeTestMalformedUrlDirect() throws InterruptedException, URISyntaxException {
         // given
         wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(200)));
 

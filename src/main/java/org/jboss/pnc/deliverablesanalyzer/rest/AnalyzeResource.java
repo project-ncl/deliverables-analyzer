@@ -16,6 +16,8 @@
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
@@ -36,6 +38,7 @@ import org.jboss.pnc.deliverablesanalyzer.Finder;
 import org.jboss.pnc.deliverablesanalyzer.StatusCache;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalysisResult;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzePayload;
+import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderStatus;
 import org.slf4j.Logger;
@@ -77,7 +80,7 @@ public class AnalyzeResource implements AnalyzeService {
     }
 
     @Override
-    public Response analyze(AnalyzePayload analyzePayload) {
+    public Response analyze(AnalyzePayload analyzePayload) throws URISyntaxException {
         List<String> urls = analyzePayload.getUrls();
         LOGGER.info(
                 "Analysis request accepted: [urls: {}, config: {}, callback: {}, heartbeat: {}",
@@ -122,10 +125,15 @@ public class AnalyzeResource implements AnalyzeService {
             LOGGER.info("Analysis with ID {} was successfully finished and callback was performed.", id);
         });
 
-        return Response.ok().type(MediaType.TEXT_PLAIN_TYPE).entity(id).build();
+        return Response.ok().type(MediaType.APPLICATION_JSON).entity(createAnalyzeResponse(id)).build();
     }
 
-    private boolean performCallback(Request callback, AnalysisResult result) {
+    private AnalyzeResponse createAnalyzeResponse(String id) throws URISyntaxException {
+        String cancelUrl = uriInfo.getAbsolutePath() + "/" + id + "/cancel";
+        return new AnalyzeResponse(id, new Request(Request.Method.POST, new URI(cancelUrl)));
+    }
+
+    private boolean performCallback(org.jboss.pnc.api.dto.Request callback, AnalysisResult result) {
         try {
             httpClient.performHttpRequest(callback, result);
             return true;

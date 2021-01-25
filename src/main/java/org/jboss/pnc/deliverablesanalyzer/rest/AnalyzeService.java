@@ -15,6 +15,8 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
+import java.net.URISyntaxException;
+
 import javax.annotation.security.PermitAll;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -34,6 +36,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzePayload;
+import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
 
 @Path("/analyze")
 public interface AnalyzeService {
@@ -67,7 +70,14 @@ public interface AnalyzeService {
             description = "Analyze a list of deliverables and perform a callback when the analysis is finished. "
                     + "During the analysis a regular hearth beat callback is performed if the parameter is specified."
                     + "The endpoint returns a String ID, which can be used to cancel the operation.")
-    @APIResponse(responseCode = "200", description = "Request accepted.")
+    @APIResponse(
+            responseCode = "200",
+            description = "Request accepted.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = AnalyzeResponse.class)
+
+            ))
     @APIResponse(
             responseCode = "400",
             description = "Bad request parameters.",
@@ -83,7 +93,7 @@ public interface AnalyzeService {
     @POST
     @PermitAll
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     Response analyze(
             @NotNull @Parameter(
                     name = "analyzePayload",
@@ -96,5 +106,6 @@ public interface AnalyzeService {
                             + "Users can specify an alternate config for the BuildFinder, which is used "
                             + "as the analysis engine internally."
                             + "The callback is an object AnalysisResult as a JSON.",
-                    schema = @Schema(type = SchemaType.OBJECT)) AnalyzePayload analyzePayload);
+                    schema = @Schema(type = SchemaType.OBJECT)) AnalyzePayload analyzePayload)
+            throws URISyntaxException;
 }

@@ -28,9 +28,12 @@ import java.util.Date;
 import javax.inject.Inject;
 
 import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.VerificationException;
 
@@ -78,5 +81,14 @@ public class AnalyzeResourceTestAbstract {
         }
 
         fail("Expected callback was not delivered!");
+    }
+
+    protected String getAnalysisId(String response) throws JsonProcessingException {
+        return getAnalyzeResponse(response).getId();
+    }
+
+    protected AnalyzeResponse getAnalyzeResponse(String response) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(response, AnalyzeResponse.class);
     }
 }

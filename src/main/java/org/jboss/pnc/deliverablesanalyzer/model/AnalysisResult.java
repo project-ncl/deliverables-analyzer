@@ -15,6 +15,7 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -24,7 +25,7 @@ import java.util.List;
  *
  * @author Jakub Bartecek &lt;jbartece@redhat.com&gt;
  */
-public class AnalysisResult {
+public class AnalysisResult implements Serializable {
 
     /** Results of the analysis (if analysis was successful) */
     List<FinderResult> results;

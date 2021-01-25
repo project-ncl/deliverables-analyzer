@@ -15,11 +15,12 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.jboss.pnc.api.dto.Request;
 
-public class AnalyzePayload {
+public class AnalyzePayload implements Serializable {
     private List<String> urls;
 
     private String config;
