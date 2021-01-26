@@ -19,7 +19,6 @@ import javax.inject.Singleton;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 import io.quarkus.jackson.ObjectMapperCustomizer;
 

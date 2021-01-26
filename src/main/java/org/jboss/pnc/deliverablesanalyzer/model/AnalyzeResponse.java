@@ -19,8 +19,6 @@ import java.io.Serializable;
 
 import org.jboss.pnc.api.dto.Request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 /**
  * Response object of a started analysis
  */
