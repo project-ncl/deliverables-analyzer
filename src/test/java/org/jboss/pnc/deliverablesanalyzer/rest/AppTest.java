@@ -16,66 +16,30 @@
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import static io.restassured.RestAssured.given;
-import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyOrNullString;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.time.Duration;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.http.params.CoreConnectionPNames;
 import org.jboss.pnc.deliverablesanalyzer.Version;
-import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
-import io.restassured.config.HttpClientConfig;
-import io.restassured.config.ObjectMapperConfig;
-import io.restassured.config.RestAssuredConfig;
 
 @QuarkusTest
 class AppTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppTest.class);
 
-    private static final String URL = System.getProperty("distribution.url");
-
-    private static final int TIMEOUT = 60000;
-
-    private static final long TIMEOUT_MINUTES = 15L;
-
-    private static final long POLL_INTERVAL_SECONDS = 30L;
-
     @BeforeAll
     static void init() {
-        assertNotNull(URL, "You must set property distribution.url");
-
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-
-        RestAssured.config = RestAssuredConfig.config()
-                .httpClient(
-                        HttpClientConfig.httpClientConfig()
-                                .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, TIMEOUT)
-                                .setParam(CoreConnectionPNames.SO_TIMEOUT, TIMEOUT))
-                .objectMapperConfig(
-                        new ObjectMapperConfig().jackson2ObjectMapperFactory(
-                                (cls, charset) -> new ObjectMapper().findAndRegisterModules()
-                                        .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
-                                        .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)));
     }
 
     @Test
@@ -98,46 +62,5 @@ class AppTest {
                 .asString();
 
         LOGGER.info("Version: {}", version);
-    }
-
-    @Test
-    void testCreated() {
-        String location = given().log()
-                .all()
-                .redirects()
-                .follow(false)
-                .accept(MediaType.TEXT_PLAIN)
-                .formParam("url", URL)
-                .when()
-                .post("/api/analyze")
-                .then()
-                .log()
-                .all()
-                .assertThat()
-                .statusCode(Response.Status.CREATED.getStatusCode())
-                .extract()
-                .header("Location");
-
-        assertThat(location, is(not(emptyOrNullString())));
-
-        await().atMost(Duration.ofMinutes(TIMEOUT_MINUTES))
-                .pollInterval(Duration.ofSeconds(POLL_INTERVAL_SECONDS))
-                .untilAsserted(
-                        () -> RestAssured.when().get(location).then().statusCode(Response.Status.OK.getStatusCode()));
-
-        given().log()
-                .all()
-                .accept(MediaType.APPLICATION_JSON)
-                .when()
-                .get(location)
-                .then()
-                .log()
-                .all()
-                .assertThat()
-                .statusCode(Response.Status.OK.getStatusCode())
-                .body("builds.size()", is(greaterThan(0)))
-                .extract()
-                .response()
-                .as(FinderResult.class);
     }
 }
