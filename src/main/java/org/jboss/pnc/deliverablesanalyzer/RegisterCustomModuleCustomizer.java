@@ -27,7 +27,6 @@ import io.quarkus.jackson.ObjectMapperCustomizer;
 public class RegisterCustomModuleCustomizer implements ObjectMapperCustomizer {
     @Override
     public void customize(ObjectMapper objectMapper) {
-        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
     }
 }

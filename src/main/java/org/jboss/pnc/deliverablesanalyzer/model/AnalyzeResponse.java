@@ -34,7 +34,6 @@ public class AnalyzeResponse implements Serializable {
     /**
      * Request definition to cancel this running analysis
      */
-    @JsonProperty("cancelRequest")
     private Request cancelRequest;
 
     public AnalyzeResponse(String id, Request cancelRequest) {
