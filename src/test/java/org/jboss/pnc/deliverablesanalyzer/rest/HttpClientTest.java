@@ -23,6 +23,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static org.jboss.pnc.api.dto.Request.Method.GET;
+import static org.jboss.pnc.api.dto.Request.Method.POST;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
@@ -51,11 +54,12 @@ import io.quarkus.test.junit.QuarkusTest;
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class HttpClientTest {
-
     @Inject
     HttpClient httpClient;
 
-    private WireMockServer wiremock = new WireMockServer(options().port(8082));
+    protected static final int PORT = 8082;
+
+    private WireMockServer wiremock = new WireMockServer(options().port(PORT));
 
     @BeforeAll
     public void beforeAll() {
@@ -76,9 +80,9 @@ public class HttpClientTest {
     public void testSimplePerformHttpRequest() throws Exception {
         // given
         String relativePath = "/testSimplePerformHttpRequest";
-        String fullUrl = "http://localhost:8082" + relativePath;
-        Request request = new Request("GET", new URI(fullUrl));
-        wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(200)));
+        String fullUrl = "http://localhost:" + PORT + relativePath;
+        Request request = new Request(GET, new URI(fullUrl));
+        wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // when
         httpClient.performHttpRequest(request);
@@ -91,9 +95,9 @@ public class HttpClientTest {
     public void testSimplePerformHttpRequestFailsafe() throws URISyntaxException {
         // given
         String relativePath = "/testSimplePerformHttpRequest";
-        String fullUrl = "http://localhost:8082" + relativePath;
-        Request request = new Request("GET", new URI(fullUrl + "anything"));
-        wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(200)));
+        String fullUrl = "http://localhost:" + PORT + relativePath;
+        Request request = new Request(GET, new URI(fullUrl + "anything"));
+        wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // when - then
         assertThrows(IOException.class, () -> {
@@ -105,7 +109,7 @@ public class HttpClientTest {
     public void testSimplePerformHttpRequestConnectionRefusedFailsafe() throws URISyntaxException {
         // given
         String fullUrl = "http://localhost:80000/";
-        Request request = new Request("GET", new URI(fullUrl + "anything"));
+        Request request = new Request(GET, new URI(fullUrl + "anything"));
 
         // when - then
         assertThrows(ProcessingException.class, () -> {
@@ -117,11 +121,11 @@ public class HttpClientTest {
     public void testAdvancedPerformHttpRequest() throws Exception {
         // given
         String relativePath = "/testAdvancedPerformHttpRequest";
-        String fullUrl = "http://localhost:8082" + relativePath;
+        String fullUrl = "http://localhost:" + PORT + relativePath;
 
-        Request request = new Request("POST", new URI(fullUrl));
+        Request request = new Request(POST, new URI(fullUrl));
 
-        wiremock.stubFor(post(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(200)));
+        wiremock.stubFor(post(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // when
         httpClient.performHttpRequest(request, new TestPayload(1, "str"));

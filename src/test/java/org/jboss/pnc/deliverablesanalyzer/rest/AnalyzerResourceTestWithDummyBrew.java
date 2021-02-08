@@ -23,7 +23,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.restassured.RestAssured.given;
+import static java.net.HttpURLConnection.HTTP_OK;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.jboss.pnc.api.dto.Request.Method.GET;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.URI;
@@ -123,8 +125,8 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
         // given
         // Setup handler for heartbeat
         String heartbeatPath = "/heartbeat";
-        Request heartbeatRequest = new Request("GET", new URI(baseUrl + heartbeatPath));
-        wiremock.stubFor(get(urlEqualTo(heartbeatPath)).willReturn(aResponse().withStatus(200)));
+        Request heartbeatRequest = new Request(GET, new URI(baseUrl + heartbeatPath));
+        wiremock.stubFor(get(urlEqualTo(heartbeatPath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // when
         // Start analysis
@@ -149,7 +151,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
     @Test
     public void analyzeTestMalformedUrlDirect() throws InterruptedException, URISyntaxException {
         // given
-        wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(200)));
+        wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // when
         analyzeResource.analyze(new AnalyzePayload(List.of("xxyy:/malformedUrl.zip"), null, callbackRequest, null));
@@ -164,7 +166,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
 
     @Test
     public void analyzeTestMalformedUrlRest() throws InterruptedException {
-        wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(200)));
+        wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         Response response = given()
                 .body(new AnalyzePayload(List.of("xxyy:/malformedUrl.zip"), null, callbackRequest, null))

@@ -19,6 +19,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static org.jboss.pnc.api.dto.Request.Method.POST;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.URI;
@@ -41,13 +43,15 @@ import com.github.tomakehurst.wiremock.client.VerificationException;
  * @author Jakub Bartecek
  */
 public class AnalyzeResourceTestAbstract {
+    protected static final int PORT = 8082;
+
     protected static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeResourceTestAbstract.class);
 
-    protected final WireMockServer wiremock = new WireMockServer(options().port(8082));
+    protected final WireMockServer wiremock = new WireMockServer(options().port(PORT));
 
     protected final String callbackRelativePath = "/callback";
 
-    protected final String baseUrl = "http://localhost:8082";
+    protected final String baseUrl = "http://localhost:" + PORT;
 
     protected final String callbackUrl = baseUrl + callbackRelativePath;
 
@@ -59,13 +63,13 @@ public class AnalyzeResourceTestAbstract {
     AnalyzeResource analyzeResource;
 
     protected AnalyzeResourceTestAbstract() throws URISyntaxException {
-        callbackRequest = new Request("POST", new URI(callbackUrl));
+        callbackRequest = new Request(POST, new URI(callbackUrl));
     }
 
     protected String stubThreeArtsZip(int delayMilis) {
         wiremock.stubFor(
                 any(urlEqualTo("/threeArts.zip")).willReturn(
-                        aResponse().withFixedDelay(delayMilis).withBodyFile("threeArts.zip").withStatus(200)));
+                        aResponse().withFixedDelay(delayMilis).withBodyFile("threeArts.zip").withStatus(HTTP_OK)));
         return baseUrl + "/threeArts.zip";
     }
 
