@@ -44,6 +44,7 @@ import org.jboss.pnc.build.finder.core.BuildSystemInteger;
 import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzer;
 import org.jboss.pnc.build.finder.core.DistributionAnalyzerListener;
+import org.jboss.pnc.build.finder.core.LocalFile;
 import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.pnc.client.PncClient;
@@ -82,7 +83,7 @@ public class Finder {
 
     @PostConstruct
     public void init() {
-        if (!config.getDisableCache()) {
+        if (Boolean.FALSE.equals(config.getDisableCache())) {
             cacheManager = cacheProvider.get();
             LOGGER.info("Initialized cache {}", cacheManager.getName());
         } else {
@@ -120,12 +121,13 @@ public class Finder {
             List<String> urls,
             DistributionAnalyzerListener distributionAnalyzerListener,
             BuildFinderListener buildFinderListener,
-            BuildConfig config) throws CancellationException, Throwable {
+            BuildConfig config) throws Throwable {
         CancelWrapper cancelWrapper = new CancelWrapper();
         runningOperations.put(id, cancelWrapper);
 
         List<Future<FinderResult>> submittedTasks = urls.stream().map(url -> executor.submit(() -> {
-            LOGGER.debug("Analysis of URL " + url + " started.");
+            LOGGER.debug("Analysis of URL {} started.", url);
+
             try {
                 FinderResult result = find(
                         id,
@@ -133,7 +135,9 @@ public class Finder {
                         distributionAnalyzerListener,
                         buildFinderListener,
                         config);
-                LOGGER.debug("Analysis of URL " + url + " finished.");
+
+                LOGGER.debug("Analysis of URL {} finished.", url);
+
                 return result;
             } catch (KojiClientException | MalformedURLException e) {
                 throw new ExecutionException(e);
@@ -143,10 +147,10 @@ public class Finder {
         try {
             return awaitResults(submittedTasks, cancelWrapper);
         } catch (CancellationException e) {
-            LOGGER.debug("Analysis " + id + " was cancelled", e);
+            LOGGER.debug("Analysis {} was cancelled", id, e);
             throw e;
         } catch (ExecutionException e) {
-            LOGGER.debug("Analysis " + id + " failed due to ", e);
+            LOGGER.debug("Analysis {} failed due to ", id, e);
             throw e.getCause();
         } finally {
             runningOperations.remove(id);
@@ -165,6 +169,7 @@ public class Finder {
             while (it.hasNext()) {
                 try {
                     Future<FinderResult> futureTask = it.next();
+
                     if (futureTask.isDone()) {
                         it.remove();
                         results.add(futureTask.get());
@@ -176,6 +181,7 @@ public class Finder {
                     LOGGER.warn("Sleeping while awaiting results was interrupted", e);
                 }
             }
+
             it = submittedTasks.iterator();
 
             if (cancelWrapper.isCancelled()) {
@@ -208,7 +214,7 @@ public class Finder {
         DistributionAnalyzer analyzer = new DistributionAnalyzer(files, config, cacheManager);
         analyzer.setListener(distributionAnalyzerListener);
 
-        Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum = pool.submit(analyzer);
+        Future<Map<ChecksumType, MultiValuedMap<String, LocalFile>>> futureChecksum = pool.submit(analyzer);
         result = findBuilds(id, url, analyzer, futureChecksum, buildFinderListener);
 
         LOGGER.info("Done finding builds for {}", url);
@@ -232,7 +238,7 @@ public class Finder {
             String id,
             URL url,
             DistributionAnalyzer analyzer,
-            Future<Map<ChecksumType, MultiValuedMap<String, String>>> futureChecksum,
+            Future<Map<ChecksumType, MultiValuedMap<String, LocalFile>>> futureChecksum,
             BuildFinderListener buildFinderListener) throws KojiClientException {
 
         URL pncURL = config.getPncURL();
@@ -253,7 +259,7 @@ public class Finder {
             Future<Map<BuildSystemInteger, KojiBuild>> futureBuilds = pool.submit(buildFinder);
 
             try {
-                Map<ChecksumType, MultiValuedMap<String, String>> checksums = futureChecksum.get();
+                Map<ChecksumType, MultiValuedMap<String, LocalFile>> checksums = futureChecksum.get();
                 Map<BuildSystemInteger, KojiBuild> builds = futureBuilds.get();
 
                 if (LOGGER.isInfoEnabled()) {
