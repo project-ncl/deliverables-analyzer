@@ -17,7 +17,7 @@ package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import java.io.IOException;
 import java.security.InvalidParameterException;
-import java.util.Set;
+import java.util.Collection;
 
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
@@ -47,9 +47,9 @@ public class HttpClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpClient.class);
 
-    private Client client;
+    private final Client client;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public HttpClient() {
         client = ClientBuilder.newBuilder().build();
@@ -70,17 +70,11 @@ public class HttpClient {
     public void performHttpRequest(Request request) throws Exception {
         LOGGER.debug("Performing HTTP request with these parameters: {}", request);
 
-        Response response = null;
-        try {
-            response = invokeHttpRequest(request, null);
+        try (Response response = invokeHttpRequest(request, null)) {
             validateResponse(response);
         } catch (ProcessingException | IOException e) {
             LOGGER.debug("HTTP request failed!", e);
             throw e;
-        } finally {
-            if (response != null) {
-                response.close();
-            }
         }
     }
 
@@ -96,6 +90,7 @@ public class HttpClient {
         LOGGER.debug("Performing HTTP request with these parameters: {}", request);
 
         Response response = null;
+
         try {
             String json = objectMapper.writeValueAsString(payload);
             Entity<String> entity = Entity.json(json);
@@ -118,25 +113,21 @@ public class HttpClient {
         switch (request.getMethod()) {
             case GET:
                 return requestBuilder.get();
-
             case POST:
                 if (entity == null) {
                     throw new InvalidParameterException("No entity provided for POST method!");
                 }
                 return requestBuilder.post(entity);
-
             case PUT:
                 if (entity == null) {
                     throw new InvalidParameterException("No entity provided for PUT method!");
                 }
-                return requestBuilder.put(entity);
 
+                return requestBuilder.put(entity);
             case DELETE:
                 return requestBuilder.delete();
-
             case HEAD:
                 return requestBuilder.head();
-
             default:
                 String failureMsg = String.format("Unsupported HTTP method provided: %s", request.getMethod());
                 LOGGER.warn(failureMsg);
@@ -164,7 +155,7 @@ public class HttpClient {
         }
     }
 
-    private MultivaluedMap<String, Object> headersToMap(Set<Request.Header> headers) {
+    private MultivaluedMap<String, Object> headersToMap(Collection<Request.Header> headers) {
         MultivaluedMap<String, Object> map = new MultivaluedMapImpl<>();
         headers.forEach(h -> map.add(h.getName(), h.getValue()));
         return map;
