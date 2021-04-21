@@ -62,7 +62,7 @@
     <skipITs>true</skipITs>
     <version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>4.0.0</version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>
     <version.com.github.eirslett>1.9.1</version.com.github.eirslett>
-    <version.com.github.ekryd.sortpom>2.15.0</version.com.github.ekryd.sortpom>
+    <version.com.github.ekryd.sortpom>3.0.0</version.com.github.ekryd.sortpom>
     <version.com.github.spotbugs>4.2.3</version.com.github.spotbugs>
     <version.com.github.tomakehurs-wiremock-jre8>2.27.2</version.com.github.tomakehurs-wiremock-jre8>
     <version.com.mycila>4.0</version.com.mycila>
