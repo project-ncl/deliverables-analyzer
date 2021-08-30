@@ -32,14 +32,14 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.microprofile.context.ManagedExecutor;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.Finder;
 import org.jboss.pnc.deliverablesanalyzer.StatusCache;
-import org.jboss.pnc.deliverablesanalyzer.model.AnalysisResult;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
-import org.jboss.pnc.deliverablesanalyzer.model.FinderResult;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,21 +100,21 @@ public class AnalyzeResource implements AnalyzeService {
 
         executor.runAsync(() -> {
             LOGGER.info("Analysis with ID {} was initiated. Starting analysis of these URLs: {}", id, urls);
-            AnalysisResult analysisResult = null;
+            AnalysisReport analysisReport = null;
             try {
                 List<FinderResult> finderResults = finder.find(id, urls, status, status, specificConfig);
-                analysisResult = new AnalysisResult(finderResults);
-                LOGGER.debug("Analysis finished successfully. Analysis results: {}", analysisResult);
+                analysisReport = new AnalysisReport(finderResults);
+                LOGGER.debug("Analysis finished successfully. Analysis results: {}", analysisReport);
             } catch (CancellationException ce) {
                 // The task was cancelled => don't send results using callback
                 LOGGER.info("Analysis with ID {} was cancelled. No callback will be performed. Exception: {}", id, ce);
             } catch (Throwable e) {
-                analysisResult = new AnalysisResult(e);
+                analysisReport = new AnalysisReport(e);
                 LOGGER.warn("Analysis with ID {} failed due to {}", id, e);
             }
 
-            if (analysisResult != null) {
-                if (!performCallback(analyzePayload.getCallback(), analysisResult)) {
+            if (analysisReport != null) {
+                if (!performCallback(analyzePayload.getCallback(), analysisReport)) {
                     heartbeatScheduler.unsubscribeRequest(id);
                     LOGGER.info("Analysis with ID {} was finished, but callback couldn't be performed!", id);
                     return;
@@ -133,7 +133,7 @@ public class AnalyzeResource implements AnalyzeService {
         return new AnalyzeResponse(id, new Request(Request.Method.POST, new URI(cancelUrl)));
     }
 
-    private boolean performCallback(org.jboss.pnc.api.dto.Request callback, AnalysisResult result) {
+    private boolean performCallback(org.jboss.pnc.api.dto.Request callback, AnalysisReport result) {
         try {
             httpClient.performHttpRequest(callback, result);
             return true;

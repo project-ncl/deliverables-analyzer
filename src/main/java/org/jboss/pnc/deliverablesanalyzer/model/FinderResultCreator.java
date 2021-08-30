@@ -26,17 +26,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import javax.validation.ConstraintViolationException;
 import javax.ws.rs.BadRequestException;
 
 import org.jboss.pnc.api.deliverablesanalyzer.dto.Artifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.Build;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact;
-import org.jboss.pnc.build.finder.core.BuildStatistics;
 import org.jboss.pnc.build.finder.core.BuildSystem;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
 import org.jboss.pnc.build.finder.core.Checksum;
@@ -47,58 +45,19 @@ import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 
-public class FinderResult {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FinderResult.class);
+public final class FinderResultCreator {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FinderResultCreator.class);
 
-    @NotEmpty
-    private String id;
-
-    private URL url;
-
-    @NotNull
-    @Valid
-    private final Set<Build> builds;
-
-    @NotNull
-    @Valid
-    private final Set<Artifact> notFoundArtifacts;
-
-    @NotNull
-    @Valid
-    private final BuildStatistics statistics;
-
-    public FinderResult() {
-        this.builds = Collections.emptySet();
-        this.notFoundArtifacts = Collections.emptySet();
-        this.statistics = new BuildStatistics(Collections.emptyList());
+    private FinderResultCreator() {
     }
 
-    public FinderResult(String id, URL url, Map<BuildSystemInteger, KojiBuild> builds) {
-        this.id = id;
-        this.url = url;
-        this.builds = getFoundBuilds(builds);
-        this.notFoundArtifacts = getNotFoundArtifacts(builds);
-        this.statistics = new BuildStatistics(getBuildsAsList(builds));
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public URL getUrl() {
-        return url;
-    }
-
-    public Set<Build> getBuilds() {
-        return Collections.unmodifiableSet(builds);
-    }
-
-    public Set<Artifact> getNotFoundArtifacts() {
-        return Collections.unmodifiableSet(notFoundArtifacts);
-    }
-
-    public BuildStatistics getStatistics() {
-        return statistics;
+    public static FinderResult createFinderResult(String id, URL url, Map<BuildSystemInteger, KojiBuild> builds) {
+        return FinderResult.builder()
+                .id(id)
+                .url(url)
+                .notFoundArtifacts(getNotFoundArtifacts(builds))
+                .builds(getFoundBuilds(builds))
+                .build();
     }
 
     private static void setCommonArtifactFields(Artifact.ArtifactBuilder builder, KojiLocalArchive archive) {
@@ -323,9 +282,4 @@ public class FinderResult {
         return Collections.unmodifiableList(kojiBuildList);
     }
 
-    @Override
-    public String toString() {
-        return "FinderResult{" + "id='" + id + '\'' + ", url=" + url + ", builds=" + builds + ", notFoundArtifacts="
-                + notFoundArtifacts + ", statistics=" + statistics + '}';
-    }
 }
