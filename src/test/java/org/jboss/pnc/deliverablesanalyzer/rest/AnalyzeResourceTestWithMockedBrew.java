@@ -82,7 +82,7 @@ public class AnalyzeResourceTestWithMockedBrew extends AnalyzeResourceTestAbstra
         brewHub.start();
 
         // when
-        Response response = given().body(new AnalyzePayload(List.of(stubThreeArtsZip(1)), null, callbackRequest, null))
+        Response response = given().body(new AnalyzePayload("1234", List.of(stubThreeArtsZip(1)), null, callbackRequest, null))
                 .contentType(APPLICATION_JSON)
                 .when()
                 .post(analyzeUrl)

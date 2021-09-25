@@ -30,7 +30,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
@@ -83,14 +82,15 @@ public class AnalyzeResource implements AnalyzeService {
     public Response analyze(AnalyzePayload analyzePayload) throws URISyntaxException {
         List<String> urls = analyzePayload.getUrls();
         LOGGER.info(
-                "Analysis request accepted: [urls: {}, config: {}, callback: {}, heartbeat: {}",
+                "Analysis request accepted: [urls: {}, config: {}, callback: {}, heartbeat: {}, operationId: {}]",
                 analyzePayload.getUrls(),
                 analyzePayload.getConfig(),
                 analyzePayload.getCallback(),
-                analyzePayload.getHeartbeat());
+                analyzePayload.getHeartbeat(),
+                analyzePayload.getOperationId());
         BuildConfig specificConfig = validateInputsLoadConfig(urls, analyzePayload.getConfig());
 
-        String id = DigestUtils.sha256Hex(urls.get(0));
+        String id = analyzePayload.getOperationId();
         FinderStatus status = new FinderStatus();
         statuses.putIfAbsent(id, status);
 
