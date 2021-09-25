@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.validation.ConstraintViolationException;
 import javax.ws.rs.BadRequestException;
 
 import org.jboss.pnc.api.deliverablesanalyzer.dto.Artifact;

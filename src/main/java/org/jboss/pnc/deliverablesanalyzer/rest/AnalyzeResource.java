@@ -30,7 +30,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
@@ -83,49 +82,63 @@ public class AnalyzeResource implements AnalyzeService {
     public Response analyze(AnalyzePayload analyzePayload) throws URISyntaxException {
         List<String> urls = analyzePayload.getUrls();
         LOGGER.info(
-                "Analysis request accepted: [urls: {}, config: {}, callback: {}, heartbeat: {}",
+                "Analysis request accepted: [urls: {}, config: {}, callback: {}, heartbeat: {}, operationId: {}]",
                 analyzePayload.getUrls(),
                 analyzePayload.getConfig(),
                 analyzePayload.getCallback(),
-                analyzePayload.getHeartbeat());
+                analyzePayload.getHeartbeat(),
+                analyzePayload.getOperationId());
         BuildConfig specificConfig = validateInputsLoadConfig(urls, analyzePayload.getConfig());
 
-        String id = DigestUtils.sha256Hex(urls.get(0));
         FinderStatus status = new FinderStatus();
-        statuses.putIfAbsent(id, status);
+        statuses.putIfAbsent(analyzePayload.getOperationId(), status);
 
         if (analyzePayload.getHeartbeat() != null) {
-            heartbeatScheduler.subscribeRequest(id, analyzePayload.getHeartbeat());
+            heartbeatScheduler.subscribeRequest(analyzePayload.getOperationId(), analyzePayload.getHeartbeat());
         }
 
         executor.runAsync(() -> {
-            LOGGER.info("Analysis with ID {} was initiated. Starting analysis of these URLs: {}", id, urls);
+            LOGGER.info(
+                    "Analysis with ID {} was initiated. Starting analysis of these URLs: {}",
+                    analyzePayload.getOperationId(),
+                    urls);
             AnalysisReport analysisReport = null;
             try {
-                List<FinderResult> finderResults = finder.find(id, urls, status, status, specificConfig);
+                List<FinderResult> finderResults = finder
+                        .find(analyzePayload.getOperationId(), urls, status, status, specificConfig);
                 analysisReport = new AnalysisReport(finderResults);
                 LOGGER.debug("Analysis finished successfully. Analysis results: {}", analysisReport);
             } catch (CancellationException ce) {
                 // The task was cancelled => don't send results using callback
-                LOGGER.info("Analysis with ID {} was cancelled. No callback will be performed. Exception: {}", id, ce);
+                LOGGER.info(
+                        "Analysis with ID {} was cancelled. No callback will be performed. Exception: {}",
+                        analyzePayload.getOperationId(),
+                        ce);
             } catch (Throwable e) {
                 analysisReport = new AnalysisReport(e);
-                LOGGER.warn("Analysis with ID {} failed due to {}", id, e);
+                LOGGER.warn("Analysis with ID {} failed due to {}", analyzePayload.getOperationId(), e);
             }
 
             if (analysisReport != null) {
                 if (!performCallback(analyzePayload.getCallback(), analysisReport)) {
-                    heartbeatScheduler.unsubscribeRequest(id);
-                    LOGGER.info("Analysis with ID {} was finished, but callback couldn't be performed!", id);
+                    heartbeatScheduler.unsubscribeRequest(analyzePayload.getOperationId());
+                    LOGGER.info(
+                            "Analysis with ID {} was finished, but callback couldn't be performed!",
+                            analyzePayload.getOperationId());
                     return;
                 }
             }
 
-            heartbeatScheduler.unsubscribeRequest(id);
-            LOGGER.info("Analysis with ID {} was successfully finished and callback was performed.", id);
+            heartbeatScheduler.unsubscribeRequest(analyzePayload.getOperationId());
+            LOGGER.info(
+                    "Analysis with ID {} was successfully finished and callback was performed.",
+                    analyzePayload.getOperationId());
         });
 
-        return Response.ok().type(MediaType.APPLICATION_JSON).entity(createAnalyzeResponse(id)).build();
+        return Response.ok()
+                .type(MediaType.APPLICATION_JSON)
+                .entity(createAnalyzeResponse(analyzePayload.getOperationId()))
+                .build();
     }
 
     private AnalyzeResponse createAnalyzeResponse(String id) throws URISyntaxException {

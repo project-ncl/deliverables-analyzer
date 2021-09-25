@@ -37,7 +37,6 @@ import javax.inject.Provider;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.manager.DefaultCacheManager;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.BuildFinder;
