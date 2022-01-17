@@ -15,11 +15,12 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
+import static org.jboss.pnc.build.finder.core.BuildFinderUtils.isBuildIdZero;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -209,7 +210,7 @@ public final class FinderResultCreator {
         for (Map.Entry<BuildSystemInteger, KojiBuild> entry : builds.entrySet()) {
             BuildSystemInteger buildSystemInteger = entry.getKey();
 
-            if (buildSystemInteger.getValue().equals(0)) {
+            if (isBuildIdZero(buildSystemInteger.getValue())) {
                 continue;
             }
 
@@ -220,6 +221,7 @@ public final class FinderResultCreator {
             int archiveCount = 0;
 
             Set<Artifact> artifacts = new HashSet<>();
+
             for (KojiLocalArchive localArchive : localArchives) {
                 Artifact artifact = createArtifact(
                         localArchive,
@@ -242,6 +244,7 @@ public final class FinderResultCreator {
                             identifier = "Unkown#-1";
                             break;
                     }
+
                     LOGGER.info("Artifact: {} / {} ({})", archiveCount, numArchives, identifier);
                 }
             }
@@ -272,13 +275,4 @@ public final class FinderResultCreator {
 
         return Collections.unmodifiableSet(buildList);
     }
-
-    private static List<KojiBuild> getBuildsAsList(Map<BuildSystemInteger, KojiBuild> builds) {
-        List<KojiBuild> kojiBuildList = new ArrayList<>(builds.values());
-
-        kojiBuildList.sort(Comparator.comparingInt(KojiBuild::getId));
-
-        return Collections.unmodifiableList(kojiBuildList);
-    }
-
 }
