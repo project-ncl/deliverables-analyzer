@@ -66,10 +66,10 @@ public class AnalyzeResourceTestAbstract {
         callbackRequest = new Request(POST, new URI(callbackUrl));
     }
 
-    protected String stubThreeArtsZip(int delayMilis) {
+    protected String stubThreeArtsZip(int milliseconds) {
         wiremock.stubFor(
                 any(urlEqualTo("/threeArts.zip")).willReturn(
-                        aResponse().withFixedDelay(delayMilis).withBodyFile("threeArts.zip").withStatus(HTTP_OK)));
+                        aResponse().withFixedDelay(milliseconds).withBodyFile("threeArts.zip").withStatus(HTTP_OK)));
         return baseUrl + "/threeArts.zip";
     }
 

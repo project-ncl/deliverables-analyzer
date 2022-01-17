@@ -187,7 +187,7 @@ public final class FinderResultCreator {
                 builder.brewId(archiveInfo.getArchiveId().longValue());
                 break;
             default:
-                throw new IllegalArgumentException("Unknonw build system " + buildSystem);
+                throw new IllegalArgumentException("Unknown build system " + buildSystem);
         }
         builder.builtFromSource(localArchive.isBuiltFromSource() && !imported);
 
@@ -241,7 +241,7 @@ public final class FinderResultCreator {
                             identifier = "PNC#" + artifact.getPncId();
                             break;
                         default:
-                            identifier = "Unkown#-1";
+                            identifier = "Unknown#-1";
                             break;
                     }
 
@@ -263,7 +263,7 @@ public final class FinderResultCreator {
                         identifier = "PNC#" + build.getPncId();
                         break;
                     default:
-                        identifier = "Unkown#-1";
+                        identifier = "Unknown#-1";
                         break;
                 }
 

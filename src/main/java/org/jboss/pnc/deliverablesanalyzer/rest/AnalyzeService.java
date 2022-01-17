@@ -99,7 +99,7 @@ public interface AnalyzeService {
                     name = "analyzePayload",
                     description = "Starts an analysis of all the deliverables and performs "
                             + "a callback once the analysis is finished. "
-                            + "If heartbeat is specified an HTTP hearbeat will be issued "
+                            + "If heartbeat is specified an HTTP heartbeat will be issued "
                             + "to signal running operation."
                             + "The analysis can be cancelled using the cancel endpoint and the analysis ID, "
                             + "which is returned by this endpoint."

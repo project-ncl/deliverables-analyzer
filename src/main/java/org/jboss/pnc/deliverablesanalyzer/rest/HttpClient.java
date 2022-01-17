@@ -56,7 +56,7 @@ public class HttpClient {
     }
 
     @PreDestroy
-    void predestroy() {
+    void preDestroy() {
         client.close();
     }
 

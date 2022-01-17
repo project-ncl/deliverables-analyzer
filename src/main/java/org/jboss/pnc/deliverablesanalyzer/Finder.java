@@ -110,7 +110,7 @@ public class Finder {
      * @param id ID of the analysis
      * @param urls List of URLs
      * @param distributionAnalyzerListener A listener for events from DistributionAnalyzer
-     * @param buildFinderListener A listener for events from Buildfinder
+     * @param buildFinderListener A listener for events from Build Finder
      * @param config Configuration of the analysis
      * @return Results of the analysis if the whole operation was successful. Partial fail results in fail of the whole
      *         analysis.
