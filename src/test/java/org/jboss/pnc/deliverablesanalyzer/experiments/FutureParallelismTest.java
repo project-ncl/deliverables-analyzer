@@ -66,7 +66,7 @@ public class FutureParallelismTest {
                 fail("Sleep was interrupted!", e);
             }
 
-            LOGGER.info("Finishing execution " + id);
+            LOGGER.info("Finishing execution {}", id);
             return id;
         })).collect(Collectors.toList());
 
@@ -74,7 +74,7 @@ public class FutureParallelismTest {
 
         // then
         long timeAfter = new Date().getTime();
-        LOGGER.info("Time elapsed " + (timeAfter - timeBefore) + "ms");
+        LOGGER.info("Time elapsed {}ms", (timeAfter - timeBefore));
         assertTrue((timeAfter - timeBefore) < 600);
 
         int result = results.stream().reduce(0, (a, b) -> a + b);
@@ -90,7 +90,7 @@ public class FutureParallelismTest {
 
         // when
         List<Future<Integer>> submittedTasks = ids.stream().map(id -> executor.submit(() -> {
-            LOGGER.info("Execution " + id + " started.");
+            LOGGER.info("Execution {} started", id);
             try {
                 Thread.sleep(100 * id);
 
@@ -101,7 +101,7 @@ public class FutureParallelismTest {
                 fail("Sleep was interrupted!", e);
             }
 
-            LOGGER.info("Finishing execution " + id);
+            LOGGER.info("Finishing execution {}", id);
             return id;
         })).collect(Collectors.toList());
 
@@ -124,7 +124,7 @@ public class FutureParallelismTest {
 
         // when
         List<Future<Integer>> submittedTasks = ids.stream().map(id -> executor.submit(() -> {
-            LOGGER.info("Execution " + id + " started.");
+            LOGGER.info("Execution {} started", id);
             try {
                 Thread.sleep(100 * id);
             } catch (InterruptedException e) {
@@ -153,7 +153,7 @@ public class FutureParallelismTest {
             long timeAfter = new Date().getTime();
             System.out.println("Verifying cancel");
             assertTrue(e instanceof CancellationException);
-            LOGGER.info("Time elapsed " + (timeAfter - timeBefore) + "ms");
+            LOGGER.info("Time elapsed {}ms", (timeAfter - timeBefore));
             assertTrue((timeAfter - timeBefore) < 200);
         }
     }
@@ -183,7 +183,7 @@ public class FutureParallelismTest {
             it = submittedTasks.iterator();
 
             if (cancelWrapper.isCancelled()) {
-                LOGGER.info("Cancelling all remaining tasks: " + submittedTasks.size());
+                LOGGER.info("Cancelling all remaining tasks: {}", submittedTasks.size());
                 it.forEachRemaining(f -> f.cancel(true));
                 LOGGER.info("All remaining tasks were cancelled");
                 throw new CancellationException("Operation was cancelled manually");

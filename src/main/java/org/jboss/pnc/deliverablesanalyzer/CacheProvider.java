@@ -122,7 +122,7 @@ public class CacheProvider {
                 Closeable closeable = (Closeable) cacheManager;
                 closeable.close();
             } catch (IOException e) {
-                LOGGER.warn("Failed to close cache manager {}", e);
+                LOGGER.warn("Failed to close cache manager", e);
             }
         }
     }

@@ -102,10 +102,10 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
                 .thenReturn();
         assertEquals(200, response.getStatusCode());
 
-        LOGGER.warn("AnalyzeResponse: " + response.getBody().asString());
+        LOGGER.warn("AnalyzeResponse: {}", response.getBody().asString());
 
         AnalyzeResponse analyzeResponse = getAnalyzeResponse(response.getBody().asString());
-        LOGGER.warn("AnalyzeResponse: " + analyzeResponse);
+        LOGGER.warn("AnalyzeResponse: {}", analyzeResponse);
 
         Thread.sleep(1000);
 

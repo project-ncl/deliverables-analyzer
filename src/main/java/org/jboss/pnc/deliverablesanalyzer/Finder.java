@@ -160,7 +160,7 @@ public class Finder {
 
     private List<FinderResult> awaitResults(List<Future<FinderResult>> submittedTasks, CancelWrapper cancelWrapper)
             throws CancellationException, ExecutionException {
-        List<FinderResult> results = new ArrayList<>();
+        List<FinderResult> results = new ArrayList<>(submittedTasks.size());
 
         int total = submittedTasks.size();
         int done = 0;
@@ -186,7 +186,7 @@ public class Finder {
             it = submittedTasks.iterator();
 
             if (cancelWrapper.isCancelled()) {
-                LOGGER.info("Cancelling all remaining tasks: " + submittedTasks.size());
+                LOGGER.info("Cancelling all remaining tasks: {}", submittedTasks.size());
                 it.forEachRemaining(f -> f.cancel(true));
                 LOGGER.info("All remaining tasks were cancelled");
                 throw new CancellationException("Operation was cancelled manually");
