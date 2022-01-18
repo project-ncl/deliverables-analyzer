@@ -137,31 +137,31 @@ public class CacheProvider {
         LOGGER.info("Initializing {} {} cache", Version.getBrandName(), Version.getVersion());
         ensureConfigurationDirectoryExists();
 
-        Path locationPath = Paths.get(ConfigDefaults.CONFIG_PATH, "cache");
-        String location = locationPath.toAbsolutePath().toString();
+        Path cachePath = Paths.get(ConfigDefaults.CONFIG_PATH, "cache");
+        String cacheLocation = cachePath.toAbsolutePath().toString();
 
-        LOGGER.info("Cache location is: {}", location);
+        LOGGER.info("Cache location is: {}", cacheLocation);
 
-        if (!Files.exists(locationPath)) {
-            Files.createDirectory(locationPath);
+        if (!Files.exists(cachePath)) {
+            Files.createDirectory(cachePath);
         }
 
-        if (!Files.isDirectory(locationPath)) {
-            throw new IOException("Tried to set cache location to non-directory: " + locationPath);
+        if (!Files.isDirectory(cachePath)) {
+            throw new IOException("Tried to set cache location to non-directory: " + cachePath);
         }
 
-        if (!Files.isReadable(locationPath)) {
-            throw new IOException("Cache location is not readable: " + locationPath);
+        if (!Files.isReadable(cachePath)) {
+            throw new IOException("Cache location is not readable: " + cachePath);
         }
 
-        if (!Files.isWritable(locationPath)) {
-            throw new IOException("Cache location is not writable: " + locationPath);
+        if (!Files.isWritable(cachePath)) {
+            throw new IOException("Cache location is not writable: " + cachePath);
         }
 
         GlobalConfigurationChildBuilder globalConfig = new GlobalConfigurationBuilder();
 
         globalConfig.globalState()
-                .persistentLocation(location)
+                .persistentLocation(cacheLocation)
                 .serialization()
                 .addContextInitializer(new ProtobufSerializerImpl())
                 .allowList()
@@ -174,13 +174,14 @@ public class CacheProvider {
                 .wakeUpInterval(-1L)
                 .persistence()
                 .passivation(false)
-                .addSingleFileStore()
+                .addSoftIndexFileStore()
                 .segmented(true)
                 .shared(false)
                 .preload(true)
                 .fetchPersistentState(true)
                 .purgeOnStartup(false)
-                .location(location)
+                .dataLocation(cacheLocation)
+                .indexLocation(cacheLocation)
                 .build();
 
         Set<ChecksumType> checksumTypes = config.getChecksumTypes();
