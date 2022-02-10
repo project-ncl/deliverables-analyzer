@@ -109,7 +109,7 @@ public class AnalyzeResource implements AnalyzeService {
                 // The task was cancelled => don't send results using callback
                 LOGGER.info("Analysis with ID {} was cancelled. No callback will be performed. Exception: {}", id, ce);
             } catch (Throwable e) {
-                analysisReport = new AnalysisReport(e);
+                analysisReport = new AnalysisReport();
                 LOGGER.warn("Analysis with ID {} failed due to {}", id, e);
             }
 
