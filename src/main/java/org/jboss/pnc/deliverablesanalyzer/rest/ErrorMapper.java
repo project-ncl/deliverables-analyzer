@@ -20,10 +20,16 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Provider
 public class ErrorMapper implements ExceptionMapper<Exception> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ErrorMapper.class);
+
     @Override
     public Response toResponse(Exception exception) {
+        LOGGER.error("Exception while processing request. ", exception);
         ErrorMessage errorMessage = new ErrorMessage(exception);
 
         return Response.status(errorMessage.getCode()).type(MediaType.APPLICATION_JSON).entity(errorMessage).build();
