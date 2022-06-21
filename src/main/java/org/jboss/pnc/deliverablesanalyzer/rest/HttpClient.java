@@ -16,7 +16,6 @@
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import java.io.IOException;
-import java.security.InvalidParameterException;
 import java.util.Collection;
 
 import javax.annotation.PreDestroy;
@@ -114,15 +113,8 @@ public class HttpClient {
             case GET:
                 return requestBuilder.get();
             case POST:
-                if (entity == null) {
-                    throw new InvalidParameterException("No entity provided for POST method!");
-                }
                 return requestBuilder.post(entity);
             case PUT:
-                if (entity == null) {
-                    throw new InvalidParameterException("No entity provided for PUT method!");
-                }
-
                 return requestBuilder.put(entity);
             case DELETE:
                 return requestBuilder.delete();
