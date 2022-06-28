@@ -15,8 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
-import static org.jboss.pnc.build.finder.core.AnsiUtils.boldRed;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,10 +63,7 @@ public class FinderStatus implements DistributionAnalyzerListener, BuildFinderLi
         }
 
         if (doneInt > totalInt) {
-            LOGGER.error(
-                    "Number of checked checksums {} cannot be greater than total {}",
-                    boldRed(doneInt),
-                    boldRed(totalInt));
+            LOGGER.error("Number of checked checksums {} cannot be greater than total {}", doneInt, totalInt);
             doneInt = totalInt;
         }
 

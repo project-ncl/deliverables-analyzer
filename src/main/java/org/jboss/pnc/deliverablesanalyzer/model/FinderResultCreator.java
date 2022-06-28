@@ -137,10 +137,13 @@ public final class FinderResultCreator {
             Collection<Artifact> notFoundArtifacts = createNotFoundArtifacts(localArchive);
             artifacts.addAll(notFoundArtifacts);
 
-            archiveCount += notFoundArtifacts.size();
-
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("Not found artifact: {} / {} ({})", archiveCount, numArchives, localArchive.getFilenames());
+            if (LOGGER.isDebugEnabled()) {
+                archiveCount += notFoundArtifacts.size();
+                LOGGER.debug(
+                        "Not found artifact: {} / {} ({})",
+                        archiveCount,
+                        numArchives,
+                        localArchive.getFilenames());
             }
         }
 
@@ -230,7 +233,7 @@ public final class FinderResultCreator {
 
                 artifacts.add(artifact);
 
-                if (LOGGER.isInfoEnabled()) {
+                if (LOGGER.isDebugEnabled()) {
                     archiveCount++;
                     String identifier;
                     switch (artifact.getBuildSystemType()) {
@@ -245,13 +248,13 @@ public final class FinderResultCreator {
                             break;
                     }
 
-                    LOGGER.info("Artifact: {} / {} ({})", archiveCount, numArchives, identifier);
+                    LOGGER.debug("Artifact: {} / {} ({})", archiveCount, numArchives, identifier);
                 }
             }
 
             Build build = createBuild(buildSystemInteger, kojiBuild, artifacts);
 
-            if (LOGGER.isInfoEnabled()) {
+            if (LOGGER.isDebugEnabled()) {
                 buildCount++;
 
                 String identifier;
@@ -267,7 +270,7 @@ public final class FinderResultCreator {
                         break;
                 }
 
-                LOGGER.info("Build: {} / {} ({})", buildCount, numBuilds, identifier);
+                LOGGER.debug("Build: {} / {} ({})", buildCount, numBuilds, identifier);
             }
 
             buildList.add(build);
