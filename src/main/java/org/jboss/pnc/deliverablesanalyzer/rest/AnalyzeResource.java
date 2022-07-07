@@ -96,7 +96,9 @@ public class AnalyzeResource implements AnalyzeService {
 
         String id = analyzePayload.getOperationId();
         FinderStatus status = new FinderStatus();
-        statuses.putIfAbsent(id, status);
+        if (id != null) {
+            statuses.putIfAbsent(id, status);
+        }
 
         if (analyzePayload.getHeartbeat() != null) {
             heartbeatScheduler.subscribeRequest(id, analyzePayload.getHeartbeat());
