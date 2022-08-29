@@ -118,7 +118,11 @@ public class AnalyzeResource implements AnalyzeService {
                 LOGGER.info("Analysis with ID {} was cancelled. No callback will be performed. Exception: {}", id, ce);
             } catch (Throwable e) {
                 analysisReport = new AnalysisReport();
-                LOGGER.warn("Analysis with ID {} failed due to {}", id, e);
+                LOGGER.warn(
+                        "Analysis with ID {} failed due to {}",
+                        id,
+                        e.getMessage() == null ? e.toString() : e.getMessage(),
+                        e);
             }
 
             if (analysisReport != null) {
@@ -130,7 +134,10 @@ public class AnalyzeResource implements AnalyzeService {
             }
 
             heartbeatScheduler.unsubscribeRequest(id);
-            LOGGER.info("Analysis with ID {} was successfully finished and callback was performed.", id);
+            LOGGER.info(
+                    "Analysis with ID {} was {} finished and callback was performed.",
+                    id,
+                    analysisReport.isSuccess() ? "successfully" : "unsuccessfully");
         });
 
         return Response.ok().type(MediaType.APPLICATION_JSON).entity(createAnalyzeResponse(id)).build();
