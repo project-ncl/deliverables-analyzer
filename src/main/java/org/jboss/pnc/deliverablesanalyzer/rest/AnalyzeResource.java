@@ -125,19 +125,30 @@ public class AnalyzeResource implements AnalyzeService {
                         e);
             }
 
-            if (analysisReport != null) {
-                if (!performCallback(analyzePayload.getCallback(), analysisReport)) {
-                    heartbeatScheduler.unsubscribeRequest(id);
-                    LOGGER.info("Analysis with ID {} was finished, but callback couldn't be performed!", id);
-                    return;
+            try {
+                if (analysisReport != null) {
+                    if (analyzePayload.getCallback() == null) {
+                        LOGGER.warn(
+                            "Analysis with ID {} finished but no callback defined for request {}.",
+                            id,
+                            analyzePayload);
+                        return;
+                    } else if (!performCallback(analyzePayload.getCallback(), analysisReport)) {
+                        LOGGER.info("Analysis with ID {} was finished, but callback couldn't be performed!", id);
+                        return;
+                    }
                 }
-            }
 
-            heartbeatScheduler.unsubscribeRequest(id);
-            LOGGER.info(
+                LOGGER.info(
                     "Analysis with ID {} was {} finished and callback was performed.",
                     id,
                     analysisReport.isSuccess() ? "successfully" : "unsuccessfully");
+            } finally {
+                if (analyzePayload.getHeartbeat() != null) {
+                    heartbeatScheduler.unsubscribeRequest(id);
+                }
+            }
+
         });
 
         return Response.ok().type(MediaType.APPLICATION_JSON).entity(createAnalyzeResponse(id)).build();
