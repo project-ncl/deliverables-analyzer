@@ -157,7 +157,7 @@ public final class FinderResultCreator {
         Build.Builder builder = Build.builder();
         if (buildSystemInteger.getBuildSystem() == BuildSystem.pnc) {
             builder.buildSystemType(BuildSystemType.PNC);
-            builder.pncId(Integer.toString(kojiBuild.getBuildInfo().getId()));
+            builder.pncId(kojiBuild.getId());
         } else {
             builder.buildSystemType(BuildSystemType.BREW);
             builder.brewId((long) kojiBuild.getBuildInfo().getId());
