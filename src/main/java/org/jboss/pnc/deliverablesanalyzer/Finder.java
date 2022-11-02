@@ -15,6 +15,7 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -72,9 +73,6 @@ public class Finder {
 
     @Inject
     Provider<BasicCacheContainer> cacheProvider;
-
-    @Inject
-    ManagedExecutor pool;
 
     @Inject
     ClientSession kojiSession;
@@ -137,8 +135,7 @@ public class Finder {
                         URI.create(url).normalize().toURL(),
                         distributionAnalyzerListener,
                         buildFinderListener,
-                        config,
-                        allTasks);
+                        config);
 
                 LOGGER.debug("Analysis of URL {} finished.", url);
 
@@ -209,8 +206,6 @@ public class Finder {
      * @param distributionAnalyzerListener A listener for events from DistributionAnalyzer
      * @param buildFinderListener A listener for events from Build Finder
      * @param config Configuration of the analysis
-     * @param allTasks list of all futures used in the public find method. Used to add future created in the method to
-     *        it
      *
      * @return results of the analysis
      * @throws KojiClientException Thrown in case of exceptions with Koji communication
@@ -220,8 +215,7 @@ public class Finder {
             URL url,
             DistributionAnalyzerListener distributionAnalyzerListener,
             BuildFinderListener buildFinderListener,
-            BuildConfig config,
-            List<Future> allTasks) throws KojiClientException {
+            BuildConfig config) throws KojiClientException {
         FinderResult result;
 
         List<String> files = Collections.singletonList(url.toExternalForm());
@@ -235,9 +229,13 @@ public class Finder {
         DistributionAnalyzer analyzer = new DistributionAnalyzer(files, config, cacheManager);
         analyzer.setListener(distributionAnalyzerListener);
 
-        Future<Map<ChecksumType, MultiValuedMap<String, LocalFile>>> futureChecksum = pool.submit(analyzer);
-        allTasks.add(futureChecksum);
-        result = findBuilds(id, url, analyzer, futureChecksum, buildFinderListener, allTasks, config);
+        Map<ChecksumType, MultiValuedMap<String, LocalFile>> checksums;
+        try {
+            checksums = analyzer.call();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to analyze checksums", e);
+        }
+        result = findBuilds(id, url, analyzer, checksums, buildFinderListener, config);
 
         LOGGER.info("Done finding builds for {}", url);
         return result;
@@ -248,10 +246,8 @@ public class Finder {
      * @param id ID of the analysis
      * @param url url to analyze
      * @param analyzer DistributionAnalyzer object for checking checksum of files
-     * @param futureChecksum future containing results of checksum values from analyzer
+     * @param checksums results of checksum values from analyzer
      * @param buildFinderListener A listener for events from Build Finder
-     * @param allTasks list of all futures used in the public find method. Used to add future created in the method to
-     *        it
      * @param forceConfig forced config for build finder
      * @return results of the analysis
      * @throws KojiClientException Thrown in case of exceptions with Koji communication
@@ -260,9 +256,8 @@ public class Finder {
             String id,
             URL url,
             DistributionAnalyzer analyzer,
-            Future<Map<ChecksumType, MultiValuedMap<String, LocalFile>>> futureChecksum,
+            Map<ChecksumType, MultiValuedMap<String, LocalFile>> checksums,
             BuildFinderListener buildFinderListener,
-            List<Future> allTasks,
             BuildConfig forceConfig) throws KojiClientException {
         BuildConfig usedConfig = forceConfig != null ? forceConfig : this.config;
         URL pncURL = usedConfig.getPncURL();
@@ -280,35 +275,23 @@ public class Finder {
 
             buildFinder.setListener(buildFinderListener);
 
-            Future<Map<BuildSystemInteger, KojiBuild>> futureBuilds = pool.submit(buildFinder);
-            allTasks.add(futureBuilds);
+            Map<BuildSystemInteger, KojiBuild> builds = buildFinder.call();
 
-            try {
-                Map<ChecksumType, MultiValuedMap<String, LocalFile>> checksums = futureChecksum.get();
-                Map<BuildSystemInteger, KojiBuild> builds = futureBuilds.get();
+            if (LOGGER.isInfoEnabled()) {
+                int size = builds.size();
+                int numBuilds = size >= 1 ? size - 1 : 0;
 
-                if (LOGGER.isInfoEnabled()) {
-                    int size = builds.size();
-                    int numBuilds = size >= 1 ? size - 1 : 0;
-
-                    LOGGER.info("Got {} checksum types and {} builds", checksums.size(), numBuilds);
-                }
-
-                FinderResult result = FinderResultCreator.createFinderResult(id, url, builds);
-
-                LOGGER.info("Returning result for {}", url);
-
-                return result;
-            } catch (ExecutionException e) {
-                throw new KojiClientException("Got ExecutionException", e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+                LOGGER.info("Got {} checksum types and {} builds", checksums.size(), numBuilds);
             }
+
+            FinderResult result = FinderResultCreator.createFinderResult(id, url, builds);
+
+            LOGGER.info("Returning result for {}", url);
+
+            return result;
         } catch (Exception e) {
             throw new KojiClientException("Got Exception", e);
         }
-
-        return null;
     }
 
     private class CancelWrapper {

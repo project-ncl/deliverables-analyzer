@@ -129,9 +129,9 @@ public class AnalyzeResource implements AnalyzeService {
                 if (analysisReport != null) {
                     if (analyzePayload.getCallback() == null) {
                         LOGGER.warn(
-                            "Analysis with ID {} finished but no callback defined for request {}.",
-                            id,
-                            analyzePayload);
+                                "Analysis with ID {} finished but no callback defined for request {}.",
+                                id,
+                                analyzePayload);
                         return;
                     } else if (!performCallback(analyzePayload.getCallback(), analysisReport)) {
                         LOGGER.info("Analysis with ID {} was finished, but callback couldn't be performed!", id);
@@ -140,9 +140,9 @@ public class AnalyzeResource implements AnalyzeService {
                 }
 
                 LOGGER.info(
-                    "Analysis with ID {} was {} finished and callback was performed.",
-                    id,
-                    analysisReport.isSuccess() ? "successfully" : "unsuccessfully");
+                        "Analysis with ID {} was {} finished and callback was performed.",
+                        id,
+                        analysisReport.isSuccess() ? "successfully" : "unsuccessfully");
             } finally {
                 if (analyzePayload.getHeartbeat() != null) {
                     heartbeatScheduler.unsubscribeRequest(id);
