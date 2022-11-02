@@ -237,7 +237,7 @@ public class Finder {
 
         Future<Map<ChecksumType, MultiValuedMap<String, LocalFile>>> futureChecksum = pool.submit(analyzer);
         allTasks.add(futureChecksum);
-        result = findBuilds(id, url, analyzer, futureChecksum, buildFinderListener, allTasks);
+        result = findBuilds(id, url, analyzer, futureChecksum, buildFinderListener, allTasks, config);
 
         LOGGER.info("Done finding builds for {}", url);
         return result;
@@ -252,6 +252,7 @@ public class Finder {
      * @param buildFinderListener A listener for events from Build Finder
      * @param allTasks list of all futures used in the public find method. Used to add future created in the method to
      *        it
+     * @param forceConfig forced config for build finder
      * @return results of the analysis
      * @throws KojiClientException Thrown in case of exceptions with Koji communication
      */
@@ -261,19 +262,20 @@ public class Finder {
             DistributionAnalyzer analyzer,
             Future<Map<ChecksumType, MultiValuedMap<String, LocalFile>>> futureChecksum,
             BuildFinderListener buildFinderListener,
-            List<Future> allTasks) throws KojiClientException {
+            List<Future> allTasks,
+            BuildConfig forceConfig) throws KojiClientException {
+        BuildConfig usedConfig = forceConfig != null ? forceConfig : this.config;
+        URL pncURL = usedConfig.getPncURL();
 
-        URL pncURL = config.getPncURL();
-
-        try (PncClient pncClient = pncURL != null ? new PncClientImpl(config) : null) {
+        try (PncClient pncClient = pncURL != null ? new PncClientImpl(usedConfig) : null) {
             BuildFinder buildFinder;
 
             if (pncClient == null) {
                 LOGGER.warn("Initializing Build Finder with PNC support disabled because PNC URL is not set");
-                buildFinder = new BuildFinder(kojiSession, config, analyzer, cacheManager);
+                buildFinder = new BuildFinder(kojiSession, usedConfig, analyzer, cacheManager);
             } else {
                 LOGGER.info("Initializing Build Finder PNC client with URL {}", pncURL);
-                buildFinder = new BuildFinder(kojiSession, config, analyzer, cacheManager, pncClient);
+                buildFinder = new BuildFinder(kojiSession, usedConfig, analyzer, cacheManager, pncClient);
             }
 
             buildFinder.setListener(buildFinderListener);
