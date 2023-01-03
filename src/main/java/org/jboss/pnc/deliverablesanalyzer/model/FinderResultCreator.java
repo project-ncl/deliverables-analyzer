@@ -170,7 +170,7 @@ public final class FinderResultCreator {
         KojiArchiveInfo archiveInfo = localArchive.getArchive();
 
         Artifact.ArtifactBuilder builder;
-        if ("maven".equals(archiveInfo.getBuildType())) {
+        if ("maven".equals(archiveInfo.getBuildType()) || "gradle".equals(archiveInfo.getBuildType())) {
             builder = createMavenArtifact(archiveInfo);
         } else if ("npm".equals(archiveInfo.getBuildType())) {
             builder = createNpmArtifact(archiveInfo);
