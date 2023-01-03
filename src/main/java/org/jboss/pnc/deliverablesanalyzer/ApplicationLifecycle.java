@@ -18,6 +18,7 @@ package org.jboss.pnc.deliverablesanalyzer;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 
+import org.fusesource.jansi.Ansi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,7 @@ public class ApplicationLifecycle {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationLifecycle.class);
 
     public void onStart(@Observes StartupEvent event) {
+        Ansi.setEnabled(false); // Turn of color output to logs
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info("{} started", Version.getVersion());
         }
