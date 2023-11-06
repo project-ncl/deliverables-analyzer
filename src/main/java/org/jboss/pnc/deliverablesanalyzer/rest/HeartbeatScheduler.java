@@ -15,6 +15,9 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -22,6 +25,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.core.HttpHeaders;
 
 import org.jboss.pnc.api.dto.HeartbeatConfig;
 import org.jboss.pnc.api.dto.Request;
@@ -29,6 +33,8 @@ import org.jboss.pnc.common.concurrent.MDCScheduledThreadPoolExecutor;
 import org.jboss.pnc.common.concurrent.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.quarkus.oidc.client.OidcClient;
 
 /**
  * Service, which performs regular heartbeat requests based using subscription style
@@ -47,6 +53,9 @@ public class HeartbeatScheduler {
 
     @Inject
     HttpClient httpClient;
+
+    @Inject
+    OidcClient oidcClient;
 
     private Map<String, Future<?>> subscribedRequests = new ConcurrentHashMap<>();
 
@@ -67,7 +76,24 @@ public class HeartbeatScheduler {
     }
 
     private void sendHeartbeat(Request heartbeatRequest) {
+
         try {
+            List<Request.Header> headers = heartbeatRequest.getHeaders();
+            List<Request.Header> existingAuthHeaders = new ArrayList<>();
+
+            for (Request.Header header : headers) {
+                if (header.getName().equals(HttpHeaders.AUTHORIZATION)) {
+                    existingAuthHeaders.add(header);
+                }
+            }
+
+            // remove any Authorization headers
+            headers.removeAll(existingAuthHeaders);
+
+            // Add an authorization header with a fresh token
+            String accessToken = oidcClient.getTokens().await().atMost(Duration.ofMinutes(1)).getAccessToken();
+            headers.add(new Request.Header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
+
             this.httpClient.performHttpRequest(heartbeatRequest);
         } catch (Exception e) {
             LOGGER.warn("Heartbeat failed with an exception!", e);

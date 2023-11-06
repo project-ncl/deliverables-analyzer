@@ -18,6 +18,7 @@ package org.jboss.pnc.deliverablesanalyzer.rest;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -166,11 +167,15 @@ public class AnalyzeResource implements AnalyzeService {
     }
 
     private boolean performCallback(org.jboss.pnc.api.dto.Request callback, AnalysisReport result) {
+
+        addAuthenticationHeaderToCallback(callback);
+
         try {
-            addAuthenticationHeaderToCallback(callback);
             httpClient.performHttpRequest(callback, result);
             return true;
         } catch (Exception e) {
+            LOGGER.warn("Exception when performing Callback with: " + e.toString());
+            LOGGER.warn("Retrying");
             try {
                 httpClient.performHttpRequest(callback, result);
                 return true;
@@ -236,7 +241,7 @@ public class AnalyzeResource implements AnalyzeService {
     }
 
     private void addAuthenticationHeaderToCallback(org.jboss.pnc.api.dto.Request callback) {
-        String accessToken = oidcClient.getTokens().await().indefinitely().getAccessToken();
+        String accessToken = oidcClient.getTokens().await().atMost(Duration.ofMinutes(1)).getAccessToken();
         List<Request.Header> headers = callback.getHeaders();
         headers.add(new Request.Header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
     }
