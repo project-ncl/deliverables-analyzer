@@ -108,6 +108,7 @@ public final class FinderResultCreator {
             localArchive.getArchive().setFilename(filename);
 
             setCommonArtifactFields(builder, localArchive);
+            builder.archiveFilenames(List.of(filename)).archiveUnmatchedFilenames(localArchive.getUnmatchedFilenames());
 
             artifacts.add(builder.build());
         }
@@ -163,7 +164,7 @@ public final class FinderResultCreator {
             builder.brewId((long) kojiBuild.getBuildInfo().getId());
             builder.brewNVR(kojiBuild.getBuildInfo().getNvr());
         }
-        return builder.artifacts(artifacts).build();
+        return builder.isImport(kojiBuild.isImport()).artifacts(artifacts).build();
     }
 
     private static Artifact createArtifact(KojiLocalArchive localArchive, BuildSystem buildSystem, boolean imported) {
@@ -195,6 +196,8 @@ public final class FinderResultCreator {
         builder.builtFromSource(localArchive.isBuiltFromSource() && !imported);
 
         setCommonArtifactFields(builder, localArchive);
+        builder.archiveFilenames(localArchive.getFilenames())
+                .archiveUnmatchedFilenames(localArchive.getUnmatchedFilenames());
 
         return builder.build();
     }
