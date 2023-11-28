@@ -2,7 +2,7 @@
   "id" : "c0145195-a9c4-499e-bc2c-460aef3f71a1",
   "name" : "pnc-rest_v2_artifacts",
   "request" : {
-    "url" : "/pnc-rest/v2/artifacts?pageSize=18&pageIndex=0&q=build%3Disnull%3Dfalse&md5=28091f0ca08c8c68a97a85f6ff429727",
+    "url" : "/pnc-rest/v2/artifacts?pageSize=18&pageIndex=0&q=build%3Disnull%3Dfalse&sha256=106d62007ab85e7399d1684cba3d2cfb8b55a7daf5d7c7d473074c733db5bf9b",
     "method" : "GET"
   },
   "response" : {
