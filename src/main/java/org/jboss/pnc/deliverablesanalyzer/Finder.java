@@ -294,7 +294,7 @@ public class Finder {
         }
     }
 
-    private class CancelWrapper {
+    private static final class CancelWrapper {
         private boolean cancelled = false;
 
         public void cancel() {
