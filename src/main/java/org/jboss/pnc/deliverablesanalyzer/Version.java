@@ -63,6 +63,7 @@ public final class Version {
         ComponentVersion quarkus = ComponentVersion.builder().name("Quarkus").version(getQuarkusVersion()).build();
 
         return ComponentVersion.builder()
+                .name("Deliverables Analyzer")
                 .version(getVersionNumber())
                 .commit(getScmRevision())
                 .builtOn(ZonedDateTime.parse(getBuildDate()))
@@ -78,7 +79,7 @@ public final class Version {
         return PROPERTIES.getProperty(name, "unknown");
     }
 
-    private static String getVersionNumber() {
+    public static String getVersionNumber() {
         return getAppProperty("version");
     }
 

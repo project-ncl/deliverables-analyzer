@@ -16,10 +16,7 @@
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.emptyOrNullString;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.equalTo;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -46,17 +43,15 @@ class AppTest {
     void testVersion() {
         String version = given().log()
                 .all()
-                .accept(MediaType.TEXT_PLAIN)
+                .accept(MediaType.APPLICATION_JSON)
                 .when()
                 .get("/api/version")
                 .then()
                 .log()
                 .all()
                 .statusCode(Response.Status.OK.getStatusCode())
-                .body(
-                        not(is(emptyOrNullString())),
-                        not(containsString("unknown")),
-                        containsString(Version.getVersion()))
+                .body("name", equalTo("Deliverables Analyzer"))
+                .body("version", equalTo(Version.getVersionNumber()))
                 .extract()
                 .response()
                 .asString();
