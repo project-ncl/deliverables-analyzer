@@ -23,10 +23,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.jboss.pnc.api.dto.ComponentVersion;
 import org.jboss.pnc.deliverablesanalyzer.Version;
 
 @Path("version")
@@ -38,12 +38,12 @@ public class VersionResource implements VersionService {
             responseCode = "200",
             description = "OK",
             content = @Content(
-                    mediaType = MediaType.TEXT_PLAIN,
-                    schema = @Schema(type = SchemaType.STRING, implementation = String.class)))
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ComponentVersion.class)))
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @PermitAll
-    public String getVersion() {
-        return Version.getVersion();
+    public ComponentVersion getVersion() {
+        return Version.getComponentVersion();
     }
 }

@@ -17,8 +17,11 @@ package org.jboss.pnc.deliverablesanalyzer;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Properties;
 
+import org.jboss.pnc.api.dto.ComponentVersion;
 import org.jboss.pnc.build.finder.core.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +53,24 @@ public final class Version {
                 + getBuildDate() + " by " + getBuiltBy();
     }
 
+    public static ComponentVersion getComponentVersion() {
+        ComponentVersion kojiBuildFinder = ComponentVersion.builder()
+                .name("Build Finder")
+                .version(Utils.getBuildFinderVersion())
+                .commit(Utils.getBuildFinderScmRevision())
+                .build();
+
+        ComponentVersion quarkus = ComponentVersion.builder().name("Quarkus").version(getQuarkusVersion()).build();
+
+        return ComponentVersion.builder()
+                .name("Deliverables Analyzer")
+                .version(getVersionNumber())
+                .commit(getScmRevision())
+                .builtOn(ZonedDateTime.parse(getBuildDate()))
+                .components(List.of(kojiBuildFinder, quarkus))
+                .build();
+    }
+
     private static String getKojiBuildFinderVersion() {
         return "Build Finder " + Utils.getBuildFinderVersion() + " (SHA: " + Utils.getBuildFinderScmRevision() + ")";
     }
@@ -58,7 +79,7 @@ public final class Version {
         return PROPERTIES.getProperty(name, "unknown");
     }
 
-    private static String getVersionNumber() {
+    public static String getVersionNumber() {
         return getAppProperty("version");
     }
 

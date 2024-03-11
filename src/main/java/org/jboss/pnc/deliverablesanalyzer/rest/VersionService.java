@@ -22,11 +22,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.jboss.pnc.api.dto.ComponentVersion;
+
 @ApplicationScoped
 @Path("version")
 public interface VersionService {
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @PermitAll
-    String getVersion();
+    ComponentVersion getVersion();
 }
