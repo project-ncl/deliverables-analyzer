@@ -27,7 +27,7 @@
 
   <groupId>org.jboss.pnc.deliverablesanalyzer</groupId>
   <artifactId>deliverables-analyzer</artifactId>
-  <version>1.1.9-SNAPSHOT</version>
+  <version>1.1.9</version>
 
   <name>Deliverables Analyzer</name>
   <description>Analyzes deliverables.</description>
@@ -48,7 +48,7 @@
   <scm>
     <connection>scm:git:https://github.com/project-ncl/deliverables-analyzer.git</connection>
     <developerConnection>scm:git:git@github.com:project-ncl/deliverables-analyzer.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>1.1.9</tag>
     <url>https://github.com/project-ncl/deliverables-analyzer</url>
   </scm>
 
