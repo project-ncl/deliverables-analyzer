@@ -23,8 +23,11 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static org.jboss.pnc.api.dto.Request.Method.POST;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import javax.inject.Inject;
@@ -44,6 +47,9 @@ import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
  * @author Jakub Bartecek
  */
 public class AnalyzeResourceTestAbstract {
+
+    private static final String CONFIG_FILE = "custom_config.json";
+
     protected static final int PORT = 8082;
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeResourceTestAbstract.class);
@@ -61,11 +67,21 @@ public class AnalyzeResourceTestAbstract {
 
     protected final String analyzeUrl = "/api/analyze";
 
+    protected String testConfigJson = null;
+
     @Inject
     AnalyzeResource analyzeResource;
 
     protected AnalyzeResourceTestAbstract() throws URISyntaxException {
         callbackRequest = new Request(POST, new URI(callbackUrl));
+
+        try {
+            InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE);
+            testConfigJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            LOGGER.debug("Found TEST configuration: {}", testConfigJson);
+        } catch (IOException e) {
+            LOGGER.error("Could not read the TEST configuration", e);
+        }
     }
 
     protected String stubThreeArtsZip(int milliseconds) {

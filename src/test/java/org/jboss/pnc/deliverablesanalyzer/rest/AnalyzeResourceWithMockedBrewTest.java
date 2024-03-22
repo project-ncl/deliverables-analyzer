@@ -83,7 +83,7 @@ public class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstra
 
         // when
         Response response = given()
-                .body(new AnalyzePayload("1234", List.of(stubThreeArtsZip(1)), null, callbackRequest, null))
+                .body(new AnalyzePayload("1234", List.of(stubThreeArtsZip(1)), testConfigJson, callbackRequest, null))
                 .contentType(APPLICATION_JSON)
                 .when()
                 .post(analyzeUrl)
