@@ -15,10 +15,11 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -27,7 +28,8 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
 import org.jboss.pnc.build.finder.core.BuildConfig;
-import org.jboss.pnc.build.finder.core.ConfigDefaults;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -36,8 +38,9 @@ import org.jboss.pnc.build.finder.core.ConfigDefaults;
 @ApplicationScoped
 public class ConfigProvider {
 
-    private static final String DEFAULT_CONFIG_LOCATION = "./" + ConfigDefaults.CONFIG_FILE;
-    private final File configFile = new File(DEFAULT_CONFIG_LOCATION);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigProvider.class);
+    private static final String CONFIG_FILE = "custom_config.json";
+
     private BuildConfig config;
 
     @Produces
@@ -47,16 +50,30 @@ public class ConfigProvider {
 
     public ConfigProvider() throws IOException {
         BuildConfig defaults = BuildConfig.load(ConfigProvider.class.getClassLoader());
+        String customConfig = null;
 
-        if (configFile.exists()) {
+        try {
+            InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE);
+            customConfig = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            LOGGER.debug("Found custom configuration: {}", customConfig);
+        } catch (IOException e) {
+            LOGGER.error("Could not read the custom configuration", e);
+        }
+
+        if (customConfig != null) {
             if (defaults == null) {
-                config = BuildConfig.load(configFile);
+                LOGGER.debug("Default config is null, using custom config file");
+                config = BuildConfig.load(customConfig);
             } else {
-                config = BuildConfig.merge(defaults, configFile);
+                LOGGER.debug("Default config is not null, merging it with custom config file");
+                config = BuildConfig.merge(defaults, customConfig);
             }
         } else {
+            LOGGER.debug("Custom config file not found, using default config!");
             config = defaults != null ? defaults : new BuildConfig();
         }
+
+        LOGGER.debug("Configuration: {}", config);
 
         // set config values if defined in java system property (-D) or via env variable or application.properties
         setKojiHubURL(config);
