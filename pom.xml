@@ -99,7 +99,7 @@
     <version.org.jacoco>0.8.12</version.org.jacoco>
     <version.org.jboss.pnc.build.finder>2.3.1</version.org.jboss.pnc.build.finder>
     <version.org.jboss.pnc.pnc-api>2.5.1</version.org.jboss.pnc.pnc-api>
-    <version.org.jboss.resteasy>6.2.8.Final</version.org.jboss.resteasy>
+    <version.org.jboss.resteasy>6.2.9.Final</version.org.jboss.resteasy>
     <version.org.sonatype.plugins.nexus-staging-maven-plugin>1.6.13</version.org.sonatype.plugins.nexus-staging-maven-plugin>
     <version.pnc.quarkus-logging-kafka>1.0.5</version.pnc.quarkus-logging-kafka>
   </properties>
