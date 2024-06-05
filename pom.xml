@@ -84,7 +84,7 @@
     <version.org.apache.maven.plugins.maven-install-plugin>3.1.2</version.org.apache.maven.plugins.maven-install-plugin>
     <version.org.apache.maven.plugins.maven-jar-plugin>3.4.1</version.org.apache.maven.plugins.maven-jar-plugin>
     <version.org.apache.maven.plugins.maven-javadoc-plugin>3.7.0</version.org.apache.maven.plugins.maven-javadoc-plugin>
-    <version.org.apache.maven.plugins.maven-jxr-plugin>3.3.2</version.org.apache.maven.plugins.maven-jxr-plugin>
+    <version.org.apache.maven.plugins.maven-jxr-plugin>3.4.0</version.org.apache.maven.plugins.maven-jxr-plugin>
     <version.org.apache.maven.plugins.maven-pmd-plugin>3.22.0</version.org.apache.maven.plugins.maven-pmd-plugin>
     <version.org.apache.maven.plugins.maven-project-info-reports-plugin>3.5.0</version.org.apache.maven.plugins.maven-project-info-reports-plugin>
     <version.org.apache.maven.plugins.maven-release-plugin>3.0.1</version.org.apache.maven.plugins.maven-release-plugin>
