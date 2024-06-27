@@ -35,6 +35,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junitpioneer.jupiter.SetSystemProperty;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
@@ -67,6 +68,7 @@ public class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstra
     }
 
     @Test
+    @SetSystemProperty(key = "org.spdx.useJARLicenseInfoOnly", value = "true")
     public void analyzeTestOKSimple() throws InterruptedException {
         // given
         // callback
