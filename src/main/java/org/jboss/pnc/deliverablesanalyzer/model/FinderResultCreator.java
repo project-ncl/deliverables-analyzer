@@ -16,11 +16,6 @@
 package org.jboss.pnc.deliverablesanalyzer.model;
 
 import static org.jboss.pnc.build.finder.core.BuildFinderUtils.isBuildIdZero;
-import static org.jboss.pnc.build.finder.core.LicenseSource.BUNDLE_LICENSE;
-import static org.jboss.pnc.build.finder.core.LicenseSource.POM;
-import static org.jboss.pnc.build.finder.core.LicenseSource.POM_XML;
-import static org.jboss.pnc.build.finder.core.LicenseSource.TEXT;
-import static org.jboss.pnc.build.finder.core.LicenseSource.UNKNOWN;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -41,9 +36,9 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.Build;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.LicenseInfo;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.LicenseSource;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact;
+import org.jboss.pnc.api.enums.LicenseSource;
 import org.jboss.pnc.build.finder.core.BuildSystem;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
 import org.jboss.pnc.build.finder.core.Checksum;
