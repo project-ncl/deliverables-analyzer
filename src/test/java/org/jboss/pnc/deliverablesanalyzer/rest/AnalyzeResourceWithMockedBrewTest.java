@@ -38,6 +38,9 @@ import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.SetSystemProperty;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.http.HttpHeaders;
+import com.github.tomakehurst.wiremock.http.RequestListener;
+import com.github.tomakehurst.wiremock.http.RequestMethod;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.Response;
@@ -67,20 +70,48 @@ public class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstra
     public AnalyzeResourceWithMockedBrewTest() throws URISyntaxException {
     }
 
+    public class LoggingRequestListener implements RequestListener {
+
+        @Override
+        public void requestReceived(
+                com.github.tomakehurst.wiremock.http.Request request,
+                com.github.tomakehurst.wiremock.http.Response response) {
+
+            RequestMethod method = request.getMethod();
+            String url = request.getUrl();
+            String body = request.getBodyAsString();
+            int port = request.getPort();
+            HttpHeaders headers = request.getHeaders();
+            String protocol = request.getProtocol();
+
+            LOGGER.info(
+                    "Received request: method={}, url={}, protocol={}, port={}, headers={}, body={}",
+                    method,
+                    url,
+                    protocol,
+                    port,
+                    headers,
+                    body);
+        }
+    }
+
     @Test
     @SetSystemProperty(key = "org.spdx.useJARLicenseInfoOnly", value = "true")
     public void analyzeTestOKSimple() throws InterruptedException {
         // given
         // callback
+        wiremock.addMockServiceRequestListener(new LoggingRequestListener());
         wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // Remote servers stubs
         WireMockServer pncServer = new WireMockServer(
                 options().port(8083).usingFilesUnderClasspath("analyzeTestOKSimple/pnc"));
+        pncServer.addMockServiceRequestListener(new LoggingRequestListener());
         pncServer.start();
 
         WireMockServer brewHub = new WireMockServer(
                 options().port(8084).usingFilesUnderClasspath("analyzeTestOKSimple/brewHub"));
+        brewHub.addMockServiceRequestListener(new LoggingRequestListener());
         brewHub.start();
 
         // when
