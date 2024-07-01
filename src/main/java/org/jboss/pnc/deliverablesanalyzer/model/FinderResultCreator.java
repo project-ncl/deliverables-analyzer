@@ -68,44 +68,46 @@ public final class FinderResultCreator {
         Set<LicenseInfo> licenses = Optional.ofNullable(localArchive.getLicenses())
                 .orElse(Collections.emptySet())
                 .stream()
-                .map((org.jboss.pnc.build.finder.core.LicenseInfo license) -> {
-                    LicenseInfo.LicenseInfoBuilder licenseBuilder = LicenseInfo.builder()
-                            .comments(license.getComments())
-                            .distribution(license.getDistribution())
-                            .name(license.getName())
-                            .spdxLicenseId(license.getSpdxLicenseId())
-                            .url(license.getUrl());
-
-                    org.jboss.pnc.build.finder.core.LicenseSource source = license.getSource();
-                    if (source != null) {
-                        switch (source) {
-                            case UNKNOWN:
-                                licenseBuilder.source(LicenseSource.UNKNOWN);
-                                break;
-                            case POM:
-                                licenseBuilder.source(LicenseSource.POM);
-                                break;
-                            case POM_XML:
-                                licenseBuilder.source(LicenseSource.POM_XML);
-                                break;
-                            case BUNDLE_LICENSE:
-                                licenseBuilder.source(LicenseSource.BUNDLE_LICENSE);
-                                break;
-                            case TEXT:
-                                licenseBuilder.source(LicenseSource.TEXT);
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Unknown license source " + source);
-                        }
-                    } else {
-                        throw new IllegalArgumentException("License source cannot be null");
-                    }
-
-                    return licenseBuilder.build();
-                })
+                .map(FinderResultCreator::toDTO)
                 .collect(Collectors.toSet());
 
         builder.licenses(licenses);
+    }
+
+    private static LicenseInfo toDTO(org.jboss.pnc.build.finder.core.LicenseInfo license) {
+        LicenseInfo.LicenseInfoBuilder licenseBuilder = LicenseInfo.builder()
+                .comments(license.getComments())
+                .distribution(license.getDistribution())
+                .name(license.getName())
+                .spdxLicenseId(license.getSpdxLicenseId())
+                .url(license.getUrl());
+
+        org.jboss.pnc.build.finder.core.LicenseSource source = license.getSource();
+        if (source == null) {
+            throw new IllegalArgumentException("License source cannot be null");
+        }
+
+        switch (source) {
+            case UNKNOWN:
+                licenseBuilder.source(LicenseSource.UNKNOWN);
+                break;
+            case POM:
+                licenseBuilder.source(LicenseSource.POM);
+                break;
+            case POM_XML:
+                licenseBuilder.source(LicenseSource.POM_XML);
+                break;
+            case BUNDLE_LICENSE:
+                licenseBuilder.source(LicenseSource.BUNDLE_LICENSE);
+                break;
+            case TEXT:
+                licenseBuilder.source(LicenseSource.TEXT);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown license source " + source);
+        }
+
+        return licenseBuilder.build();
     }
 
     private static void setCommonArtifactFields(Artifact.ArtifactBuilder builder, KojiLocalArchive archive) {
