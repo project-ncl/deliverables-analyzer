@@ -1,0 +1,174 @@
+{
+    "results": [
+      {
+        "id": "1234",
+        "url": "http://localhost:8082/threeArts.zip",
+        "builds": [
+          {
+            "buildSystemType": "BREW",
+            "brewId": 937531,
+            "brewNVR": "org.uberfire-uberfire-parent-2.20.0.Final_redhat_00003-1",
+            "artifacts": [
+              {
+                "buildSystemType": "BREW",
+                "brewId": 3204502,
+                "artifactType": "MAVEN",
+                "filename": "uberfire-client-backend-2.20.0.Final-redhat-00003.jar",
+                "size": 4425,
+                "md5": "28091f0ca08c8c68a97a85f6ff429727",
+                "sha1": "d80b5f5c4d2a6399c668102c5ed2c488a8b7cf44",
+                "sha256": "106d62007ab85e7399d1684cba3d2cfb8b55a7daf5d7c7d473074c733db5bf9b",
+                "builtFromSource": true,
+                "archiveFilenames": [
+                  "threeArts.zip!/twitter4j-core-4.0.7.redhat-00002.jar",
+                  "threeArts.zip!/uberfire-client-backend-2.20.0.Final-redhat-00003.jar"
+                ],
+                "archiveUnmatchedFilenames": [
+                  
+                ],
+                "licenses": [
+                  {
+                    "comments": null,
+                    "distribution": "repo",
+                    "name": "Apache License 2.0",
+                    "url": "http://www.apache.org/licenses/LICENSE-2.0",
+                    "spdxLicenseId": "Apache-2.0",
+                    "source": "POM_XML"
+                  }
+                ],
+                "groupId": "org.uberfire",
+                "artifactId": "uberfire-client-backend",
+                "type": "jar",
+                "version": "2.20.0.Final-redhat-00003"
+              },
+              {
+                "buildSystemType": "BREW",
+                "brewId": 3204499,
+                "artifactType": "MAVEN",
+                "filename": "uberfire-client-backend-2.20.0.Final-redhat-00003.pom",
+                "size": 1711,
+                "md5": "2b2ae0cf8ef48e7cad31f75552e7b695",
+                "sha1": "d7caffe0017a736b5f142203a739887ed3e67bea",
+                "sha256": "6b0138885a6598965f9ac759efb20845e3c3bac1a8df812e2e0f9020d66d9e26",
+                "builtFromSource": false,
+                "archiveFilenames": [
+                  "threeArts.zip!/twitter4j-core-4.0.7.redhat-00002.jar!/uberfire-client-backend-2.20.0.Final-redhat-00003.jar",
+                  "threeArts.zip!/uberfire-client-backend-2.20.0.Final-redhat-00003.jar!/META-INF/maven/org.uberfire/uberfire-client-backend/pom.xml"
+                ],
+                "archiveUnmatchedFilenames": [
+                  "threeArts.zip!/twitter4j-core-4.0.7.redhat-00002.jar!/uberfire-client-backend-2.20.0.Final-redhat-00003.jar!/META-INF/maven/org.uberfire/uberfire-client-backend/pom.xml"
+                ],
+                "licenses": [
+                  
+                ],
+                "groupId": "org.uberfire",
+                "artifactId": "uberfire-client-backend",
+                "type": "pom",
+                "version": "2.20.0.Final-redhat-00003"
+              }
+            ],
+            "import": false
+          },
+          {
+            "buildSystemType": "PNC",
+            "pncId": "71213",
+            "artifacts": [
+              {
+                "buildSystemType": "PNC",
+                "pncId": "4993228",
+                "artifactType": "MAVEN",
+                "filename": "uberfire-all-7.44.0.Final-redhat-00003.jar",
+                "size": 3276,
+                "md5": "5153ea9bdc6fff4576d641ad406d977e",
+                "sha1": "a03d2873ce1fae3e6ee32ddf59936f2547235b89",
+                "sha256": "63140a1d60c7ec30865ff66227762e95a2a54df8d2a9d65902b09d027894818c",
+                "builtFromSource": true,
+                "archiveFilenames": [
+                  "threeArts.zip!/twitter4j-core-4.0.7.redhat-00002.jar!/uberfire-all-7.44.0.Final-redhat-00003.jar",
+                  "threeArts.zip!/uberfire-all-7.44.0.Final-redhat-00003.jar"
+                ],
+                "archiveUnmatchedFilenames": [
+                  
+                ],
+                "licenses": [
+                  
+                ],
+                "groupId": "org.uberfire",
+                "artifactId": "uberfire-all",
+                "type": "jar",
+                "version": "7.44.0.Final-redhat-00003"
+              },
+              {
+                "buildSystemType": "PNC",
+                "pncId": "4993229",
+                "artifactType": "MAVEN",
+                "filename": "uberfire-all-7.44.0.Final-redhat-00003.pom",
+                "size": 1533,
+                "md5": "7d4c14e2272407c640c8ff4353def961",
+                "sha1": "0dcdb9450676bc55d354249bbde81ffb4ee8f4fe",
+                "sha256": "ae1565e4ce3d0b98a9a39a4121e5932cfef5f4ca443429addfad0ed351e1a2b1",
+                "builtFromSource": true,
+                "archiveFilenames": [
+                  "threeArts.zip!/twitter4j-core-4.0.7.redhat-00002.jar!/uberfire-all-7.44.0.Final-redhat-00003.jar!/META-INF/maven/org.uberfire/uberfire-all/pom.xml",
+                  "threeArts.zip!/uberfire-all-7.44.0.Final-redhat-00003.jar!/META-INF/maven/org.uberfire/uberfire-all/pom.xml"
+                ],
+                "archiveUnmatchedFilenames": [
+                  
+                ],
+                "licenses": [
+                  
+                ],
+                "groupId": "org.uberfire",
+                "artifactId": "uberfire-all",
+                "type": "pom",
+                "version": "7.44.0.Final-redhat-00003"
+              }
+            ],
+            "import": false
+          },
+          {
+            "buildSystemType": "PNC",
+            "pncId": "40358",
+            "artifacts": [
+              {
+                "buildSystemType": "PNC",
+                "pncId": "3018205",
+                "artifactType": "MAVEN",
+                "filename": "twitter4j-core-4.0.7.redhat-00002.pom",
+                "size": 10096,
+                "md5": "fc97e71a3abc5b7876fc87f3d3be0988",
+                "sha1": "d61cf42f7e2d2e68fe6c20edde8d8e0e5841cccf",
+                "sha256": "6b30db33e0003be8e5cc033188fcd6a9b0acceb198ac73db3594f1ff972d3c71",
+                "builtFromSource": true,
+                "archiveFilenames": [
+                  "threeArts.zip!/twitter4j-core-4.0.7.redhat-00002.jar!/META-INF/maven/org.twitter4j/twitter4j-core/pom.xml"
+                ],
+                "archiveUnmatchedFilenames": [
+                  
+                ],
+                "licenses": [
+                  {
+                    "comments": null,
+                    "distribution": "repo",
+                    "name": "Apache License 2.0",
+                    "url": "http://www.apache.org/licenses/LICENSE-2.0",
+                    "spdxLicenseId": "Apache-2.0",
+                    "source": "POM_XML"
+                  }
+                ],
+                "groupId": "org.twitter4j",
+                "artifactId": "twitter4j-core",
+                "type": "pom",
+                "version": "4.0.7.redhat-00002"
+              }
+            ],
+            "import": false
+          }
+        ],
+        "notFoundArtifacts": [
+          
+        ]
+      }
+    ],
+    "success": true
+  }

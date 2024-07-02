@@ -17,6 +17,7 @@ package org.jboss.pnc.deliverablesanalyzer.rest;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -101,7 +102,9 @@ public class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstra
         // given
         // callback
         wiremock.addMockServiceRequestListener(new LoggingRequestListener());
-        wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
+        wiremock.stubFor(
+                post(urlEqualTo(callbackRelativePath))
+                        .willReturn(aResponse().withBodyFile("threeArtsAnalysis.json").withStatus(HTTP_OK)));
 
         // Remote servers stubs
         WireMockServer pncServer = new WireMockServer(
@@ -125,12 +128,15 @@ public class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstra
         // then
         String id = response.getBody().asString();
         assertEquals(200, response.getStatusCode());
+        String jsonMatchString = "$.results[*].builds[*].artifacts[*].licenses[?(@.spdxLicenseId == 'Apache-2.0')]";
 
         verifyCallback(
                 () -> wiremock.verify(
                         1,
                         postRequestedFor(urlEqualTo(callbackRelativePath))
-                                .withRequestBody(containing("\"success\":true"))));
+                                .withRequestBody(containing("\"success\":true"))
+                                .withRequestBody(matchingJsonPath(jsonMatchString))
+                                .withRequestBody(containing("\"spdxLicenseId\":\"Apache-2.0\""))));
 
         // cleanup
         pncServer.stop();
