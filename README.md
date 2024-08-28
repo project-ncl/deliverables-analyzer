@@ -65,21 +65,21 @@ keys listed below. They can be defined by setting the configuration key in:
 - `.env` file in the working directory
 - `application.properties` file
 
-|Configuration Key|Description|Example|
-|-----------------|-----------|-------|
-|koji.hub.url|The Koji Hub URL to find builds|http://brewhub.localhost/brewhub|
-|koji.web.url|The Koji Web URL|http://brewweb.localhost/brew|
-|pnc.url|The PNC URL to find builds|http://pnc.localhost|
-|infinispan.mode|Define whether to use Infinispan in `EMBEDDED` (default) or `REMOTE`|`EMBEDDED`|
+| Configuration Key | Description                                                          | Example                          |
+|-------------------|----------------------------------------------------------------------|----------------------------------|
+| koji.hub.url      | The Koji Hub URL to find builds                                      | http://brewhub.localhost/brewhub |
+| koji.web.url      | The Koji Web URL                                                     | http://brewweb.localhost/brew    |
+| pnc.url           | The PNC URL to find builds                                           | http://pnc.localhost             |
+| infinispan.mode   | Define whether to use Infinispan in `EMBEDDED` (default) or `REMOTE` | `EMBEDDED`                       |
 
 ### Remote Infinispan
 If the `infinispan.mode` is set to `REMOTE`, the following configuration keys need to be defined:
 
-|Configuration Key|Description|Example|
-|-----------------|-----------|-------|
-|quarkus.infinispan-client.server-list|Comma-delimited Infinispan server list (\<hostname>[:\<port>])|localhost:11222|
-|quarkus.infinispan-client.auth-username|Username for the Infinispan server|admin|
-|quarkus.infinispan-client.auth-password|Password for the Infinispan server|password|
+| Configuration Key                       | Description                                                    | Example         |
+|-----------------------------------------|----------------------------------------------------------------|-----------------|
+| quarkus.infinispan-client.server-list   | Comma-delimited Infinispan server list (\<hostname>[:\<port>]) | localhost:11222 |
+| quarkus.infinispan-client.auth-username | Username for the Infinispan server                             | admin           |
+| quarkus.infinispan-client.auth-password | Password for the Infinispan server                             | password        |
 
 The following caches also need to be present in the Infinispan server:
 
