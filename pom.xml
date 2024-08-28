@@ -23,6 +23,7 @@
     <groupId>org.jboss</groupId>
     <artifactId>jboss-parent</artifactId>
     <version>46</version>
+    <relativePath/>
   </parent>
 
   <groupId>org.jboss.pnc.deliverablesanalyzer</groupId>
@@ -31,16 +32,16 @@
 
   <name>Deliverables Analyzer</name>
   <description>Analyzes deliverables.</description>
-  <url>http://www.redhat.com/</url>
+  <url>https://www.redhat.com/</url>
   <inceptionYear>2019</inceptionYear>
   <organization>
     <name>Red Hat, Inc.</name>
-    <url>http://www.redhat.com/</url>
+    <url>https://www.redhat.com/</url>
   </organization>
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
@@ -56,6 +57,8 @@
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
     <maven.compiler.parameters>true</maven.compiler.parameters>
     <maven.compiler.release>11</maven.compiler.release>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
     <mavenVersion>3.6.2</mavenVersion>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
