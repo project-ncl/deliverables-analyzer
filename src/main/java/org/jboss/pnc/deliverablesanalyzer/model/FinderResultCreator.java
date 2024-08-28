@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -294,19 +295,10 @@ public final class FinderResultCreator {
 
                 if (LOGGER.isDebugEnabled()) {
                     archiveCount++;
-                    String identifier;
-                    switch (artifact.getBuildSystemType()) {
-                        case BREW:
-                            identifier = "Brew#" + artifact.getBrewId();
-                            break;
-                        case PNC:
-                            identifier = "PNC#" + artifact.getPncId();
-                            break;
-                        default:
-                            identifier = "Unknown#-1";
-                            break;
-                    }
-
+                    String identifier = getIdentifier(
+                            artifact.getBuildSystemType(),
+                            artifact.getBrewId(),
+                            artifact.getPncId());
                     LOGGER.debug("Artifact: {} / {} ({})", archiveCount, numArchives, identifier);
                 }
             }
@@ -315,20 +307,7 @@ public final class FinderResultCreator {
 
             if (LOGGER.isDebugEnabled()) {
                 buildCount++;
-
-                String identifier;
-                switch (build.getBuildSystemType()) {
-                    case BREW:
-                        identifier = "Brew#" + build.getBrewId();
-                        break;
-                    case PNC:
-                        identifier = "PNC#" + build.getPncId();
-                        break;
-                    default:
-                        identifier = "Unknown#-1";
-                        break;
-                }
-
+                String identifier = getIdentifier(build.getBuildSystemType(), build.getBrewId(), build.getPncId());
                 LOGGER.debug("Build: {} / {} ({})", buildCount, numBuilds, identifier);
             }
 
@@ -336,5 +315,21 @@ public final class FinderResultCreator {
         }
 
         return Collections.unmodifiableSet(buildList);
+    }
+
+    private static String getIdentifier(BuildSystemType buildSystemType, Long brewId, String pncId) {
+        String identifier;
+        switch (buildSystemType) {
+            case BREW:
+                identifier = "Brew#" + Objects.requireNonNullElse(brewId, "-1");
+                break;
+            case PNC:
+                identifier = "PNC#" + pncId;
+                break;
+            default:
+                identifier = "Unknown#-1";
+                break;
+        }
+        return identifier;
     }
 }
