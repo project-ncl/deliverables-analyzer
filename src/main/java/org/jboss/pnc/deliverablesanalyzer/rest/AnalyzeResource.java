@@ -122,7 +122,10 @@ public class AnalyzeResource implements AnalyzeService {
                 LOGGER.debug("Analysis finished successfully. Analysis results: {}", analysisReport);
             } catch (CancellationException ce) {
                 // The task was cancelled => don't send results using callback
-                LOGGER.info("Analysis with ID {} was cancelled. No callback will be performed. Exception: {}", id, ce);
+                LOGGER.info(
+                        "Analysis with ID {} was cancelled. No callback will be performed. Exception: {}",
+                        id,
+                        ce.toString());
             } catch (Throwable e) {
                 analysisReport = new AnalysisReport();
                 LOGGER.warn(
@@ -174,7 +177,7 @@ public class AnalyzeResource implements AnalyzeService {
             httpClient.performHttpRequest(callback, result);
             return true;
         } catch (Exception e) {
-            LOGGER.warn("Exception when performing Callback with: " + e.toString());
+            LOGGER.warn("Exception when performing Callback with: {}", e.toString());
             LOGGER.warn("Retrying");
             try {
                 httpClient.performHttpRequest(callback, result);
