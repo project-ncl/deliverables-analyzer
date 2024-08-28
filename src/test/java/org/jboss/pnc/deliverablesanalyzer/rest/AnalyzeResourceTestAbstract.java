@@ -21,6 +21,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.jboss.pnc.api.dto.Request.Method.POST;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
@@ -76,6 +77,7 @@ public class AnalyzeResourceTestAbstract {
         callbackRequest = new Request(POST, new URI(callbackUrl));
 
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE)) {
+            assertNotNull(is);
             testConfigJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             LOGGER.debug("Found TEST configuration: {}", testConfigJson);
         } catch (IOException e) {

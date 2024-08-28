@@ -71,8 +71,7 @@ public class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstra
     public AnalyzeResourceWithMockedBrewTest() throws URISyntaxException {
     }
 
-    public class LoggingRequestListener implements RequestListener {
-
+    public static class LoggingRequestListener implements RequestListener {
         @Override
         public void requestReceived(
                 com.github.tomakehurst.wiremock.http.Request request,

@@ -18,6 +18,7 @@ package org.jboss.pnc.deliverablesanalyzer.experiments;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -90,7 +91,7 @@ public class CompletableFutureParallelismTest {
             fail("The results was joined successfully! It should have failed.");
         } catch (CompletionException e) {
             long timeAfter = new Date().getTime();
-            assertTrue(e.getCause() instanceof KojiClientException);
+            assertInstanceOf(KojiClientException.class, e.getCause());
             assertTrue((timeAfter - timeBefore) < 200);
         }
     }
@@ -127,7 +128,7 @@ public class CompletableFutureParallelismTest {
             fail("The results was joined successfully! It should have been cancelled.");
         } catch (CompletionException e) {
             System.out.println("Verifying cancel");
-            assertTrue(e.getCause() instanceof CancellationException);
+            assertInstanceOf(CancellationException.class, e.getCause());
             long timeAfter = new Date().getTime();
             assertTrue((timeAfter - timeBefore) < 100);
         }

@@ -16,6 +16,7 @@
 package org.jboss.pnc.deliverablesanalyzer.experiments;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -110,7 +111,7 @@ public class FutureParallelismTest {
             fail("The results was awaited successfully! It should have failed.");
         } catch (ExecutionException e) {
             long timeAfter = new Date().getTime();
-            assertTrue(e.getCause() instanceof KojiClientException);
+            assertInstanceOf(KojiClientException.class, e.getCause());
             assertTrue((timeAfter - timeBefore) < 200);
         }
     }
@@ -152,7 +153,7 @@ public class FutureParallelismTest {
         } catch (CancellationException | ExecutionException e) {
             long timeAfter = new Date().getTime();
             System.out.println("Verifying cancel");
-            assertTrue(e instanceof CancellationException);
+            assertInstanceOf(CancellationException.class, e);
             LOGGER.info("Time elapsed {}ms", (timeAfter - timeBefore));
             assertTrue((timeAfter - timeBefore) < 200);
         }
