@@ -75,8 +75,7 @@ public class AnalyzeResourceTestAbstract {
     protected AnalyzeResourceTestAbstract() throws URISyntaxException {
         callbackRequest = new Request(POST, new URI(callbackUrl));
 
-        try {
-            InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE);
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE)) {
             testConfigJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             LOGGER.debug("Found TEST configuration: {}", testConfigJson);
         } catch (IOException e) {

@@ -41,7 +41,7 @@ public class ConfigProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigProvider.class);
     private static final String CONFIG_FILE = "custom_config.json";
 
-    private BuildConfig config;
+    private final BuildConfig config;
 
     @Produces
     public BuildConfig getConfig() {
@@ -52,8 +52,7 @@ public class ConfigProvider {
         BuildConfig defaults = BuildConfig.load(ConfigProvider.class.getClassLoader());
         String customConfig = null;
 
-        try {
-            InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE);
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE)) {
             customConfig = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             LOGGER.debug("Found custom configuration: {}", customConfig);
         } catch (IOException e) {

@@ -154,8 +154,10 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
         wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // when
-        analyzeResource
-                .analyze(new AnalyzePayload("1234", List.of("xxyy:/malformedUrl.zip"), null, callbackRequest, null));
+        try (javax.ws.rs.core.Response response = analyzeResource
+                .analyze(new AnalyzePayload("1234", List.of("xxyy:/malformedUrl.zip"), null, callbackRequest, null))) {
+            assertEquals(200, response.getStatus());
+        }
 
         // then
         verifyCallback(
@@ -202,7 +204,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
                 public Map<String, KojiArchiveType> getArchiveTypeMap() throws KojiClientException {
                     Map<String, KojiArchiveType> archiveTypeMap = new HashMap<>();
                     archiveTypeMap.put("jar", new KojiArchiveType("jar", List.of("jar"), 1, "jar"));
-                    archiveTypeMap.put("jar", new KojiArchiveType("zip", List.of("zip"), 2, "zip"));
+                    archiveTypeMap.put("zip", new KojiArchiveType("zip", List.of("zip"), 2, "zip"));
 
                     return archiveTypeMap;
                 }
