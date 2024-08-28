@@ -95,14 +95,14 @@ public class CompletableFutureParallelismTest {
         }
     }
 
-    // CompletableFuture.cancel doesn't do its job and it is not possible to cancel running operations using it
+    // CompletableFuture.cancel doesn't do its job, and it is not possible to cancel running operations using it
     @Test
     public void testParallelCancel() {
         List<Integer> ids = List.of(5, 2, 1, 4, 3);
         long timeBefore = new Date().getTime();
         CompletableFuture<List<Integer>> future = ids.stream().map(id -> CompletableFuture.supplyAsync(() -> {
             try {
-                Thread.sleep(100 * id);
+                Thread.sleep(100L * id);
             } catch (InterruptedException e) {
                 fail("Sleep was interrupted!", e);
             }

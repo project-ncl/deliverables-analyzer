@@ -110,7 +110,7 @@ public class Finder {
      * @param distributionAnalyzerListener A listener for events from DistributionAnalyzer
      * @param buildFinderListener A listener for events from Build Finder
      * @param config Configuration of the analysis
-     * @return Results of the analysis if the whole operation was successful. Partial fail results in fail of the whole
+     * @return Results of the analysis of the whole operation was successful. Partial fail results in fail of the whole
      *         analysis.
      * @throws CancellationException Thrown in case of cancel operation performed during the analysis
      * @throws Throwable Thrown in case of any errors during the analysis

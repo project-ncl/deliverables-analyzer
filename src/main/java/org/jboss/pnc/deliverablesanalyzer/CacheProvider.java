@@ -128,7 +128,7 @@ public class CacheProvider {
     }
 
     /**
-     * Setup the embedded infinispan cache. The caches are also setup.
+     * Set up the embedded infinispan cache. The caches are also set up.
      *
      * @return embedded cache manager
      * @throws IOException if something went wrong
@@ -202,13 +202,13 @@ public class CacheProvider {
     }
 
     /**
-     * Setup the distributed Infinispan cache manager from configs. It is assumed that the caches are already setup on
+     * Set up the distributed Infinispan cache manager from configs. It is assumed that the caches are already set up on
      * the remote Infinispan server.
      * <p>
      * In the future, this can be replaced by the built-in quarkus-infinispan-client once we don't use the embedded
      * infinispan feature.
      *
-     * @return remote cache manager setup to talk to the distributed infinispan server
+     * @return remote cache manager set up to talk to the distributed infinispan server
      * @throws RuntimeException if the infinispan remote server list, username, or password are not specified in the
      *         config
      */

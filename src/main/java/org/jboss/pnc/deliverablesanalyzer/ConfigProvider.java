@@ -91,7 +91,7 @@ public class ConfigProvider {
      *
      * @param config config file to potentially override its kojiHubUrl
      *
-     * @throws IOException if we can't parse the value as an URL
+     * @throws IOException if we can't parse the value as a URL
      */
     private void setKojiHubURL(BuildConfig config) throws IOException {
         Optional<String> optionalKojiHubURL = org.eclipse.microprofile.config.ConfigProvider.getConfig()
@@ -115,7 +115,7 @@ public class ConfigProvider {
      *
      * @param config config file to potentially override its kojiWebUrl
      *
-     * @throws IOException if we can't parse the value as an URL
+     * @throws IOException if we can't parse the value as a URL
      */
     private void setKojiWebURL(BuildConfig config) throws IOException {
         Optional<String> optionalKojiWebURL = org.eclipse.microprofile.config.ConfigProvider.getConfig()
@@ -149,7 +149,7 @@ public class ConfigProvider {
      *
      * @param config config file to potentially override its pncUrl
      *
-     * @throws IOException if we can't parse the value as an URL
+     * @throws IOException if we can't parse the value as a URL
      */
     private void setPncURL(BuildConfig config) throws IOException {
         Optional<String> optionalPncURL = org.eclipse.microprofile.config.ConfigProvider.getConfig()
