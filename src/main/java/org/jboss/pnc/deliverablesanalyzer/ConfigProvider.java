@@ -22,6 +22,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -37,8 +38,8 @@ import org.slf4j.LoggerFactory;
  */
 @ApplicationScoped
 public class ConfigProvider {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigProvider.class);
+
     private static final String CONFIG_FILE = "custom_config.json";
 
     private final BuildConfig config;
@@ -53,6 +54,7 @@ public class ConfigProvider {
         String customConfig = null;
 
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE)) {
+            Objects.requireNonNull(is, "Input stream was null when getting resource " + CONFIG_FILE);
             customConfig = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             LOGGER.debug("Found custom configuration: {}", customConfig);
         } catch (IOException e) {
