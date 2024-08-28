@@ -94,7 +94,7 @@
         });
 
         // XXX
-        var table = null;
+        let table = null;
         const builds = $('#builds');
 
         const input = $('#url');
@@ -104,9 +104,9 @@
         const urlAlert = $('#urlAlert');
         const urlAlertMessage = $('#urlAlertMessage');
         const form = $('#analyzeForm');
-        const progress = $('#progress');
+        //const progress = $('#progress');
 
-        var intervalID;
+        let intervalID;
 
         form.submit(function(event) {
           event.preventDefault();
@@ -124,7 +124,7 @@
 
           const url = input.val();
 
-          if (url == null || url.trim().length == 0) {
+          if (url == null || url.trim().length === 0) {
             urlAlertMessage.html('URL cannot be empty');
             urlAlert.show().alert();
 
@@ -144,7 +144,7 @@
 
           const protocol = u.protocol;
 
-          if (protocol != 'http:' && protocol != 'https:') {
+          if (protocol !== 'http:' && protocol !== 'https:') {
             urlAlertMessage.html('Invalid URL protocol: ' + protocol)
             urlAlert.show().alert();
 
@@ -152,7 +152,7 @@
           }
 
           const progressbar = $('#progressbar');
-          var percent = 0;
+          let percent = 0;
 
           progressbar.css('width', '0%').attr('aria-valuenow', 0);
           progressbar.html(percent + '%');
@@ -182,7 +182,7 @@
             const id = location.split('/').pop();
             const max = 3600000 - 10000;
             const interval = 1000;
-            var t = 0;
+            let t = 0;
 
             intervalID = setInterval(function() {
               $.getJSON('/api/analyze/statuses/' + id, function(data) {
@@ -206,7 +206,7 @@
 
                 handle(config, data);
 
-                if (percent != 100) {
+                if (percent !== 100) {
                   percent = 100;
                   progressbar.css('width', percent + '%').attr('aria-valuenow', percent);
                   progressbar.html(percent + '%');
@@ -318,10 +318,12 @@
               {
                 data: 'artifacts',
                 render: function(data, type) {
+                  let a;
+
                   if (type === 'display') {
                     let text = '<ul>';
 
-                    for (i = 0; i < data.length; i++) {
+                    for (let i = 0; i < data.length; i++) {
                       a = data[i];
                       text += '<li>';
                       if (a.brew_id != null) {
