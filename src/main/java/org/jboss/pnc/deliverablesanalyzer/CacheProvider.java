@@ -226,7 +226,7 @@ public class CacheProvider {
             serverBuilder.host(hostPort[0]);
 
             if (hostPort.length > 1) {
-                serverBuilder.port(Integer.valueOf(hostPort[1]));
+                serverBuilder.port(Integer.parseInt(hostPort[1]));
             }
         }
 

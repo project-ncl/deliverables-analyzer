@@ -58,10 +58,10 @@ public class CompletableFutureParallelismTest {
 
             System.out.println("testParallelExecution: Finishing execution " + id);
             return id;
-        }, executor)).collect(collectingAndThen(toList(), futures -> executeFutures(futures)));
+        }, executor)).collect(collectingAndThen(toList(), this::executeFutures));
 
         List<Integer> resultList = future.join();
-        int result = resultList.stream().reduce(0, (a, b) -> a + b);
+        int result = resultList.stream().reduce(0, Integer::sum);
         assertEquals(1 + 2 + 3 + 4 + 5, result);
     }
 
@@ -83,7 +83,7 @@ public class CompletableFutureParallelismTest {
 
             System.out.println("testParallelShortCircuitOnException: Finishing execution " + id);
             return id;
-        }, executor)).collect(collectingAndThen(toList(), futures -> executeFutures(futures)));
+        }, executor)).collect(collectingAndThen(toList(), this::executeFutures));
 
         try {
             future.join();
@@ -109,7 +109,7 @@ public class CompletableFutureParallelismTest {
 
             System.out.println("testParallelCancel: Finishing execution " + id);
             return id;
-        }, executor)).collect(collectingAndThen(toList(), futures -> executeFutures(futures)));
+        }, executor)).collect(collectingAndThen(toList(), this::executeFutures));
 
         executor.runAsync(() -> {
             try {

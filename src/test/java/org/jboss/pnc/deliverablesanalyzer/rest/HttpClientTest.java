@@ -59,7 +59,7 @@ public class HttpClientTest {
 
     protected static final int PORT = 8082;
 
-    private WireMockServer wiremock = new WireMockServer(options().port(PORT));
+    private final WireMockServer wiremock = new WireMockServer(options().port(PORT));
 
     @BeforeAll
     public void beforeAll() {
@@ -100,9 +100,7 @@ public class HttpClientTest {
         wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // when - then
-        assertThrows(IOException.class, () -> {
-            httpClient.performHttpRequest(request);
-        });
+        assertThrows(IOException.class, () -> httpClient.performHttpRequest(request));
     }
 
     @Test
@@ -112,9 +110,7 @@ public class HttpClientTest {
         Request request = new Request(GET, new URI(fullUrl + "anything"));
 
         // when - then
-        assertThrows(ProcessingException.class, () -> {
-            httpClient.performHttpRequest(request);
-        });
+        assertThrows(ProcessingException.class, () -> httpClient.performHttpRequest(request));
     }
 
     @Test
@@ -138,8 +134,8 @@ public class HttpClientTest {
     }
 
     static class TestPayload {
-        private Integer a;
-        private String b;
+        private final Integer a;
+        private final String b;
 
         TestPayload(Integer a, String b) {
             this.a = a;

@@ -77,7 +77,7 @@ public class FutureParallelismTest {
         LOGGER.info("Time elapsed {}ms", (timeAfter - timeBefore));
         assertTrue((timeAfter - timeBefore) < 600);
 
-        int result = results.stream().reduce(0, (a, b) -> a + b);
+        int result = results.stream().reduce(0, Integer::sum);
         assertEquals(1 + 2 + 3 + 4 + 5, result);
     }
 

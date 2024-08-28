@@ -57,12 +57,14 @@ public class HeartbeatScheduler {
     @Inject
     OidcClient oidcClient;
 
-    private Map<String, Future<?>> subscribedRequests = new ConcurrentHashMap<>();
+    private final Map<String, Future<?>> subscribedRequests = new ConcurrentHashMap<>();
 
     public void subscribeRequest(String id, HeartbeatConfig heartbeatConfig) {
-        Future<?> beat = this.executor.scheduleAtFixedRate(() -> {
-            this.sendHeartbeat(heartbeatConfig.getRequest());
-        }, 0L, heartbeatConfig.getDelay(), heartbeatConfig.getDelayTimeUnit());
+        Future<?> beat = this.executor.scheduleAtFixedRate(
+                () -> this.sendHeartbeat(heartbeatConfig.getRequest()),
+                0L,
+                heartbeatConfig.getDelay(),
+                heartbeatConfig.getDelayTimeUnit());
 
         subscribedRequests.put(id, beat);
     }

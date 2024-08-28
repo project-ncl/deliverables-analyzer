@@ -61,9 +61,9 @@ import com.redhat.red.build.koji.KojiClientException;
 public class Finder {
     private static final Logger LOGGER = LoggerFactory.getLogger(Finder.class);
 
-    private BasicCacheContainer cacheManager;
+    private final Map<String, CancelWrapper> runningOperations = new ConcurrentHashMap<>();
 
-    private Map<String, CancelWrapper> runningOperations = new ConcurrentHashMap<>();
+    private BasicCacheContainer cacheManager;
 
     @Inject
     ManagedExecutor executor;
@@ -125,7 +125,6 @@ public class Finder {
         runningOperations.put(id, cancelWrapper);
 
         // Capture all the futures used in the find method. This is used for the cancel operation
-        List<Future> allTasks = new ArrayList<>();
         List<Future<FinderResult>> submittedTasks = urls.stream().map(url -> executor.submit(() -> {
             LOGGER.debug("Analysis of URL {} started.", url);
 
@@ -144,7 +143,7 @@ public class Finder {
                 throw new ExecutionException(e);
             }
         })).collect(Collectors.toList());
-        allTasks.addAll(submittedTasks);
+        List<Future<FinderResult>> allTasks = new ArrayList<>(submittedTasks);
 
         try {
             return awaitResults(submittedTasks, allTasks, cancelWrapper);
@@ -161,7 +160,7 @@ public class Finder {
 
     private List<FinderResult> awaitResults(
             List<Future<FinderResult>> submittedTasks,
-            List<Future> allTasks,
+            List<Future<FinderResult>> allTasks,
             CancelWrapper cancelWrapper) throws CancellationException, ExecutionException {
         List<FinderResult> results = new ArrayList<>(submittedTasks.size());
 
