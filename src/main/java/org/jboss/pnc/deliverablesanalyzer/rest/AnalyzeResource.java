@@ -152,7 +152,7 @@ public class AnalyzeResource implements AnalyzeService {
                 LOGGER.info(
                         "Analysis with ID {} was {} finished and callback was performed.",
                         id,
-                        analysisReport.isSuccess() ? "successfully" : "unsuccessfully");
+                        analysisReport != null && analysisReport.isSuccess() ? "successfully" : "unsuccessfully");
             } finally {
                 if (analyzePayload.getHeartbeat() != null) {
                     heartbeatScheduler.unsubscribeRequest(id);
@@ -224,10 +224,10 @@ public class AnalyzeResource implements AnalyzeService {
     }
 
     /**
-     * Given a request and a map of http headers, add the http headers to the request if not already in the request
+     * Given a request and a map of HTTP headers, add the HTTP headers to the request if not already in the request
      *
-     * @param request
-     * @param httpHeaders
+     * @param request the request
+     * @param httpHeaders the HTTP headers
      */
     private static void mergeHttpHeaders(Request request, Map<String, String> httpHeaders) {
 

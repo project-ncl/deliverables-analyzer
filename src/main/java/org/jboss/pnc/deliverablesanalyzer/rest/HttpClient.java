@@ -86,7 +86,7 @@ public class HttpClient {
      * @throws IOException Thrown in case of the request failure
      */
     public void performHttpRequest(Request request, Object payload) throws Exception {
-        LOGGER.debug("Performing HTTP request with these parameters: {}", request);
+        LOGGER.debug("Performing HTTP request with these parameters: {} (payload: {})", request, payload);
 
         Response response = null;
 
