@@ -178,13 +178,16 @@ public final class FinderResultCreator {
         }
 
         KojiBuild buildZero = builds.get(new BuildSystemInteger(0));
-        List<KojiLocalArchive> localArchives = buildZero.getArchives();
-        int numArchives = localArchives.size();
-
-        if (numArchives == 0) {
+        if (buildZero == null) {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
 
+        List<KojiLocalArchive> localArchives = buildZero.getArchives();
+        if (localArchives == null || localArchives.size() == 0) {
+            return Collections.unmodifiableSet(new LinkedHashSet<>());
+        }
+
+        int numArchives = localArchives.size();
         Set<Artifact> artifacts = new LinkedHashSet<>(numArchives);
         int archiveCount = 0;
 
