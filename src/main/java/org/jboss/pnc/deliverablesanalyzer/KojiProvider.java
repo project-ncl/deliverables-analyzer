@@ -22,7 +22,6 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import org.jboss.pnc.build.finder.core.BuildConfig;
-import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.build.finder.koji.KojiClientSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +42,7 @@ public class KojiProvider {
 
     @Produces
     @DefaultBean
-    public ClientSession createSession() throws KojiClientException {
+    public KojiClientSession createSession() throws KojiClientException {
         LOGGER.info("Using default Koji ClientSession");
 
         URL kojiHubURL = config.getKojiHubURL();
