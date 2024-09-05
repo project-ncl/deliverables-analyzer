@@ -15,7 +15,12 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model;
 
+import static org.jboss.pnc.api.deliverablesanalyzer.dto.Artifact.ArtifactBuilder;
 import static org.jboss.pnc.build.finder.core.BuildFinderUtils.isBuildIdZero;
+import static org.jboss.pnc.build.finder.pnc.client.PncUtils.GRADLE;
+import static org.jboss.pnc.build.finder.pnc.client.PncUtils.MAVEN;
+import static org.jboss.pnc.build.finder.pnc.client.PncUtils.NPM;
+import static org.jboss.pnc.build.finder.pnc.client.PncUtils.SBT;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -38,7 +43,9 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.LicenseInfo;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact.MavenArtifactBuilder;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact.NPMArtifactBuilder;
 import org.jboss.pnc.api.enums.LicenseSource;
 import org.jboss.pnc.build.finder.core.BuildSystem;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
@@ -65,7 +72,7 @@ public final class FinderResultCreator {
                 .build();
     }
 
-    private static void setLicenseInformation(Artifact.ArtifactBuilder builder, KojiLocalArchive localArchive) {
+    private static void setLicenseInformation(ArtifactBuilder<?, ?> builder, KojiLocalArchive localArchive) {
         Set<LicenseInfo> licenses = Optional.ofNullable(localArchive.getLicenses())
                 .orElse(Collections.emptySet())
                 .stream()
@@ -111,7 +118,7 @@ public final class FinderResultCreator {
         return licenseBuilder.build();
     }
 
-    private static void setCommonArtifactFields(Artifact.ArtifactBuilder builder, KojiLocalArchive archive) {
+    private static void setCommonArtifactFields(ArtifactBuilder<?, ?> builder, KojiLocalArchive archive) {
         KojiArchiveInfo archiveInfo = archive.getArchive();
         long size = archiveInfo.getSize();
 
@@ -134,7 +141,7 @@ public final class FinderResultCreator {
         }
     }
 
-    private static MavenArtifact.MavenArtifactBuilder createMavenArtifact(KojiArchiveInfo archiveInfo) {
+    private static MavenArtifactBuilder<?, ?> createMavenArtifact(KojiArchiveInfo archiveInfo) {
         return MavenArtifact.builder()
                 .groupId(archiveInfo.getGroupId())
                 .artifactId(archiveInfo.getArtifactId())
@@ -143,7 +150,7 @@ public final class FinderResultCreator {
                 .classifier(archiveInfo.getClassifier());
     }
 
-    private static NPMArtifact.NPMArtifactBuilder createNpmArtifact(KojiArchiveInfo archiveInfo) {
+    private static NPMArtifactBuilder<?, ?> createNpmArtifact(KojiArchiveInfo archiveInfo) {
         return NPMArtifact.builder().name(archiveInfo.getArtifactId()).version(archiveInfo.getVersion());
     }
 
@@ -226,17 +233,21 @@ public final class FinderResultCreator {
 
     private static Artifact createArtifact(KojiLocalArchive localArchive, BuildSystem buildSystem, boolean imported) {
         KojiArchiveInfo archiveInfo = localArchive.getArchive();
+        String buildType = archiveInfo.getBuildType();
+        ArtifactBuilder<?, ?> builder;
 
-        Artifact.ArtifactBuilder builder;
-        if ("maven".equals(archiveInfo.getBuildType()) || "gradle".equals(archiveInfo.getBuildType())
-                || "sbt".equals(archiveInfo.getBuildType())) {
-            builder = createMavenArtifact(archiveInfo);
-        } else if ("npm".equals(archiveInfo.getBuildType())) {
-            builder = createNpmArtifact(archiveInfo);
-        } else {
-            throw new BadRequestException(
-                    "Archive " + archiveInfo.getArtifactId() + " had unhandled artifact type: "
-                            + archiveInfo.getBuildType());
+        switch (buildType) {
+            case GRADLE:
+            case MAVEN:
+            case SBT:
+                builder = createMavenArtifact(archiveInfo);
+                break;
+            case NPM:
+                builder = createNpmArtifact(archiveInfo);
+                break;
+            default:
+                throw new BadRequestException(
+                        "Archive " + archiveInfo.getArtifactId() + " had unhandled artifact type: " + buildType);
         }
 
         switch (buildSystem) {
