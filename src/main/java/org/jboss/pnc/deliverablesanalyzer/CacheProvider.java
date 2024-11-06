@@ -104,16 +104,16 @@ public class CacheProvider {
      */
     @Produces
     public BasicCacheContainer initCaches() throws IOException {
-        switch (infinispanMode) {
-            case EMBEDDED:
+        return switch (infinispanMode) {
+            case EMBEDDED -> {
                 LOGGER.info("Using Embedded Infinispan cache");
-                return setupEmbeddedCacheManager();
-            case REMOTE:
+                yield setupEmbeddedCacheManager();
+            }
+            case REMOTE -> {
                 LOGGER.info("Using Remote Infinispan cache");
-                return setupDistributedCacheManager();
-            default:
-                throw new RuntimeException("This infinispan mode has no cache manager");
-        }
+                yield setupDistributedCacheManager();
+            }
+        };
     }
 
     public void close(@Disposes BasicCacheContainer cacheManager) {

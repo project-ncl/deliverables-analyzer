@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
@@ -52,9 +51,7 @@ public class ErrorMessage {
         this.exception = exception;
         Response.Status status = Response.Status.INTERNAL_SERVER_ERROR;
 
-        if (exception instanceof WebApplicationException) {
-            WebApplicationException e = (WebApplicationException) exception;
-
+        if (exception instanceof WebApplicationException e) {
             try (Response response = e.getResponse()) {
                 status = response.getStatusInfo().toEnum();
             }
@@ -62,16 +59,13 @@ public class ErrorMessage {
 
         if (exception.getCause() != null) {
             causeStackTrace.addAll(
-                    Arrays.stream(exception.getCause().getStackTrace())
-                            .map(StackTraceElement::toString)
-                            .collect(Collectors.toList()));
+                    Arrays.stream(exception.getCause().getStackTrace()).map(StackTraceElement::toString).toList());
         }
 
         message = exception.getMessage();
         reason = status.getReasonPhrase();
         code = status.getStatusCode();
-        stackTrace.addAll(
-                Arrays.stream(exception.getStackTrace()).map(StackTraceElement::toString).collect(Collectors.toList()));
+        stackTrace.addAll(Arrays.stream(exception.getStackTrace()).map(StackTraceElement::toString).toList());
     }
 
     @JsonIgnore

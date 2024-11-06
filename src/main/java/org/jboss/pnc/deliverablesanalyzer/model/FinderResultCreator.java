@@ -190,7 +190,7 @@ public final class FinderResultCreator {
         }
 
         List<KojiLocalArchive> localArchives = buildZero.getArchives();
-        if (localArchives == null || localArchives.size() == 0) {
+        if (localArchives == null || localArchives.isEmpty()) {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
 
@@ -237,17 +237,10 @@ public final class FinderResultCreator {
         ArtifactBuilder<?, ?> builder;
 
         switch (buildType) {
-            case GRADLE:
-            case MAVEN:
-            case SBT:
-                builder = createMavenArtifact(archiveInfo);
-                break;
-            case NPM:
-                builder = createNpmArtifact(archiveInfo);
-                break;
-            default:
-                throw new BadRequestException(
-                        "Archive " + archiveInfo.getArtifactId() + " had unhandled artifact type: " + buildType);
+            case GRADLE, MAVEN, SBT -> builder = createMavenArtifact(archiveInfo);
+            case NPM -> builder = createNpmArtifact(archiveInfo);
+            default -> throw new BadRequestException(
+                    "Archive " + archiveInfo.getArtifactId() + " had unhandled artifact type: " + buildType);
         }
 
         switch (buildSystem) {
@@ -335,15 +328,9 @@ public final class FinderResultCreator {
     private static String getIdentifier(BuildSystemType buildSystemType, Long brewId, String pncId) {
         String identifier;
         switch (buildSystemType) {
-            case BREW:
-                identifier = "Brew#" + Objects.requireNonNullElse(brewId, "-1");
-                break;
-            case PNC:
-                identifier = "PNC#" + pncId;
-                break;
-            default:
-                identifier = "Unknown#-1";
-                break;
+            case BREW -> identifier = "Brew#" + Objects.requireNonNullElse(brewId, "-1");
+            case PNC -> identifier = "PNC#" + pncId;
+            default -> identifier = "Unknown#-1";
         }
         return identifier;
     }

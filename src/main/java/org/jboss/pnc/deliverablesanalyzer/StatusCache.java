@@ -15,6 +15,7 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
+import java.io.Serial;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,6 +26,7 @@ import org.apache.commons.collections4.map.PassiveExpiringMap;
 
 @Singleton
 public class StatusCache<K, V> extends PassiveExpiringMap<K, V> {
+    @Serial
     private static final long serialVersionUID = -5602712310506571554L;
 
     private static final long TIME_TO_LIVE_MILLIS = Duration.ofDays(1L).toMillis();

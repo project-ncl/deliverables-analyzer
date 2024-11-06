@@ -133,21 +133,6 @@ public class HttpClientTest {
                         .withRequestBody(equalToJson("{\"a\" : 1, \"b\" : \"str\"}")));
     }
 
-    static class TestPayload {
-        private final Integer a;
-        private final String b;
-
-        TestPayload(Integer a, String b) {
-            this.a = a;
-            this.b = b;
-        }
-
-        public Integer getA() {
-            return a;
-        }
-
-        public String getB() {
-            return b;
-        }
+    record TestPayload(Integer a, String b) {
     }
 }

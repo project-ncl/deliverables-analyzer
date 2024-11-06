@@ -32,16 +32,6 @@
         <ignoreVersion type="regex">[^2]\..+</ignoreVersion>
       </ignoreVersions>
     </rule>
-    <rule groupId="net.revelc.code" artifactId="impsort-maven-plugin" comparisonMethod="maven">
-      <ignoreVersions>
-        <ignoreVersion type="regex">([^1]\..+|1\.[^9].*)</ignoreVersion>
-      </ignoreVersions>
-    </rule>
-    <rule groupId="net.revelc.code.formatter" comparisonMethod="maven">
-      <ignoreVersions>
-        <ignoreVersion type="regex">([^2]\..+|2\.[^2].*|2\.2[^3].*)</ignoreVersion>
-      </ignoreVersions>
-    </rule>
     <rule groupId="org.infinispan" comparisonMethod="maven">
       <ignoreVersions>
         <ignoreVersion type="regex">([2-9]+|1[^4].*)</ignoreVersion>
