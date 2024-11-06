@@ -841,7 +841,7 @@ limitations under the License.]]></inlineHeader>
           <!--
                 If you'd like to tell the plugin where your .git directory is,
                 use this setting, otherwise we'll perform a search trying to
-                figure out the right directory. It's better to add it explicite IMHO.
+                figure out the right directory. It's better to add it explicitly, IMHO.
               -->
           <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
 
