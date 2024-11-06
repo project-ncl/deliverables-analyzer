@@ -27,11 +27,6 @@
     <ignoreVersion type="regex">.+-M\d+</ignoreVersion>
   </ignoreVersions>
   <rules>
-    <rule groupId="com.github.tomakehurst" comparisonMethod="maven">
-      <ignoreVersions>
-        <ignoreVersion type="regex">[^2]\..+</ignoreVersion>
-      </ignoreVersions>
-    </rule>
     <rule groupId="io.quarkus" comparisonMethod="maven">
       <ignoreVersions>
         <ignoreVersion type="regex">[^2]\..+</ignoreVersion>
