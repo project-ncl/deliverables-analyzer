@@ -383,13 +383,12 @@
           <configuration>
             <encoding>${project.build.sourceEncoding}</encoding>
             <expandEmptyElements>false</expandEmptyElements>
-            <keepBlankLines>true</keepBlankLines>
             <lineSeparator>\n</lineSeparator>
-            <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
             <sortDependencies>scope,groupId,artifactId</sortDependencies>
             <sortDependencyExclusions>groupId,artifactId</sortDependencyExclusions>
             <sortPlugins>scope,groupId,artifactId</sortPlugins>
             <sortProperties>true</sortProperties>
+            <spaceBeforeCloseEmptyElement>true</spaceBeforeCloseEmptyElement>
           </configuration>
         </plugin>
         <plugin>
