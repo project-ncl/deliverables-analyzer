@@ -108,36 +108,37 @@ class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstract {
         WireMockServer pncServer = new WireMockServer(
                 options().port(8083).usingFilesUnderClasspath("analyzeTestOKSimple/pnc"));
         pncServer.addMockServiceRequestListener(new LoggingRequestListener());
-        pncServer.start();
-
         WireMockServer brewHub = new WireMockServer(
                 options().port(8085).usingFilesUnderClasspath("analyzeTestOKSimple/brewHub"));
         brewHub.addMockServiceRequestListener(new LoggingRequestListener());
-        brewHub.start();
 
-        // when
-        Response response = given()
-                .body(new AnalyzePayload("1234", List.of(stubThreeArtsZip(1)), testConfigJson, callbackRequest, null))
-                .contentType(APPLICATION_JSON)
-                .when()
-                .post(analyzeUrl)
-                .thenReturn();
+        try {
+            pncServer.start();
+            brewHub.start();
 
-        // then
-        String id = response.getBody().asString();
-        assertEquals(jakarta.ws.rs.core.Response.Status.OK.getStatusCode(), response.getStatusCode());
-        String jsonMatchString = "$.results[*].builds[*].artifacts[*].licenses[?(@.spdxLicenseId == 'Apache-2.0')]";
+            // when
+            Response response = given().body(
+                    new AnalyzePayload("1234", List.of(stubThreeArtsZip(1)), testConfigJson, callbackRequest, null))
+                    .contentType(APPLICATION_JSON)
+                    .when()
+                    .post(analyzeUrl)
+                    .thenReturn();
 
-        verifyCallback(
-                () -> wiremock.verify(
-                        1,
-                        postRequestedFor(urlEqualTo(callbackRelativePath))
-                                .withRequestBody(containing("\"success\":true"))
-                                .withRequestBody(matchingJsonPath(jsonMatchString))
-                                .withRequestBody(containing("\"spdxLicenseId\":\"Apache-2.0\""))));
+            // then
+            String id = response.getBody().asString();
+            assertEquals(jakarta.ws.rs.core.Response.Status.OK.getStatusCode(), response.getStatusCode());
+            String jsonMatchString = "$.results[*].builds[*].artifacts[*].licenses[?(@.spdxLicenseId == 'Apache-2.0')]";
 
-        // cleanup
-        pncServer.stop();
-        brewHub.stop();
+            verifyCallback(
+                    () -> wiremock.verify(
+                            1,
+                            postRequestedFor(urlEqualTo(callbackRelativePath))
+                                    .withRequestBody(containing("\"success\":true"))
+                                    .withRequestBody(matchingJsonPath(jsonMatchString))
+                                    .withRequestBody(containing("\"spdxLicenseId\":\"Apache-2.0\""))));
+        } finally {
+            pncServer.stop();
+            brewHub.stop();
+        }
     }
 }
