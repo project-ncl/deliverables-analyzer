@@ -36,7 +36,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, macOS-latest, windows-latest ]
-        java: [ 17, 21 ]
+        java: [ "17", "21", "23" ]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -56,6 +56,6 @@ jobs:
           distribution: 'adopt'
           java-version: ${{ matrix.java }}
       - name: Build with Maven
-        run: mvn -B -e -V -DskipTests verify
+        run: mvn -B -e -V verify
 #     - name: Codecov
-#       uses: codecov/codecov-action@v1
+#       uses: codecov/codecov-action@v4

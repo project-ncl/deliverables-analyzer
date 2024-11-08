@@ -112,7 +112,7 @@ public class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstra
         pncServer.start();
 
         WireMockServer brewHub = new WireMockServer(
-                options().port(8084).usingFilesUnderClasspath("analyzeTestOKSimple/brewHub"));
+                options().port(8085).usingFilesUnderClasspath("analyzeTestOKSimple/brewHub"));
         brewHub.addMockServiceRequestListener(new LoggingRequestListener());
         brewHub.start();
 

@@ -9,7 +9,7 @@
   "disable-cache" : true,
   "disable-recursion" : false,
   "excludes" : [ "^(?!.*/pom\\.xml$).*/.*\\.xml$" ],
-  "koji-hub-url" : "http://localhost:8084",
+  "koji-hub-url" : "http://localhost:8085",
   "koji-multicall-size" : 8,
   "koji-num-threads" : 12,
   "koji-web-url" : "http://localhost:88888",
