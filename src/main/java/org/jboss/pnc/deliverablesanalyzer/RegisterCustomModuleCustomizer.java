@@ -15,12 +15,11 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import javax.inject.Singleton;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.quarkus.jackson.ObjectMapperCustomizer;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class RegisterCustomModuleCustomizer implements ObjectMapperCustomizer {

@@ -35,8 +35,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.BadRequestException;
-
 import org.jboss.pnc.api.deliverablesanalyzer.dto.Artifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.Build;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
@@ -56,6 +54,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
+
+import jakarta.ws.rs.BadRequestException;
 
 public final class FinderResultCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(FinderResultCreator.class);

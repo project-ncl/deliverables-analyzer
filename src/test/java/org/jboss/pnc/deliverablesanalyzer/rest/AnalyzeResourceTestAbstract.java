@@ -31,8 +31,6 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-import javax.inject.Inject;
-
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
 import org.slf4j.Logger;
@@ -44,11 +42,12 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.VerificationException;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 
+import jakarta.inject.Inject;
+
 /**
  * @author Jakub Bartecek
  */
 public class AnalyzeResourceTestAbstract {
-
     private static final String CONFIG_FILE = "custom_config.json";
 
     protected static final int PORT = 8082;

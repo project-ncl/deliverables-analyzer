@@ -15,7 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import java.io.IOException;
 import java.util.Map;
 
 import io.quarkus.oidc.client.OidcClient;
@@ -27,11 +26,16 @@ import io.smallrye.mutiny.Uni;
 public class OidcClientMock implements OidcClient {
     @Override
     public Uni<Tokens> getTokens(Map<String, String> additionalGrantParameters) {
-        return Uni.createFrom().item(new Tokens("hahaha", 10L, null, "refres", 10L, null));
+        return Uni.createFrom().item(new Tokens("hahaha", 10L, null, "refres", 10L, null, "clientId"));
     }
 
     @Override
     public Uni<Tokens> refreshTokens(String refreshToken) {
+        return null;
+    }
+
+    @Override
+    public Uni<Tokens> refreshTokens(String refreshToken, Map<String, String> additionalGrantParameters) {
         return null;
     }
 
@@ -41,7 +45,12 @@ public class OidcClientMock implements OidcClient {
     }
 
     @Override
-    public void close() throws IOException {
+    public Uni<Boolean> revokeAccessToken(String accessToken, Map<String, String> additionalParameters) {
+        return null;
+    }
+
+    @Override
+    public void close() {
 
     }
 }

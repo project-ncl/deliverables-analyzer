@@ -19,12 +19,12 @@ import java.io.Serial;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import org.apache.commons.collections4.map.PassiveExpiringMap;
 
-@Singleton
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
+@Dependent
 public class BuildConfigCache<K, V> extends PassiveExpiringMap<K, V> {
     @Serial
     private static final long serialVersionUID = -3473704377200486238L;

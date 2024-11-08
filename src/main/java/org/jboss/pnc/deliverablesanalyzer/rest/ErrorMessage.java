@@ -20,13 +20,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 public class ErrorMessage {
     @NotNull

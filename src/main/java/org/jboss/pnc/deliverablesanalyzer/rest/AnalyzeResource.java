@@ -25,16 +25,6 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
@@ -50,6 +40,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.quarkus.oidc.client.OidcClient;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
 @ApplicationScoped
 public class AnalyzeResource implements AnalyzeService {

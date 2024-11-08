@@ -23,19 +23,7 @@
   <ignoreVersions>
     <ignoreVersion type="regex">.+\.Dev\d+</ignoreVersion>
     <ignoreVersion type="regex">.+[-.][Aa]lpha-?\d+</ignoreVersion>
-    <ignoreVersion type="regex">.+-beta-?\d+</ignoreVersion>
+    <ignoreVersion type="regex">.+[-.][Bb]eta-?\d+</ignoreVersion>
     <ignoreVersion type="regex">.+-M\d+</ignoreVersion>
   </ignoreVersions>
-  <rules>
-    <rule groupId="io.quarkus" comparisonMethod="maven">
-      <ignoreVersions>
-        <ignoreVersion type="regex">[^2]\..+</ignoreVersion>
-      </ignoreVersions>
-    </rule>
-    <rule groupId="org.infinispan" comparisonMethod="maven">
-      <ignoreVersions>
-        <ignoreVersion type="regex">([2-9]+|1[^4].*)</ignoreVersion>
-      </ignoreVersions>
-    </rule>
-  </rules>
 </ruleset>

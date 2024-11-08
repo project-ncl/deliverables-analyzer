@@ -29,8 +29,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
-
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -40,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import com.redhat.red.build.koji.KojiClientException;
 
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 
 /**
  * @author Jakub Bartecek

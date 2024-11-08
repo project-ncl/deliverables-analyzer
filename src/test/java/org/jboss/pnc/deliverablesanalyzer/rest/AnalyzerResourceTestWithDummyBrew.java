@@ -23,8 +23,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.restassured.RestAssured.given;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.jboss.pnc.api.dto.Request.Method.GET;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -154,7 +154,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
         wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // when
-        try (javax.ws.rs.core.Response response = analyzeResource
+        try (jakarta.ws.rs.core.Response response = analyzeResource
                 .analyze(new AnalyzePayload("1234", List.of("xxyy:/malformedUrl.zip"), null, callbackRequest, null))) {
             assertEquals(200, response.getStatus());
         }

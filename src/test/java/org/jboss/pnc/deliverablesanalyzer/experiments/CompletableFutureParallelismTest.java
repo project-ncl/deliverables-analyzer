@@ -30,8 +30,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
-
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -39,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import com.redhat.red.build.koji.KojiClientException;
 
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 
 @QuarkusTest
 @Disabled

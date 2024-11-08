@@ -22,10 +22,10 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import javax.enterprise.context.ApplicationScoped;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class Cleaner {

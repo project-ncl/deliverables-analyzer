@@ -23,8 +23,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static io.restassured.RestAssured.given;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.net.HttpURLConnection.HTTP_OK;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.URISyntaxException;

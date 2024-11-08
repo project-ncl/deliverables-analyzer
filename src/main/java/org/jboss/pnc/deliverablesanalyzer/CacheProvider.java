@@ -24,10 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.enterprise.inject.Disposes;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -45,6 +41,10 @@ import org.jboss.pnc.build.finder.core.ConfigDefaults;
 import org.jboss.pnc.build.finder.protobuf.ProtobufSerializerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 
 /**
  *
@@ -177,7 +177,6 @@ public class CacheProvider {
                 .segmented(true)
                 .shared(false)
                 .preload(true)
-                .fetchPersistentState(true)
                 .purgeOnStartup(false)
                 .dataLocation(cacheLocation)
                 .indexLocation(cacheLocation)

@@ -62,7 +62,6 @@
     <mavenVersion>3.6.3</mavenVersion>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus.package.type>uber-jar</quarkus.package.type>
     <skipITs>true</skipITs>
     <version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>4.0.0</version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>
     <version.com.fasterxml.jackson>2.18.1</version.com.fasterxml.jackson>
@@ -72,7 +71,7 @@
     <version.com.mycila>4.6</version.com.mycila>
     <version.com.puppycrawl.tools>10.20.1</version.com.puppycrawl.tools>
     <version.git-commit-id-plugin>4.9.10</version.git-commit-id-plugin>
-    <version.io.quarkus>2.16.12.Final</version.io.quarkus>
+    <version.io.quarkus>3.16.2</version.io.quarkus>
     <version.net.revelc.code.formatter.formatter-maven-plugin>2.24.1</version.net.revelc.code.formatter.formatter-maven-plugin>
     <version.net.revelc.code.impsort-maven-plugin>1.12.0</version.net.revelc.code.impsort-maven-plugin>
     <version.net.sourceforge.pmd>7.7.0</version.net.sourceforge.pmd>
@@ -99,12 +98,9 @@
     <version.org.codehaus.mojo.buildnumber-maven-plugin>3.2.1</version.org.codehaus.mojo.buildnumber-maven-plugin>
     <version.org.codehaus.mojo.versions-maven-plugin>2.17.1</version.org.codehaus.mojo.versions-maven-plugin>
     <version.org.ec4j.maven.editorconfig-maven-plugin>0.1.0</version.org.ec4j.maven.editorconfig-maven-plugin>
-    <version.org.infinispan>13.0.10.Final</version.org.infinispan>
-    <version.org.jacoco>0.8.12</version.org.jacoco>
     <version.org.jboss.pnc>3.0.4</version.org.jboss.pnc>
-    <version.org.jboss.pnc.build.finder>2.4.2</version.org.jboss.pnc.build.finder>
+    <version.org.jboss.pnc.build.finder>2.5.1-SNAPSHOT</version.org.jboss.pnc.build.finder>
     <version.org.jboss.pnc.logging>1.0.6</version.org.jboss.pnc.logging>
-    <version.org.jboss.resteasy>6.2.10.Final</version.org.jboss.resteasy>
     <version.org.junit-pioneer>2.3.0</version.org.junit-pioneer>
     <version.org.sonatype.plugins.nexus-staging-maven-plugin>1.7.0</version.org.sonatype.plugins.nexus-staging-maven-plugin>
     <version.org.wiremock>3.9.2</version.org.wiremock>
@@ -127,23 +123,26 @@
         <scope>import</scope>
       </dependency>
       <dependency>
-        <groupId>org.infinispan</groupId>
-        <artifactId>infinispan-bom</artifactId>
-        <version>${version.org.infinispan}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.resteasy</groupId>
-        <artifactId>resteasy-bom</artifactId>
-        <version>${version.org.jboss.resteasy}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-collections4</artifactId>
         <version>${version.org.apache.commons.collections4}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.pnc</groupId>
+        <artifactId>dto</artifactId>
+        <version>${version.org.jboss.pnc}</version>
+        <classifier>jakarta</classifier>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.pnc</groupId>
+        <artifactId>dto</artifactId>
+        <version>${version.org.jboss.pnc}</version>
+        <classifier>patch-builders-jakarta</classifier>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.pnc</groupId>
+        <artifactId>rest-client-jakarta</artifactId>
+        <version>${version.org.jboss.pnc}</version>
       </dependency>
       <dependency>
         <groupId>org.jboss.pnc.build.finder</groupId>
@@ -157,6 +156,14 @@
           <exclusion>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.jboss.pnc</groupId>
+            <artifactId>dto</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.jboss.pnc</groupId>
+            <artifactId>rest-client</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -182,6 +189,14 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-infinispan-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jacoco</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-logging-json</artifactId>
     </dependency>
     <dependency>
@@ -190,7 +205,11 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-opentelemetry-exporter-otlp</artifactId>
+      <artifactId>quarkus-opentelemetry</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-resteasy-client-jackson</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -230,26 +249,13 @@
       <artifactId>commons-collections4</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-client-hotrod</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-commons-jdk11</artifactId>
-      <version>${version.org.infinispan}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-query-dsl</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-remote-query-client</artifactId>
+      <groupId>org.jboss.pnc</groupId>
+      <artifactId>dto</artifactId>
+      <classifier>patch-builders-jakarta</classifier>
     </dependency>
     <dependency>
       <groupId>org.jboss.pnc</groupId>
-      <artifactId>pnc-api</artifactId>
-      <version>${version.org.jboss.pnc}</version>
+      <artifactId>rest-client-jakarta</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jboss.pnc.build.finder</groupId>
@@ -266,17 +272,8 @@
       <version>${version.org.jboss.pnc.logging}</version>
     </dependency>
     <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-client</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.jboss.slf4j</groupId>
       <artifactId>slf4j-jboss-logmanager</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-component-annotations</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -293,12 +290,6 @@
       <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
-    <!--<dependency>
-      <groupId>org.jacoco</groupId>
-      <artifactId>org.jacoco.agent</artifactId>
-      <classifier>runtime</classifier>
-      <scope>test</scope>
-    </dependency>-->
     <dependency>
       <groupId>org.junit-pioneer</groupId>
       <artifactId>junit-pioneer</artifactId>
@@ -308,24 +299,6 @@
       <groupId>org.wiremock</groupId>
       <artifactId>wiremock</artifactId>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-annotations</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.datatype</groupId>
-          <artifactId>jackson-datatype-jsr310</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
   </dependencies>
 
@@ -624,11 +597,6 @@
             <rulesUri>file:///${project.basedir}/maven-version-rules.xml</rulesUri>
           </configuration>
         </plugin>
-        <plugin>
-          <groupId>org.jacoco</groupId>
-          <artifactId>jacoco-maven-plugin</artifactId>
-          <version>${version.org.jacoco}</version>
-        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -651,15 +619,17 @@
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
         <configuration>
-          <excludes>
-            <exclude>.cache/*</exclude>
-            <exclude>.vs*/*</exclude>
-            <exclude>LICENSE</exclude>
-            <exclude>lsp/log/*.log</exclude>
-            <exclude>src/main/docker/Dockerfile.jvm</exclude>
-            <exclude>src/main/docker/Dockerfile.native</exclude>
-          </excludes>
-          <inlineHeader><![CDATA[Copyright (C) ${project.inceptionYear} Red Hat, Inc.
+          <licenseSets>
+            <licenseSet>
+              <excludes>
+                <exclude>.cache/*</exclude>
+                <exclude>.vs*/*</exclude>
+                <exclude>LICENSE</exclude>
+                <exclude>lsp/log/*.log</exclude>
+                <exclude>src/main/docker/Dockerfile.jvm</exclude>
+                <exclude>src/main/docker/Dockerfile.native</exclude>
+              </excludes>
+              <inlineHeader><![CDATA[Copyright (C) ${project.inceptionYear} Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -672,6 +642,8 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.]]></inlineHeader>
+            </licenseSet>
+          </licenseSets>
           <mapping>
             <dockerignore>SCRIPT_STYLE</dockerignore>
             <gitattributes>SCRIPT_STYLE</gitattributes>
@@ -692,10 +664,6 @@ limitations under the License.]]></inlineHeader>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-maven-plugin</artifactId>
         <version>${version.io.quarkus}</version>
-        <configuration>
-          <!-- needed to publish to maven central -->
-          <skipOriginalJarRename>true</skipOriginalJarRename>
-        </configuration>
         <executions>
           <execution>
             <goals>
@@ -764,9 +732,9 @@ limitations under the License.]]></inlineHeader>
             <include>**/*Test.java</include>
           </includes>
           <skipITs>${skipITs}</skipITs>
-          <systemProperties>
+          <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-          </systemProperties>
+          </systemPropertyVariables>
         </configuration>
         <executions>
           <execution>
@@ -797,55 +765,14 @@ limitations under the License.]]></inlineHeader>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <excludedGroups>integration</excludedGroups>
-          <forkedProcessExitTimeoutInSeconds>480</forkedProcessExitTimeoutInSeconds>
-          <systemProperties>
-            <jacoco-agent.destfile>${project.build.directory}/jacoco-ut.exec</jacoco-agent.destfile>
+          <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-          </systemProperties>
+          </systemPropertyVariables>
         </configuration>
-        <executions>
-          <execution>
-            <id>integration-tests</id>
-            <goals>
-              <goal>test</goal>
-            </goals>
-            <phase>integration-test</phase>
-            <configuration>
-              <excludedGroups>!integration</excludedGroups>
-              <groups>integration</groups>
-              <systemProperties>
-                <jacoco-agent.destfile>${project.build.directory}/jacoco-it.exec</jacoco-agent.destfile>
-              </systemProperties>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>buildnumber-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>default-prepare-agent</id>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>default-report</id>
-            <goals>
-              <goal>report</goal>
-            </goals>
-            <configuration>
-              <dataFile>${project.build.directory}/jacoco.exec</dataFile>
-              <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
@@ -870,7 +797,6 @@ limitations under the License.]]></inlineHeader>
                 figure out the right directory. It's better to add it explicitly, IMHO.
               -->
           <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
-
           <!-- false is default here, it prints some more information during the build -->
           <verbose>true</verbose>
         </configuration>
@@ -930,17 +856,6 @@ limitations under the License.]]></inlineHeader>
             <reportsDirectory>${project.build.directory}/failsafe-reports</reportsDirectory>
           </reportsDirectories>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <reportSets>
-          <reportSet>
-            <reports>
-              <report>report</report>
-            </reports>
-          </reportSet>
-        </reportSets>
       </plugin>
     </plugins>
   </reporting>
@@ -1005,23 +920,12 @@ limitations under the License.]]></inlineHeader>
           <name>native</name>
         </property>
       </activation>
+      <properties>
+        <quarkus.native.enabled>true</quarkus.native.enabled>
+        <skipITs>false</skipITs>
+      </properties>
       <build>
         <plugins>
-          <plugin>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-maven-plugin</artifactId>
-            <version>${version.io.quarkus}</version>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>native-image</goal>
-                </goals>
-                <configuration>
-                  <enableHttpUrlHandler>true</enableHttpUrlHandler>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
@@ -1033,9 +937,9 @@ limitations under the License.]]></inlineHeader>
                   <goal>verify</goal>
                 </goals>
                 <configuration>
-                  <systemProperties>
+                  <systemPropertyVariables>
                     <native.image.path>${project.build.directory}/${project.artifactId}-runner</native.image.path>
-                  </systemProperties>
+                  </systemPropertyVariables>
                 </configuration>
               </execution>
             </executions>

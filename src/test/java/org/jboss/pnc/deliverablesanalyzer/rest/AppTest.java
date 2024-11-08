@@ -18,9 +18,6 @@ package org.jboss.pnc.deliverablesanalyzer.rest;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 import org.jboss.pnc.deliverablesanalyzer.Version;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -29,6 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 @QuarkusTest
 class AppTest {

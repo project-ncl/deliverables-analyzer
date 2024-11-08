@@ -30,11 +30,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Provider;
-
 import org.apache.commons.collections4.MultiValuedMap;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.commons.api.BasicCacheContainer;
@@ -56,6 +51,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.KojiClientException;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @ApplicationScoped
 public class Finder {

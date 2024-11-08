@@ -15,9 +15,9 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
-import io.quarkus.test.junit.NativeImageTest;
+import io.quarkus.test.junit.QuarkusIntegrationTest;
 
-@NativeImageTest
+@QuarkusIntegrationTest
 class NativeAppIT extends AppTest {
 
 }

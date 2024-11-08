@@ -32,9 +32,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import javax.inject.Inject;
-import javax.ws.rs.ProcessingException;
-
 import org.jboss.pnc.api.dto.Request;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -45,6 +42,8 @@ import org.junit.jupiter.api.TestInstance;
 import com.github.tomakehurst.wiremock.WireMockServer;
 
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.ProcessingException;
 
 /**
  * Tests for simple HTTP client wrapper
