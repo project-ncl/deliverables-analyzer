@@ -51,24 +51,23 @@ import io.restassured.response.Response;
  */
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstract {
-
+class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstract {
     @BeforeAll
-    public void beforeAll() {
+    void beforeAll() {
         wiremock.start();
     }
 
     @AfterAll
-    public void afterAll() {
+    void afterAll() {
         wiremock.stop();
     }
 
     @BeforeEach
-    public void beforeEach() {
+    void beforeEach() {
         wiremock.resetAll();
     }
 
-    public AnalyzeResourceWithMockedBrewTest() throws URISyntaxException {
+    AnalyzeResourceWithMockedBrewTest() throws URISyntaxException {
     }
 
     public static class LoggingRequestListener implements RequestListener {
@@ -97,7 +96,7 @@ public class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstra
 
     @Test
     @SetSystemProperty(key = "org.spdx.useJARLicenseInfoOnly", value = "true")
-    public void analyzeTestOKSimple() throws InterruptedException {
+    void analyzeTestOKSimple() throws InterruptedException {
         // given
         // callback
         wiremock.addMockServiceRequestListener(new LoggingRequestListener());
@@ -126,7 +125,7 @@ public class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstra
 
         // then
         String id = response.getBody().asString();
-        assertEquals(200, response.getStatusCode());
+        assertEquals(jakarta.ws.rs.core.Response.Status.OK.getStatusCode(), response.getStatusCode());
         String jsonMatchString = "$.results[*].builds[*].artifacts[*].licenses[?(@.spdxLicenseId == 'Apache-2.0')]";
 
         verifyCallback(

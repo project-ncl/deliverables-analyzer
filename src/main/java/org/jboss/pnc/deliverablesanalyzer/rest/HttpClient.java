@@ -130,7 +130,7 @@ public class HttpClient {
     private void validateResponse(Response response) throws IOException {
         String responseEntity = response.readEntity(String.class);
 
-        if (response.getStatus() != 200) {
+        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             String failureMsg = String.format(
                     "Http request failed! ResponseCode: %s, Entity: %s",
                     response.getStatus(),

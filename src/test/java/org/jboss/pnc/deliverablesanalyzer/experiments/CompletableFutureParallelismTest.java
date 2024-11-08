@@ -41,13 +41,12 @@ import jakarta.inject.Inject;
 
 @QuarkusTest
 @Disabled
-public class CompletableFutureParallelismTest {
-
+class CompletableFutureParallelismTest {
     @Inject
     ManagedExecutor executor;
 
     @Test
-    public void testParallelExecution() throws ExecutionException, InterruptedException {
+    void testParallelExecution() throws ExecutionException, InterruptedException {
         List<Integer> ids = List.of(5, 2, 1, 4, 3);
         CompletableFuture<List<Integer>> future = ids.stream().map(id -> CompletableFuture.supplyAsync(() -> {
             try {
@@ -66,7 +65,7 @@ public class CompletableFutureParallelismTest {
     }
 
     @Test
-    public void testParallelShortCircuitOnException() throws ExecutionException, InterruptedException {
+    void testParallelShortCircuitOnException() throws ExecutionException, InterruptedException {
         List<Integer> ids = List.of(5, 2, 1, 4, 3);
         long timeBefore = new Date().getTime();
         CompletableFuture<List<Integer>> future = ids.stream().map(id -> CompletableFuture.supplyAsync(() -> {
@@ -97,7 +96,7 @@ public class CompletableFutureParallelismTest {
 
     // CompletableFuture.cancel doesn't do its job, and it is not possible to cancel running operations using it
     @Test
-    public void testParallelCancel() {
+    void testParallelCancel() {
         List<Integer> ids = List.of(5, 2, 1, 4, 3);
         long timeBefore = new Date().getTime();
         CompletableFuture<List<Integer>> future = ids.stream().map(id -> CompletableFuture.supplyAsync(() -> {

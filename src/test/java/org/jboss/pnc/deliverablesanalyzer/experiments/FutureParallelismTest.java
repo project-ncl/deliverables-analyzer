@@ -45,14 +45,14 @@ import jakarta.inject.Inject;
  */
 @QuarkusTest
 @Disabled
-public class FutureParallelismTest {
+class FutureParallelismTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(FutureParallelismTest.class);
 
     @Inject
     ManagedExecutor executor;
 
     @Test
-    public void testParallelExecution() throws ExecutionException {
+    void testParallelExecution() throws ExecutionException {
         // given
         List<Integer> ids = List.of(5, 2, 1, 4, 3);
         List<Integer> results = new ArrayList<>();
@@ -82,7 +82,7 @@ public class FutureParallelismTest {
     }
 
     @Test
-    public void testParallelShortCircuitOnException() {
+    void testParallelShortCircuitOnException() {
         // given
         List<Integer> ids = List.of(5, 2, 1, 4, 3);
         List<Integer> results = new ArrayList<>();
@@ -116,7 +116,7 @@ public class FutureParallelismTest {
     }
 
     @Test
-    public void testParallelCancel() {
+    void testParallelCancel() {
         // given
         List<Integer> ids = List.of(5, 2, 1, 4, 3);
         List<Integer> results = new ArrayList<>();

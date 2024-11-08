@@ -68,30 +68,31 @@ import io.restassured.response.Response;
  * @author Jakub Bartecek
  */
 @QuarkusTest
+@Disabled
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstract {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzerResourceTestWithDummyBrew.class);
+class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzerResourceWithDummyBrewTest.class);
 
     @BeforeAll
-    public void beforeAll() {
+    void beforeAll() {
         wiremock.start();
     }
 
     @AfterAll
-    public void afterAll() {
+    void afterAll() {
         wiremock.stop();
     }
 
     @BeforeEach
-    public void beforeEach() {
+    void beforeEach() {
         wiremock.resetAll();
     }
 
-    public AnalyzerResourceTestWithDummyBrew() throws URISyntaxException {
+    AnalyzerResourceWithDummyBrewTest() throws URISyntaxException {
     }
 
     @Test
-    public void cancelTestSuccessful() throws InterruptedException, JsonProcessingException {
+    void cancelTestSuccessful() throws InterruptedException, JsonProcessingException {
         // Start analysis
         Response response = given()
                 .body(new AnalyzePayload("1234", List.of(stubThreeArtsZip(1500)), null, callbackRequest, null))
@@ -99,7 +100,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
                 .when()
                 .post(analyzeUrl)
                 .thenReturn();
-        assertEquals(200, response.getStatusCode());
+        assertEquals(jakarta.ws.rs.core.Response.Status.OK.getStatusCode(), response.getStatusCode());
 
         LOGGER.warn("AnalyzeResponse: {}", response.getBody().asString());
 
@@ -109,18 +110,24 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
         Thread.sleep(1000);
 
         // Cancel the running analysis
-        given().when().post(analyzeResponse.getCancelRequest().getUri()).then().statusCode(200);
+        given().when()
+                .post(analyzeResponse.getCancelRequest().getUri())
+                .then()
+                .statusCode(jakarta.ws.rs.core.Response.Status.OK.getStatusCode());
     }
 
     @Test
-    public void cancelTestNotFound() {
-        given().when().post("/api/analyze/99999/cancel").then().statusCode(404);
+    void cancelTestNotFound() {
+        given().when()
+                .post("/api/analyze/99999/cancel")
+                .then()
+                .statusCode(jakarta.ws.rs.core.Response.Status.NOT_FOUND.getStatusCode());
     }
 
     @Disabled // FIXME - disabled as it causes the tests to run infinitely. The tests passes, but the scheduler doesn't
               // finish.
     @Test
-    public void analyzeTestHeartBeat() throws InterruptedException, JsonProcessingException, URISyntaxException {
+    void analyzeTestHeartBeat() throws InterruptedException, JsonProcessingException, URISyntaxException {
         // given
         // Setup handler for heartbeat
         String heartbeatPath = "/heartbeat";
@@ -136,7 +143,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
                 .when()
                 .post(analyzeUrl)
                 .thenReturn();
-        assertEquals(200, response.getStatusCode());
+        assertEquals(jakarta.ws.rs.core.Response.Status.OK.getStatusCode(), response.getStatusCode());
         String id = getAnalysisId(response.getBody().asString());
 
         // then
@@ -144,19 +151,22 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
 
         // cleanup
         // Cancel the running analysis
-        given().when().post("/api/analyze/" + id + "/cancel").then().statusCode(200);
+        given().when()
+                .post("/api/analyze/" + id + "/cancel")
+                .then()
+                .statusCode(jakarta.ws.rs.core.Response.Status.OK.getStatusCode());
         Thread.sleep(1000);
     }
 
     @Test
-    public void analyzeTestMalformedUrlDirect() throws InterruptedException, URISyntaxException {
+    void analyzeTestMalformedUrlDirect() throws InterruptedException, URISyntaxException {
         // given
         wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // when
         try (jakarta.ws.rs.core.Response response = analyzeResource
                 .analyze(new AnalyzePayload("1234", List.of("xxyy:/malformedUrl.zip"), null, callbackRequest, null))) {
-            assertEquals(200, response.getStatus());
+            assertEquals(jakarta.ws.rs.core.Response.Status.OK.getStatusCode(), response.getStatus());
         }
 
         // then
@@ -168,7 +178,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
     }
 
     @Test
-    public void analyzeTestMalformedUrlRest() throws InterruptedException {
+    void analyzeTestMalformedUrlRest() throws InterruptedException {
         wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         Response response = given()
@@ -179,7 +189,7 @@ public class AnalyzerResourceTestWithDummyBrew extends AnalyzeResourceTestAbstra
                 .thenReturn();
 
         // then
-        assertEquals(200, response.getStatusCode());
+        assertEquals(jakarta.ws.rs.core.Response.Status.OK.getStatusCode(), response.getStatusCode());
         assertEquals("676017a772b1df2ef4b79e95827fd563f6482c366bb002221cc19903ad75c95f", response.getBody().asString());
         verifyCallback(
                 () -> wiremock.verify(

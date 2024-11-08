@@ -52,7 +52,7 @@ import jakarta.ws.rs.ProcessingException;
  */
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class HttpClientTest {
+class HttpClientTest {
     @Inject
     HttpClient httpClient;
 
@@ -61,22 +61,22 @@ public class HttpClientTest {
     private final WireMockServer wiremock = new WireMockServer(options().port(PORT));
 
     @BeforeAll
-    public void beforeAll() {
+    void beforeAll() {
         wiremock.start();
     }
 
     @AfterAll
-    public void afterAll() {
+    void afterAll() {
         wiremock.stop();
     }
 
     @BeforeEach
-    public void beforeEach() {
+    void beforeEach() {
         wiremock.resetAll();
     }
 
     @Test
-    public void testSimplePerformHttpRequest() throws Exception {
+    void testSimplePerformHttpRequest() throws Exception {
         // given
         String relativePath = "/testSimplePerformHttpRequest";
         String fullUrl = "http://localhost:" + PORT + relativePath;
@@ -91,7 +91,7 @@ public class HttpClientTest {
     }
 
     @Test
-    public void testSimplePerformHttpRequestFailsafe() throws URISyntaxException {
+    void testSimplePerformHttpRequestFailsafe() throws URISyntaxException {
         // given
         String relativePath = "/testSimplePerformHttpRequest";
         String fullUrl = "http://localhost:" + PORT + relativePath;
@@ -103,7 +103,7 @@ public class HttpClientTest {
     }
 
     @Test
-    public void testSimplePerformHttpRequestConnectionRefusedFailsafe() throws URISyntaxException {
+    void testSimplePerformHttpRequestConnectionRefusedFailsafe() throws URISyntaxException {
         // given
         String fullUrl = "http://localhost:80000/";
         Request request = new Request(GET, new URI(fullUrl + "anything"));
@@ -113,7 +113,7 @@ public class HttpClientTest {
     }
 
     @Test
-    public void testAdvancedPerformHttpRequest() throws Exception {
+    void testAdvancedPerformHttpRequest() throws Exception {
         // given
         String relativePath = "/testAdvancedPerformHttpRequest";
         String fullUrl = "http://localhost:" + PORT + relativePath;
