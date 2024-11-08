@@ -65,6 +65,7 @@
     <quarkus.package.type>uber-jar</quarkus.package.type>
     <skipITs>true</skipITs>
     <version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>4.0.0</version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>
+    <version.com.fasterxml.jackson>2.18.1</version.com.fasterxml.jackson>
     <version.com.github.eirslett>1.9.1</version.com.github.eirslett>
     <version.com.github.ekryd.sortpom>4.0.0</version.com.github.ekryd.sortpom>
     <version.com.github.spotbugs>4.8.6.5</version.com.github.spotbugs>
@@ -100,17 +101,24 @@
     <version.org.ec4j.maven.editorconfig-maven-plugin>0.1.0</version.org.ec4j.maven.editorconfig-maven-plugin>
     <version.org.infinispan>13.0.10.Final</version.org.infinispan>
     <version.org.jacoco>0.8.12</version.org.jacoco>
+    <version.org.jboss.pnc>3.0.4</version.org.jboss.pnc>
     <version.org.jboss.pnc.build.finder>2.4.2</version.org.jboss.pnc.build.finder>
-    <version.org.jboss.pnc.pnc-api>3.0.4</version.org.jboss.pnc.pnc-api>
+    <version.org.jboss.pnc.logging>1.0.6</version.org.jboss.pnc.logging>
     <version.org.jboss.resteasy>6.2.10.Final</version.org.jboss.resteasy>
     <version.org.junit-pioneer>2.3.0</version.org.junit-pioneer>
     <version.org.sonatype.plugins.nexus-staging-maven-plugin>1.7.0</version.org.sonatype.plugins.nexus-staging-maven-plugin>
     <version.org.wiremock>3.9.2</version.org.wiremock>
-    <version.pnc.quarkus-logging-kafka>1.0.6</version.pnc.quarkus-logging-kafka>
   </properties>
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${version.com.fasterxml.jackson}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-bom</artifactId>
@@ -160,7 +168,7 @@
       </dependency>
       <dependency>
         <groupId>org.wiremock</groupId>
-        <artifactId>wiremock-standalone</artifactId>
+        <artifactId>wiremock</artifactId>
         <version>${version.org.wiremock}</version>
         <scope>test</scope>
       </dependency>
@@ -241,7 +249,7 @@
     <dependency>
       <groupId>org.jboss.pnc</groupId>
       <artifactId>pnc-api</artifactId>
-      <version>${version.org.jboss.pnc.pnc-api}</version>
+      <version>${version.org.jboss.pnc}</version>
     </dependency>
     <dependency>
       <groupId>org.jboss.pnc.build.finder</groupId>
@@ -250,12 +258,12 @@
     <dependency>
       <groupId>org.jboss.pnc.logging</groupId>
       <artifactId>quarkus-logging-kafka</artifactId>
-      <version>${version.pnc.quarkus-logging-kafka}</version>
+      <version>${version.org.jboss.pnc.logging}</version>
     </dependency>
     <dependency>
       <groupId>org.jboss.pnc.logging</groupId>
       <artifactId>quarkus-logging-kafka-deployment</artifactId>
-      <version>${version.pnc.quarkus-logging-kafka}</version>
+      <version>${version.org.jboss.pnc.logging}</version>
     </dependency>
     <dependency>
       <groupId>org.jboss.resteasy</groupId>
@@ -298,8 +306,26 @@
     </dependency>
     <dependency>
       <groupId>org.wiremock</groupId>
-      <artifactId>wiremock-standalone</artifactId>
+      <artifactId>wiremock</artifactId>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-annotations</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.datatype</groupId>
+          <artifactId>jackson-datatype-jsr310</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
