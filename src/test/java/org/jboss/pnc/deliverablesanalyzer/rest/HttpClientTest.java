@@ -23,7 +23,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static java.net.HttpURLConnection.HTTP_OK;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.jboss.pnc.api.dto.Request.Method.GET;
 import static org.jboss.pnc.api.dto.Request.Method.POST;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,12 +53,12 @@ import jakarta.ws.rs.ProcessingException;
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HttpClientTest {
-    @Inject
-    HttpClient httpClient;
+    private final WireMockServer wiremock = new WireMockServer(options().port(PORT));
 
     protected static final int PORT = 8082;
 
-    private final WireMockServer wiremock = new WireMockServer(options().port(PORT));
+    @Inject
+    HttpClient httpClient;
 
     @BeforeAll
     void beforeAll() {
@@ -81,7 +81,7 @@ class HttpClientTest {
         String relativePath = "/testSimplePerformHttpRequest";
         String fullUrl = "http://localhost:" + PORT + relativePath;
         Request request = new Request(GET, new URI(fullUrl));
-        wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
+        wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(OK.getStatusCode())));
 
         // when
         httpClient.performHttpRequest(request);
@@ -96,7 +96,7 @@ class HttpClientTest {
         String relativePath = "/testSimplePerformHttpRequest";
         String fullUrl = "http://localhost:" + PORT + relativePath;
         Request request = new Request(GET, new URI(fullUrl + "anything"));
-        wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
+        wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(OK.getStatusCode())));
 
         // when - then
         assertThrows(IOException.class, () -> httpClient.performHttpRequest(request));
@@ -120,7 +120,7 @@ class HttpClientTest {
 
         Request request = new Request(POST, new URI(fullUrl));
 
-        wiremock.stubFor(post(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
+        wiremock.stubFor(post(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(OK.getStatusCode())));
 
         // when
         httpClient.performHttpRequest(request, new TestPayload(1, "str"));
