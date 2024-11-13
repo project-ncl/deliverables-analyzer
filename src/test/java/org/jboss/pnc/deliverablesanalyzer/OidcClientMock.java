@@ -26,7 +26,7 @@ import io.smallrye.mutiny.Uni;
 public class OidcClientMock implements OidcClient {
     @Override
     public Uni<Tokens> getTokens(Map<String, String> additionalGrantParameters) {
-        return Uni.createFrom().item(new Tokens("hahaha", 10L, null, "refres", 10L, null, "clientId"));
+        return Uni.createFrom().item(new Tokens("hahaha", 10L, null, "refresh", 10L, null, "clientId"));
     }
 
     @Override

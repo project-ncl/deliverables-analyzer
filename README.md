@@ -37,7 +37,7 @@ The main way to use the service is as follows:
 
 ### Health
 
-The service supports the Micoprofile `/q/health` endpoint (and also
+The service supports the MicroProfile `/q/health` endpoint (and also
 `/q/health/live` and `/q/health/ready`).
 
 ### Version
