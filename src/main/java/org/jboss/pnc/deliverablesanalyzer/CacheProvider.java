@@ -60,19 +60,19 @@ public class CacheProvider {
      * Specify list of Infinispan servers. Format: hostname[:port]. The ConfigProperty is the same as the one used by
      * infinispan-quarkus-client to help with future migration.
      */
-    @ConfigProperty(name = "quarkus.infinispan-client.server-list")
+    @ConfigProperty(name = "quarkus.infinispan-client.hosts")
     Optional<List<String>> infinispanRemoteServerList;
 
     /*
      * The ConfigProperty is the same as the one used by infinispan-quarkus-client to help with future migration.
      */
-    @ConfigProperty(name = "quarkus.infinispan-client.auth-username")
+    @ConfigProperty(name = "quarkus.infinispan-client.username")
     Optional<String> infinispanUsername;
 
     /*
      * The ConfigProperty is the same as the one used by infinispan-quarkus-client to help with future migration.
      */
-    @ConfigProperty(name = "quarkus.infinispan-client.auth-password")
+    @ConfigProperty(name = "quarkus.infinispan-client.password")
     Optional<String> infinispanPassword;
 
     /**
@@ -212,7 +212,7 @@ public class CacheProvider {
      *         config
      */
     private RemoteCacheManager setupDistributedCacheManager() {
-        throwRuntimeExceptionIfOptionalEmpty(infinispanRemoteServerList, "infinispan server list");
+        throwRuntimeExceptionIfOptionalEmptyOrEmptyList(infinispanRemoteServerList, "infinispan server list");
         throwRuntimeExceptionIfOptionalEmpty(infinispanUsername, "infinispan username");
         throwRuntimeExceptionIfOptionalEmpty(infinispanPassword, "infinispan password");
 
@@ -233,6 +233,16 @@ public class CacheProvider {
         builder.addContextInitializer(new ProtobufSerializerImpl());
         builder.security().authentication().username(infinispanUsername.get()).password(infinispanPassword.get());
         return new RemoteCacheManager(builder.build());
+    }
+
+    private static void throwRuntimeExceptionIfOptionalEmptyOrEmptyList(Optional<List<String>> optional, String key) {
+        throwRuntimeExceptionIfOptionalEmpty(optional, key);
+
+        List<String> list = optional.get();
+
+        if (list.isEmpty()) {
+            throw new RuntimeException(key + " value is empty in the config");
+        }
     }
 
     private static void throwRuntimeExceptionIfOptionalEmpty(Optional<?> optional, String key) {
