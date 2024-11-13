@@ -178,7 +178,7 @@ public class Finder {
                         results.add(futureTask.get());
                         done++;
                     } else {
-                        Thread.sleep(500);
+                        Thread.sleep(500L);
                     }
                 } catch (InterruptedException e) {
                     LOGGER.warn("Sleeping while awaiting results was interrupted", e);

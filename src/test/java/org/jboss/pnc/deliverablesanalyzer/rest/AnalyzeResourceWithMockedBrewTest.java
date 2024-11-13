@@ -125,7 +125,6 @@ class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstract {
                     .thenReturn();
 
             // then
-            String id = response.getBody().asString();
             assertEquals(jakarta.ws.rs.core.Response.Status.OK.getStatusCode(), response.getStatusCode());
             String jsonMatchString = "$.results[*].builds[*].artifacts[*].licenses[?(@.spdxLicenseId == 'Apache-2.0')]";
 

@@ -16,7 +16,6 @@
 
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -66,8 +65,7 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     }
 
     @Override
-    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext)
-            throws IOException {
+    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
         Long startTime = (Long) requestContext.getProperty(REQUEST_EXECUTION_START);
 
         String took;

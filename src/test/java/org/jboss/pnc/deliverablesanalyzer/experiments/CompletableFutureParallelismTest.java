@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
@@ -46,11 +45,11 @@ class CompletableFutureParallelismTest {
     ManagedExecutor executor;
 
     @Test
-    void testParallelExecution() throws ExecutionException, InterruptedException {
+    void testParallelExecution() {
         List<Integer> ids = List.of(5, 2, 1, 4, 3);
         CompletableFuture<List<Integer>> future = ids.stream().map(id -> CompletableFuture.supplyAsync(() -> {
             try {
-                Thread.sleep(100 * id);
+                Thread.sleep(100L * id);
             } catch (InterruptedException e) {
                 fail("Sleep was interrupted!", e);
             }
@@ -65,12 +64,12 @@ class CompletableFutureParallelismTest {
     }
 
     @Test
-    void testParallelShortCircuitOnException() throws ExecutionException, InterruptedException {
+    void testParallelShortCircuitOnException() {
         List<Integer> ids = List.of(5, 2, 1, 4, 3);
         long timeBefore = new Date().getTime();
         CompletableFuture<List<Integer>> future = ids.stream().map(id -> CompletableFuture.supplyAsync(() -> {
             try {
-                Thread.sleep(100 * id);
+                Thread.sleep(100L * id);
                 if (id == 1) {
                     throw new KojiClientException("ID 1 found");
                 }

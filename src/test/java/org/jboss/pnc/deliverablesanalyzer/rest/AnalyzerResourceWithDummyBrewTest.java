@@ -50,7 +50,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.redhat.red.build.koji.KojiClientException;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveQuery;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveType;
@@ -206,12 +205,12 @@ class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
             LOGGER.info("Using alternate dummy Koji ClientSession");
             return new ClientSession() {
                 @Override
-                public List<KojiArchiveInfo> listArchives(KojiArchiveQuery query) throws KojiClientException {
+                public List<KojiArchiveInfo> listArchives(KojiArchiveQuery query) {
                     return null;
                 }
 
                 @Override
-                public Map<String, KojiArchiveType> getArchiveTypeMap() throws KojiClientException {
+                public Map<String, KojiArchiveType> getArchiveTypeMap() {
                     Map<String, KojiArchiveType> archiveTypeMap = new HashMap<>();
                     archiveTypeMap.put("jar", new KojiArchiveType("jar", List.of("jar"), 1, "jar"));
                     archiveTypeMap.put("zip", new KojiArchiveType("zip", List.of("zip"), 2, "zip"));
@@ -220,59 +219,57 @@ class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
                 }
 
                 @Override
-                public KojiBuildInfo getBuild(int buildId) throws KojiClientException {
+                public KojiBuildInfo getBuild(int buildId) {
                     return null;
                 }
 
                 @Override
-                public KojiTaskInfo getTaskInfo(int taskId, boolean request) throws KojiClientException {
+                public KojiTaskInfo getTaskInfo(int taskId, boolean request) {
                     return null;
                 }
 
                 @Override
-                public KojiTaskRequest getTaskRequest(int taskId) throws KojiClientException {
+                public KojiTaskRequest getTaskRequest(int taskId) {
                     return null;
                 }
 
                 @Override
-                public List<KojiTagInfo> listTags(int id) throws KojiClientException {
+                public List<KojiTagInfo> listTags(int id) {
                     return null;
                 }
 
                 @Override
-                public void enrichArchiveTypeInfo(List<KojiArchiveInfo> archiveInfos) throws KojiClientException {
+                public void enrichArchiveTypeInfo(List<KojiArchiveInfo> archiveInfos) {
 
                 }
 
                 @Override
-                public List<List<KojiArchiveInfo>> listArchives(List<KojiArchiveQuery> queries)
-                        throws KojiClientException {
+                public List<List<KojiArchiveInfo>> listArchives(List<KojiArchiveQuery> queries) {
                     return null;
                 }
 
                 @Override
-                public List<KojiBuildInfo> getBuild(List<KojiIdOrName> idsOrNames) throws KojiClientException {
+                public List<KojiBuildInfo> getBuild(List<KojiIdOrName> idsOrNames) {
                     return null;
                 }
 
                 @Override
-                public List<KojiRpmInfo> getRPM(List<KojiIdOrName> idsOrNames) throws KojiClientException {
+                public List<KojiRpmInfo> getRPM(List<KojiIdOrName> idsOrNames) {
                     return null;
                 }
 
                 @Override
-                public List<KojiTaskInfo> getTaskInfo(List<Integer> taskIds, List<Boolean> requests)
-                        throws KojiClientException {
+                public List<KojiTaskInfo> getTaskInfo(List<Integer> taskIds, List<Boolean> requests) {
                     return null;
                 }
 
                 @Override
-                public List<List<KojiRpmInfo>> listBuildRPMs(List<KojiIdOrName> idsOrNames) throws KojiClientException {
+                public List<List<KojiRpmInfo>> listBuildRPMs(List<KojiIdOrName> idsOrNames) {
                     return null;
                 }
 
                 @Override
-                public List<List<KojiTagInfo>> listTags(List<KojiIdOrName> idsOrNames) throws KojiClientException {
+                public List<List<KojiTagInfo>> listTags(List<KojiIdOrName> idsOrNames) {
                     return null;
                 }
             };

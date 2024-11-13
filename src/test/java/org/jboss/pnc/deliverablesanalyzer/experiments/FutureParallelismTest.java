@@ -61,7 +61,7 @@ class FutureParallelismTest {
         // when
         List<Future<Integer>> submittedTasks = ids.stream().map(id -> executor.submit(() -> {
             try {
-                Thread.sleep(100 * id);
+                Thread.sleep(100L * id);
             } catch (InterruptedException e) {
                 fail("Sleep was interrupted!", e);
             }
@@ -92,7 +92,7 @@ class FutureParallelismTest {
         List<Future<Integer>> submittedTasks = ids.stream().map(id -> executor.submit(() -> {
             LOGGER.info("Execution {} started", id);
             try {
-                Thread.sleep(100 * id);
+                Thread.sleep(100L * id);
 
                 if (id == 1) {
                     throw new KojiClientException("ID 1 found");
@@ -126,7 +126,7 @@ class FutureParallelismTest {
         List<Future<Integer>> submittedTasks = ids.stream().map(id -> executor.submit(() -> {
             LOGGER.info("Execution {} started", id);
             try {
-                Thread.sleep(100 * id);
+                Thread.sleep(100L * id);
             } catch (InterruptedException e) {
                 fail("Sleep was interrupted!", e);
             }
@@ -174,7 +174,7 @@ class FutureParallelismTest {
                         results.add(futureTask.get());
                         done++;
                     } else {
-                        Thread.sleep(10);
+                        Thread.sleep(10L);
                     }
                 } catch (InterruptedException e) {
                     LOGGER.warn("Sleeping while awaiting results was interrupted", e);
