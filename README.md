@@ -73,13 +73,14 @@ keys listed below. They can be defined by setting the configuration key in:
 | infinispan.mode   | Define whether to use Infinispan in `EMBEDDED` (default) or `REMOTE` | `EMBEDDED`                       |
 
 ### Remote Infinispan
+
 If the `infinispan.mode` is set to `REMOTE`, the following configuration keys need to be defined:
 
-| Configuration Key                       | Description                                                    | Example         |
-|-----------------------------------------|----------------------------------------------------------------|-----------------|
-| quarkus.infinispan-client.server-list   | Comma-delimited Infinispan server list (\<hostname>[:\<port>]) | localhost:11222 |
-| quarkus.infinispan-client.auth-username | Username for the Infinispan server                             | admin           |
-| quarkus.infinispan-client.auth-password | Password for the Infinispan server                             | password        |
+| Configuration Key                  | Description                                                    | Example         |
+|------------------------------------|----------------------------------------------------------------|-----------------|
+| quarkus.infinispan-client.hosts    | Comma-delimited Infinispan server list (\<hostname>[:\<port>]) | localhost:11222 |
+| quarkus.infinispan-client.username | Username for the Infinispan server                             | admin           |
+| quarkus.infinispan-client.password | Password for the Infinispan server                             | password        |
 
 The following caches also need to be present in the Infinispan server:
 
@@ -97,6 +98,13 @@ The following caches also need to be present in the Infinispan server:
 - rpms-md5
 - rpms-sha1
 - rpms-sha256
+
+### OpenTelemetry
+
+| Configuration Key                   | Description                             | Example                                                                |
+|-------------------------------------|-----------------------------------------|------------------------------------------------------------------------|
+| quarkus.otel.exporter.otlp.endpoint | OTLP endpoint to send telemetry data to | http://localhost:4317                                                  |
+| quarkus.otel.resource.attributes    | Attributes to add to the exported trace | "service.name=pnc-deliverable-analyzer,deployment.environment=staging" |
 
 ## Creating Docker Images with Docker Compose
 
