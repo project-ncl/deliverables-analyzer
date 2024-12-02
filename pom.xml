@@ -103,7 +103,7 @@
     <version.org.jboss.pnc.logging>1.0.6</version.org.jboss.pnc.logging>
     <version.org.junit-pioneer>2.3.0</version.org.junit-pioneer>
     <version.org.sonatype.plugins.nexus-staging-maven-plugin>1.7.0</version.org.sonatype.plugins.nexus-staging-maven-plugin>
-    <version.org.wiremock>3.9.2</version.org.wiremock>
+    <version.org.wiremock>3.10.0</version.org.wiremock>
   </properties>
 
   <dependencyManagement>
