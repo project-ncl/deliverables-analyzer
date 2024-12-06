@@ -110,20 +110,26 @@ public class HttpClient {
         Invocation.Builder requestBuilder = target.request().headers(headersToMap(request.getHeaders()));
 
         switch (request.getMethod()) {
-            case GET:
+            case GET -> {
                 return requestBuilder.get();
-            case POST:
+            }
+            case POST -> {
                 return requestBuilder.post(entity);
-            case PUT:
+            }
+            case PUT -> {
                 return requestBuilder.put(entity);
-            case DELETE:
+            }
+            case DELETE -> {
                 return requestBuilder.delete();
-            case HEAD:
+            }
+            case HEAD -> {
                 return requestBuilder.head();
-            default:
+            }
+            default -> {
                 String failureMsg = String.format("Unsupported HTTP method provided: %s", request.getMethod());
                 LOGGER.warn(failureMsg);
                 throw new IOException(failureMsg);
+            }
         }
     }
 
