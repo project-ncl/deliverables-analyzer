@@ -17,10 +17,6 @@ package org.jboss.pnc.deliverablesanalyzer.model;
 
 import static org.jboss.pnc.api.deliverablesanalyzer.dto.Artifact.ArtifactBuilder;
 import static org.jboss.pnc.build.finder.core.BuildFinderUtils.isBuildIdZero;
-import static org.jboss.pnc.build.finder.pnc.client.PncUtils.GRADLE;
-import static org.jboss.pnc.build.finder.pnc.client.PncUtils.MAVEN;
-import static org.jboss.pnc.build.finder.pnc.client.PncUtils.NPM;
-import static org.jboss.pnc.build.finder.pnc.client.PncUtils.SBT;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -44,16 +40,20 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact.MavenArtifactBuilder;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact.NPMArtifactBuilder;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.WindowsArtifact;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.WindowsArtifact.WindowsArtifactBuilder;
 import org.jboss.pnc.api.enums.LicenseSource;
 import org.jboss.pnc.build.finder.core.BuildSystem;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
 import org.jboss.pnc.build.finder.core.Checksum;
+import org.jboss.pnc.build.finder.core.ChecksumType;
 import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.koji.KojiLocalArchive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
+import com.redhat.red.build.koji.model.xmlrpc.KojiBtype;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -61,6 +61,7 @@ public final class FinderResultCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(FinderResultCreator.class);
 
     private FinderResultCreator() {
+
     }
 
     public static FinderResult createFinderResult(String id, URL url, Map<BuildSystemInteger, KojiBuild> builds) {
@@ -91,28 +92,18 @@ public final class FinderResultCreator {
                 .url(license.getUrl());
 
         org.jboss.pnc.build.finder.core.LicenseSource source = license.getSource();
+
         if (source == null) {
             throw new IllegalArgumentException("License source cannot be null");
         }
 
         switch (source) {
-            case UNKNOWN:
-                licenseBuilder.source(LicenseSource.UNKNOWN);
-                break;
-            case POM:
-                licenseBuilder.source(LicenseSource.POM);
-                break;
-            case POM_XML:
-                licenseBuilder.source(LicenseSource.POM_XML);
-                break;
-            case BUNDLE_LICENSE:
-                licenseBuilder.source(LicenseSource.BUNDLE_LICENSE);
-                break;
-            case TEXT:
-                licenseBuilder.source(LicenseSource.TEXT);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown license source " + source);
+            case UNKNOWN -> licenseBuilder.source(LicenseSource.UNKNOWN);
+            case POM -> licenseBuilder.source(LicenseSource.POM);
+            case POM_XML -> licenseBuilder.source(LicenseSource.POM_XML);
+            case BUNDLE_LICENSE -> licenseBuilder.source(LicenseSource.BUNDLE_LICENSE);
+            case TEXT -> licenseBuilder.source(LicenseSource.TEXT);
+            default -> throw new IllegalArgumentException("Unknown license source " + source);
         }
 
         return licenseBuilder.build();
@@ -120,23 +111,18 @@ public final class FinderResultCreator {
 
     private static void setCommonArtifactFields(ArtifactBuilder<?, ?> builder, KojiLocalArchive archive) {
         KojiArchiveInfo archiveInfo = archive.getArchive();
-        long size = archiveInfo.getSize();
-
-        builder.filename(archiveInfo.getFilename()).size(size);
+        builder.filename(archiveInfo.getFilename()).size(archiveInfo.getSize());
 
         for (Checksum checksum : archive.getChecksums()) {
-            switch (checksum.getType()) {
-                case md5:
-                    builder.md5(checksum.getValue());
-                    break;
-                case sha1:
-                    builder.sha1(checksum.getValue());
-                    break;
-                case sha256:
-                    builder.sha256(checksum.getValue());
-                    break;
-                default:
-                    break;
+            ChecksumType checksumType = checksum.getType();
+            String value = checksum.getValue();
+
+            switch (checksumType) {
+                case md5 -> builder.md5(value);
+                case sha1 -> builder.sha1(value);
+                case sha256 -> builder.sha256(value);
+                default ->
+                    throw new IllegalArgumentException("Unknown checksum type " + checksumType + " for " + checksum);
             }
         }
     }
@@ -152,6 +138,14 @@ public final class FinderResultCreator {
 
     private static NPMArtifactBuilder<?, ?> createNpmArtifact(KojiArchiveInfo archiveInfo) {
         return NPMArtifact.builder().name(archiveInfo.getArtifactId()).version(archiveInfo.getVersion());
+    }
+
+    private static WindowsArtifactBuilder<?, ?> createWindowsArtifact(KojiArchiveInfo archiveInfo) {
+        return WindowsArtifact.builder()
+                .name(archiveInfo.getArtifactId())
+                .version(archiveInfo.getVersion())
+                .platforms(archiveInfo.getPlatforms())
+                .flags(archiveInfo.getFlags());
     }
 
     private static Collection<Artifact> createNotFoundArtifacts(KojiLocalArchive localArchive) {
@@ -185,11 +179,13 @@ public final class FinderResultCreator {
         }
 
         KojiBuild buildZero = builds.get(new BuildSystemInteger(0));
+
         if (buildZero == null) {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
 
         List<KojiLocalArchive> localArchives = buildZero.getArchives();
+
         if (localArchives == null || localArchives.isEmpty()) {
             return Collections.unmodifiableSet(new LinkedHashSet<>());
         }
@@ -220,6 +216,7 @@ public final class FinderResultCreator {
             KojiBuild kojiBuild,
             Set<Artifact> artifacts) {
         Build.Builder builder = Build.builder();
+
         if (buildSystemInteger.getBuildSystem() == BuildSystem.pnc) {
             builder.buildSystemType(BuildSystemType.PNC);
             builder.pncId(kojiBuild.getId());
@@ -228,33 +225,35 @@ public final class FinderResultCreator {
             builder.brewId((long) kojiBuild.getBuildInfo().getId());
             builder.brewNVR(kojiBuild.getBuildInfo().getNvr());
         }
+
         return builder.isImport(kojiBuild.isImport()).artifacts(artifacts).build();
     }
 
     private static Artifact createArtifact(KojiLocalArchive localArchive, BuildSystem buildSystem, boolean imported) {
         KojiArchiveInfo archiveInfo = localArchive.getArchive();
-        String buildType = archiveInfo.getBuildType();
+        KojiBtype buildType = archiveInfo.getBuildType();
         ArtifactBuilder<?, ?> builder;
 
         switch (buildType) {
-            case GRADLE, MAVEN, SBT -> builder = createMavenArtifact(archiveInfo);
-            case NPM -> builder = createNpmArtifact(archiveInfo);
+            case maven -> builder = createMavenArtifact(archiveInfo);
+            case npm -> builder = createNpmArtifact(archiveInfo);
+            case win -> builder = createWindowsArtifact(archiveInfo);
             default -> throw new BadRequestException(
-                    "Archive " + archiveInfo.getArtifactId() + " had unhandled artifact type: " + buildType);
+                    "Unhandled build type " + buildType + " for local archive " + localArchive);
         }
 
         switch (buildSystem) {
-            case pnc:
+            case pnc -> {
                 builder.buildSystemType(BuildSystemType.PNC);
                 builder.pncId(archiveInfo.getArchiveId().toString());
-                break;
-            case koji:
+            }
+            case koji -> {
                 builder.buildSystemType(BuildSystemType.BREW);
                 builder.brewId(archiveInfo.getArchiveId().longValue());
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown build system " + buildSystem);
+            }
+            default -> throw new IllegalArgumentException("Unknown build system " + buildSystem);
         }
+
         builder.builtFromSource(localArchive.isBuiltFromSource() && !imported);
 
         setCommonArtifactFields(builder, localArchive);
@@ -327,11 +326,13 @@ public final class FinderResultCreator {
 
     private static String getIdentifier(BuildSystemType buildSystemType, Long brewId, String pncId) {
         String identifier;
+
         switch (buildSystemType) {
             case BREW -> identifier = "Brew#" + Objects.requireNonNullElse(brewId, "-1");
             case PNC -> identifier = "PNC#" + pncId;
             default -> identifier = "Unknown#-1";
         }
+
         return identifier;
     }
 }
