@@ -17,10 +17,6 @@ package org.jboss.pnc.deliverablesanalyzer.model;
 
 import static org.jboss.pnc.api.deliverablesanalyzer.dto.Artifact.ArtifactBuilder;
 import static org.jboss.pnc.build.finder.core.BuildFinderUtils.isBuildIdZero;
-import static org.jboss.pnc.build.finder.pnc.client.PncUtils.GRADLE;
-import static org.jboss.pnc.build.finder.pnc.client.PncUtils.MAVEN;
-import static org.jboss.pnc.build.finder.pnc.client.PncUtils.NPM;
-import static org.jboss.pnc.build.finder.pnc.client.PncUtils.SBT;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -44,6 +40,8 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact.MavenArtifactBuilder;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact.NPMArtifactBuilder;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.WindowsArtifact;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.WindowsArtifact.WindowsArtifactBuilder;
 import org.jboss.pnc.api.enums.LicenseSource;
 import org.jboss.pnc.build.finder.core.BuildSystem;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
@@ -54,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
+import com.redhat.red.build.koji.model.xmlrpc.KojiBtype;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -154,6 +153,14 @@ public final class FinderResultCreator {
         return NPMArtifact.builder().name(archiveInfo.getArtifactId()).version(archiveInfo.getVersion());
     }
 
+    private static WindowsArtifactBuilder<?, ?> createWindowsArtifact(KojiArchiveInfo archiveInfo) {
+        return WindowsArtifact.builder()
+                .name(archiveInfo.getArtifactId())
+                .version(archiveInfo.getVersion())
+                .platforms(archiveInfo.getPlatforms())
+                .flags(archiveInfo.getFlags());
+    }
+
     private static Collection<Artifact> createNotFoundArtifacts(KojiLocalArchive localArchive) {
         Collection<Artifact> artifacts = new ArrayList<>();
 
@@ -233,14 +240,22 @@ public final class FinderResultCreator {
 
     private static Artifact createArtifact(KojiLocalArchive localArchive, BuildSystem buildSystem, boolean imported) {
         KojiArchiveInfo archiveInfo = localArchive.getArchive();
-        String buildType = archiveInfo.getBuildType();
+        KojiBtype buildType = archiveInfo.getBuildType();
         ArtifactBuilder<?, ?> builder;
 
         switch (buildType) {
-            case GRADLE, MAVEN, SBT -> builder = createMavenArtifact(archiveInfo);
-            case NPM -> builder = createNpmArtifact(archiveInfo);
-            default -> throw new BadRequestException(
-                    "Archive " + archiveInfo.getArtifactId() + " had unhandled artifact type: " + buildType);
+            case maven:
+                builder = createMavenArtifact(archiveInfo);
+                break;
+            case npm:
+                builder = createNpmArtifact(archiveInfo);
+                break;
+            case win:
+                builder = createWindowsArtifact(archiveInfo);
+                break;
+            default:
+                throw new BadRequestException(
+                        "Unhandled build type " + buildType + " for local archive " + localArchive);
         }
 
         switch (buildSystem) {
