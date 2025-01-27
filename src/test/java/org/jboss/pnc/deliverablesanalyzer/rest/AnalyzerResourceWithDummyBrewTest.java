@@ -124,7 +124,7 @@ class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
     }
 
     @Disabled // FIXME - disabled as it causes the tests to run infinitely. The tests passes, but the scheduler doesn't
-              // finish.
+    // finish.
     @Test
     void analyzeTestHeartBeat() throws InterruptedException, JsonProcessingException, URISyntaxException {
         // given
