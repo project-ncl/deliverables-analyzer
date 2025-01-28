@@ -98,7 +98,7 @@ public class AnalyzeResourceTestAbstract {
                 r.run();
                 return;
             } catch (VerificationException e) {
-                Thread.sleep(300L);
+                Thread.sleep(300L); // FIXME
             }
         }
 

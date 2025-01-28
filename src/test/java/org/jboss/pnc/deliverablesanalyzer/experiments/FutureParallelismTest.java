@@ -174,7 +174,7 @@ class FutureParallelismTest {
                         results.add(futureTask.get());
                         done++;
                     } else {
-                        Thread.sleep(10L);
+                        Thread.sleep(10L); // FIXME
                     }
                 } catch (InterruptedException e) {
                     LOGGER.warn("Sleeping while awaiting results was interrupted", e);
