@@ -241,22 +241,13 @@ public final class FinderResultCreator {
     private static Artifact createArtifact(KojiLocalArchive localArchive, BuildSystem buildSystem, boolean imported) {
         KojiArchiveInfo archiveInfo = localArchive.getArchive();
         KojiBtype buildType = archiveInfo.getBuildType();
-        ArtifactBuilder<?, ?> builder;
-
-        switch (buildType) {
-            case maven:
-                builder = createMavenArtifact(archiveInfo);
-                break;
-            case npm:
-                builder = createNpmArtifact(archiveInfo);
-                break;
-            case win:
-                builder = createWindowsArtifact(archiveInfo);
-                break;
-            default:
-                throw new BadRequestException(
-                        "Unhandled build type " + buildType + " for local archive " + localArchive);
-        }
+        ArtifactBuilder<?, ?> builder = switch (buildType) {
+            case maven -> createMavenArtifact(archiveInfo);
+            case npm -> createNpmArtifact(archiveInfo);
+            case win -> createWindowsArtifact(archiveInfo);
+            default -> throw new BadRequestException(
+                    "Unhandled build type " + buildType + " for local archive " + localArchive);
+        };
 
         switch (buildSystem) {
             case pnc:
