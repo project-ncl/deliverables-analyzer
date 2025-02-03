@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBtype;
+import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -153,10 +154,12 @@ public final class FinderResultCreator {
         return NPMArtifact.builder().name(archiveInfo.getArtifactId()).version(archiveInfo.getVersion());
     }
 
-    private static WindowsArtifactBuilder<?, ?> createWindowsArtifact(KojiArchiveInfo archiveInfo) {
+    private static WindowsArtifactBuilder<?, ?> createWindowsArtifact(
+            KojiBuildInfo buildInfo,
+            KojiArchiveInfo archiveInfo) {
         return WindowsArtifact.builder()
                 .name(archiveInfo.getArtifactId())
-                .version(archiveInfo.getVersion())
+                .version(String.join("-", archiveInfo.getVersion(), buildInfo.getRelease()))
                 .platforms(archiveInfo.getPlatforms())
                 .flags(archiveInfo.getFlags());
     }
@@ -238,13 +241,17 @@ public final class FinderResultCreator {
         return builder.isImport(kojiBuild.isImport()).artifacts(artifacts).build();
     }
 
-    private static Artifact createArtifact(KojiLocalArchive localArchive, BuildSystem buildSystem, boolean imported) {
+    private static Artifact createArtifact(
+            KojiBuildInfo buildInfo,
+            KojiLocalArchive localArchive,
+            BuildSystem buildSystem,
+            boolean imported) {
         KojiArchiveInfo archiveInfo = localArchive.getArchive();
         KojiBtype buildType = archiveInfo.getBuildType();
         ArtifactBuilder<?, ?> builder = switch (buildType) {
             case maven -> createMavenArtifact(archiveInfo);
             case npm -> createNpmArtifact(archiveInfo);
-            case win -> createWindowsArtifact(archiveInfo);
+            case win -> createWindowsArtifact(buildInfo, archiveInfo);
             default -> throw new BadRequestException(
                     "Unhandled build type " + buildType + " for local archive " + localArchive);
         };
@@ -301,6 +308,7 @@ public final class FinderResultCreator {
 
             for (KojiLocalArchive localArchive : localArchives) {
                 Artifact artifact = createArtifact(
+                        kojiBuild.getBuildInfo(),
                         localArchive,
                         buildSystemInteger.getBuildSystem(),
                         kojiBuild.isImport());
