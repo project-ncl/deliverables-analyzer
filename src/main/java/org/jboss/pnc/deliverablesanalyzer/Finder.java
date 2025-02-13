@@ -102,7 +102,7 @@ public class Finder {
     }
 
     /**
-     * Executes analysis of the provided archives identified by URLs, which must be downloadable using HTTP(S). The
+     * Executes analysis of the provided archives identified by URLs, which must be downloadable using "HTTP(S)". The
      * operation is executed synchronously, but the analysis itself runs several executors in parallel.
      *
      * @param id ID of the analysis
@@ -110,8 +110,8 @@ public class Finder {
      * @param distributionAnalyzerListener A listener for events from DistributionAnalyzer
      * @param buildFinderListener A listener for events from Build Finder
      * @param config Configuration of the analysis
-     * @return Results of the analysis of the whole operation was successful. Partial fail results in fail of the whole
-     *         analysis.
+     * @return The results of the analysis, if the whole operation was successful, or the partially failed results
+     *         otherwise
      * @throws CancellationException Thrown in case of cancel operation performed during the analysis
      * @throws Throwable Thrown in case of any errors during the analysis
      */

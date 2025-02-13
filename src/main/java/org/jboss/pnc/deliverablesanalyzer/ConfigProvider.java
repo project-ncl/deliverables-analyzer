@@ -112,8 +112,9 @@ public class ConfigProvider {
     }
 
     /**
-     * Override koji web url in the config if 'koji.web.url' defined in a system property, env variable, or in
-     * application.properties. Otherwise, use kojiHubUrl to generate the kojiWebUrl.
+     * Override koji web url in the config if "koji.web.url" defined in a system property, env variable, or in
+     * "application.properties".
+     * Otherwise, use kojiHubUrl to generate the kojiWebUrl.
      *
      * @param config config file to potentially override its kojiWebUrl
      *

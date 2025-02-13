@@ -136,7 +136,7 @@ class CompletableFutureParallelismTest {
                 .collect(
                         collectingAndThen(
                                 toList(),
-                                // Creates a new CompletableFuture, which will complete, when all the included futures
+                                // Creates a new CompletableFuture, which will complete when all the included futures
                                 // are finished
                                 // and waits for it to complete
                                 futures -> CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))

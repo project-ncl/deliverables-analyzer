@@ -56,8 +56,8 @@ public class CacheProvider {
     BuildConfig config;
 
     /**
-     * Specify list of Infinispan servers. Format: hostname[:port]. The ConfigProperty is the same as the one used by
-     * infinispan-quarkus-client to help with future migration.
+     * Specify the list of Infinispan servers in the format: hostname[:port].
+     * The ConfigProperty is the same as the one used by infinispan-quarkus-client to help with future migration.
      */
     @ConfigProperty(name = "quarkus.infinispan-client.hosts")
     Optional<List<String>> infinispanRemoteServerList;
