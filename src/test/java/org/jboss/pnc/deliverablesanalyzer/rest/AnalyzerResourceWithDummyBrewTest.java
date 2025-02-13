@@ -69,7 +69,7 @@ import io.restassured.response.Response;
 @QuarkusTest
 @Disabled
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
+class AnalyzerResourceWithDummyBrewTest extends AbstractAnalyzeResourceTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzerResourceWithDummyBrewTest.class);
 
     @BeforeAll
@@ -94,7 +94,7 @@ class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
     void cancelTestSuccessful() throws InterruptedException, JsonProcessingException {
         // Start analysis
         Response response = given()
-                .body(new AnalyzePayload("1234", List.of(stubThreeArtsZip(1500)), null, callbackRequest, null))
+                .body(new AnalyzePayload("1234", List.of(stubThreeArtsZip(TIMEOUT)), null, callbackRequest, null))
                 .contentType(APPLICATION_JSON)
                 .when()
                 .post(analyzeUrl)
@@ -137,7 +137,7 @@ class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
         // when
         // Start analysis
         Response response = given().body(
-                new AnalyzePayload("1234", List.of(stubThreeArtsZip(15000)), null, callbackRequest, heartbeatConfig))
+                new AnalyzePayload("1234", List.of(stubThreeArtsZip(TIMEOUT)), null, callbackRequest, heartbeatConfig))
                 .contentType(APPLICATION_JSON)
                 .when()
                 .post(analyzeUrl)

@@ -21,6 +21,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.jboss.pnc.api.dto.Request.Method.POST;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -47,12 +48,14 @@ import jakarta.inject.Inject;
 /**
  * @author Jakub Bartecek
  */
-public class AnalyzeResourceTestAbstract {
-    private static final String CONFIG_FILE = "custom_config.json";
+public abstract class AbstractAnalyzeResourceTest {
+    protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractAnalyzeResourceTest.class);
+
+    protected static final String CONFIG_FILE = "custom_config.json";
 
     protected static final int PORT = 8082;
 
-    protected static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeResourceTestAbstract.class);
+    protected static final int TIMEOUT = 30000;
 
     protected final WireMockServer wiremock = new WireMockServer(
             options().port(PORT).notifier(new Slf4jNotifier(true)));
@@ -72,7 +75,7 @@ public class AnalyzeResourceTestAbstract {
     @Inject
     AnalyzeResource analyzeResource;
 
-    protected AnalyzeResourceTestAbstract() throws URISyntaxException {
+    protected AbstractAnalyzeResourceTest() throws URISyntaxException {
         callbackRequest = new Request(POST, new URI(callbackUrl));
 
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE)) {
@@ -87,13 +90,15 @@ public class AnalyzeResourceTestAbstract {
     protected String stubThreeArtsZip(int milliseconds) {
         wiremock.stubFor(
                 any(urlEqualTo("/threeArts.zip")).willReturn(
-                        aResponse().withFixedDelay(milliseconds).withBodyFile("threeArts.zip").withStatus(HTTP_OK)));
+                        aResponse().withFixedDelay(milliseconds)
+                                .withBodyFile("threeArts.zip")
+                                .withStatus(HTTP_OK)));
         return baseUrl + "/threeArts.zip";
     }
 
     protected void verifyCallback(Runnable r) throws InterruptedException {
         long oldTime = new Date().getTime();
-        while ((new Date().getTime() - oldTime) < 15000) {
+        while ((new Date().getTime() - oldTime) < TIMEOUT) {
             try {
                 r.run();
                 return;

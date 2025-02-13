@@ -51,7 +51,7 @@ import io.restassured.response.Response;
  */
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstract {
+class AnalyzeResourceWithMockedBrewTest extends AbstractAnalyzeResourceTest {
     @BeforeAll
     void beforeAll() {
         wiremock.start();
