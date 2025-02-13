@@ -19,7 +19,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -82,9 +81,10 @@ public class CacheProvider {
     InfinispanMode infinispanMode;
 
     private static void ensureConfigurationDirectoryExists() throws IOException {
-        Path configPath = Paths.get(ConfigDefaults.CONFIG_PATH);
+        Path configPath = ConfigDefaults.CONFIG_PATH;
 
         LOGGER.info("Configuration directory is: {}", configPath);
+
         if (Files.exists(configPath)) {
             if (!Files.isDirectory(configPath)) {
                 throw new IOException("Configuration directory is not a directory: " + configPath);
@@ -137,7 +137,7 @@ public class CacheProvider {
         LOGGER.info("Initializing {} {} cache", Version.getBrandName(), Version.getVersion());
         ensureConfigurationDirectoryExists();
 
-        Path cachePath = Paths.get(ConfigDefaults.CONFIG_PATH, "cache");
+        Path cachePath = ConfigDefaults.CACHE_LOCATION;
         String cacheLocation = cachePath.toAbsolutePath().toString();
 
         LOGGER.info("Cache location is: {}", cacheLocation);
