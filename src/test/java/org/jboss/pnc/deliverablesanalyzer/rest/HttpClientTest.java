@@ -53,9 +53,7 @@ import jakarta.ws.rs.ProcessingException;
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HttpClientTest {
-    private final WireMockServer wiremock = new WireMockServer(options().port(PORT));
-
-    protected static final int PORT = 8082;
+    private final WireMockServer wiremock = new WireMockServer(options().dynamicPort());
 
     @Inject
     HttpClient httpClient;
@@ -79,7 +77,7 @@ class HttpClientTest {
     void testSimplePerformHttpRequest() throws Exception {
         // given
         String relativePath = "/testSimplePerformHttpRequest";
-        String fullUrl = "http://localhost:" + PORT + relativePath;
+        String fullUrl = wiremock.baseUrl() + relativePath;
         Request request = new Request(GET, new URI(fullUrl));
         wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(OK.getStatusCode())));
 
@@ -94,7 +92,7 @@ class HttpClientTest {
     void testSimplePerformHttpRequestFailsafe() throws URISyntaxException {
         // given
         String relativePath = "/testSimplePerformHttpRequest";
-        String fullUrl = "http://localhost:" + PORT + relativePath;
+        String fullUrl = wiremock.baseUrl() + relativePath;
         Request request = new Request(GET, new URI(fullUrl + "anything"));
         wiremock.stubFor(get(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(OK.getStatusCode())));
 
@@ -116,7 +114,7 @@ class HttpClientTest {
     void testAdvancedPerformHttpRequest() throws Exception {
         // given
         String relativePath = "/testAdvancedPerformHttpRequest";
-        String fullUrl = "http://localhost:" + PORT + relativePath;
+        String fullUrl = wiremock.baseUrl() + relativePath;
 
         Request request = new Request(POST, new URI(fullUrl));
 
