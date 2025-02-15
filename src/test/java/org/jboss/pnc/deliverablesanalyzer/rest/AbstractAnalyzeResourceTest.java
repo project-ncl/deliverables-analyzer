@@ -28,11 +28,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Date;
 
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,34 +54,60 @@ import jakarta.inject.Inject;
 /**
  * @author Jakub Bartecek
  */
-public class AnalyzeResourceTestAbstract {
+public class AbstractAnalyzeResourceTest {
     private static final String CONFIG_FILE = "custom_config.json";
 
-    protected static final int PORT = 8082;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAnalyzeResourceTest.class);
 
-    protected static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeResourceTestAbstract.class);
+    protected static final WireMockServer WIREMOCK = new WireMockServer(
+            options().dynamicPort().notifier(new Slf4jNotifier(true)));
 
-    protected final WireMockServer wiremock = new WireMockServer(
-            options().port(PORT).notifier(new Slf4jNotifier(true)));
+    protected static final String CALLBACK_RELATIVE_PATH = "/callback";
 
-    protected final String callbackRelativePath = "/callback";
+    protected static final String ANALYZE_URL = "/api/analyze";
 
-    protected final String baseUrl = "http://localhost:" + PORT;
-
-    protected final String callbackUrl = baseUrl + callbackRelativePath;
-
-    protected final Request callbackRequest;
-
-    protected final String analyzeUrl = "/api/analyze";
+    protected static Request callbackRequest;
 
     protected String testConfigJson = null;
+
+    protected static final int TIMEOUT_MILLISECONDS = 60000;
 
     @Inject
     AnalyzeResource analyzeResource;
 
-    protected AnalyzeResourceTestAbstract() throws URISyntaxException {
-        callbackRequest = new Request(POST, new URI(callbackUrl));
+    private static void replaceBaseURL() throws IOException, URISyntaxException {
+        URL url = AbstractAnalyzeResourceTest.class.getClassLoader().getResource("__files/threeArtsAnalysis.json");
+        assertNotNull(url);
+        String text;
 
+        try (InputStream is = url.openStream()) {
+            assertNotNull(is);
+            text = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
+
+        String newText = text.replaceAll("http://localhost:[0-9]+", WIREMOCK.baseUrl());
+        Files.writeString(Path.of(url.toURI()), newText, StandardOpenOption.TRUNCATE_EXISTING);
+    }
+
+    @BeforeAll
+    static void beforeAll() throws URISyntaxException, IOException {
+        WIREMOCK.start();
+        replaceBaseURL();
+        String callbackUrl = WIREMOCK.baseUrl() + CALLBACK_RELATIVE_PATH;
+        callbackRequest = new Request(POST, new URI(callbackUrl));
+    }
+
+    @AfterAll
+    static void afterAll() {
+        WIREMOCK.stop();
+    }
+
+    @BeforeEach
+    void beforeEach() {
+        WIREMOCK.resetAll();
+    }
+
+    protected AbstractAnalyzeResourceTest() {
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE)) {
             assertNotNull(is);
             testConfigJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
@@ -85,15 +118,15 @@ public class AnalyzeResourceTestAbstract {
     }
 
     protected String stubThreeArtsZip(int milliseconds) {
-        wiremock.stubFor(
+        WIREMOCK.stubFor(
                 any(urlEqualTo("/threeArts.zip")).willReturn(
                         aResponse().withFixedDelay(milliseconds).withBodyFile("threeArts.zip").withStatus(HTTP_OK)));
-        return baseUrl + "/threeArts.zip";
+        return WIREMOCK.baseUrl() + "/threeArts.zip";
     }
 
     protected void verifyCallback(Runnable r) throws InterruptedException {
         long oldTime = new Date().getTime();
-        while ((new Date().getTime() - oldTime) < 15000) {
+        while ((new Date().getTime() - oldTime) < TIMEOUT_MILLISECONDS) {
             try {
                 r.run();
                 return;

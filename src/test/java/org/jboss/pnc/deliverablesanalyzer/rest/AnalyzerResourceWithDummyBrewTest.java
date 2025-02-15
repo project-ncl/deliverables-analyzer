@@ -40,9 +40,6 @@ import org.jboss.pnc.api.dto.HeartbeatConfig;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.build.finder.koji.ClientSession;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -69,23 +66,8 @@ import io.restassured.response.Response;
 @QuarkusTest
 @Disabled
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
+class AnalyzerResourceWithDummyBrewTest extends AbstractAnalyzeResourceTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzerResourceWithDummyBrewTest.class);
-
-    @BeforeAll
-    void beforeAll() {
-        wiremock.start();
-    }
-
-    @AfterAll
-    void afterAll() {
-        wiremock.stop();
-    }
-
-    @BeforeEach
-    void beforeEach() {
-        wiremock.resetAll();
-    }
 
     AnalyzerResourceWithDummyBrewTest() throws URISyntaxException {
     }
@@ -94,10 +76,16 @@ class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
     void cancelTestSuccessful() throws InterruptedException, JsonProcessingException {
         // Start analysis
         Response response = given()
-                .body(new AnalyzePayload("1234", List.of(stubThreeArtsZip(1500)), null, callbackRequest, null))
+                .body(
+                        new AnalyzePayload(
+                                "1234",
+                                List.of(stubThreeArtsZip(TIMEOUT_MILLISECONDS)),
+                                null,
+                                callbackRequest,
+                                null))
                 .contentType(APPLICATION_JSON)
                 .when()
-                .post(analyzeUrl)
+                .post(ANALYZE_URL)
                 .thenReturn();
         assertEquals(jakarta.ws.rs.core.Response.Status.OK.getStatusCode(), response.getStatusCode());
 
@@ -130,23 +118,28 @@ class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
         // given
         // Setup handler for heartbeat
         String heartbeatPath = "/heartbeat";
-        Request heartbeatRequest = new Request(GET, new URI(baseUrl + heartbeatPath));
+        Request heartbeatRequest = new Request(GET, new URI(WIREMOCK.baseUrl() + heartbeatPath));
         HeartbeatConfig heartbeatConfig = new HeartbeatConfig(heartbeatRequest, 100L, TimeUnit.MILLISECONDS);
-        wiremock.stubFor(get(urlEqualTo(heartbeatPath)).willReturn(aResponse().withStatus(HTTP_OK)));
+        WIREMOCK.stubFor(get(urlEqualTo(heartbeatPath)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // when
         // Start analysis
         Response response = given().body(
-                new AnalyzePayload("1234", List.of(stubThreeArtsZip(15000)), null, callbackRequest, heartbeatConfig))
+                new AnalyzePayload(
+                        "1234",
+                        List.of(stubThreeArtsZip(TIMEOUT_MILLISECONDS)),
+                        null,
+                        callbackRequest,
+                        heartbeatConfig))
                 .contentType(APPLICATION_JSON)
                 .when()
-                .post(analyzeUrl)
+                .post(ANALYZE_URL)
                 .thenReturn();
         assertEquals(jakarta.ws.rs.core.Response.Status.OK.getStatusCode(), response.getStatusCode());
         String id = getAnalysisId(response.getBody().asString());
 
         // then
-        verifyCallback(() -> wiremock.verify(1, getRequestedFor(urlEqualTo(heartbeatPath))));
+        verifyCallback(() -> WIREMOCK.verify(1, getRequestedFor(urlEqualTo(heartbeatPath))));
 
         // cleanup
         // Cancel the running analysis
@@ -160,7 +153,7 @@ class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
     @Test
     void analyzeTestMalformedUrlDirect() throws InterruptedException, URISyntaxException {
         // given
-        wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
+        WIREMOCK.stubFor(post(urlEqualTo(CALLBACK_RELATIVE_PATH)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         // when
         try (jakarta.ws.rs.core.Response response = analyzeResource
@@ -170,30 +163,30 @@ class AnalyzerResourceWithDummyBrewTest extends AnalyzeResourceTestAbstract {
 
         // then
         verifyCallback(
-                () -> wiremock.verify(
+                () -> WIREMOCK.verify(
                         1,
-                        postRequestedFor(urlEqualTo(callbackRelativePath)).withRequestBody(
+                        postRequestedFor(urlEqualTo(CALLBACK_RELATIVE_PATH)).withRequestBody(
                                 containing("java.net.MalformedURLException: unknown protocol: xxyy"))));
     }
 
     @Test
     void analyzeTestMalformedUrlRest() throws InterruptedException {
-        wiremock.stubFor(post(urlEqualTo(callbackRelativePath)).willReturn(aResponse().withStatus(HTTP_OK)));
+        WIREMOCK.stubFor(post(urlEqualTo(CALLBACK_RELATIVE_PATH)).willReturn(aResponse().withStatus(HTTP_OK)));
 
         Response response = given()
                 .body(new AnalyzePayload("1234", List.of("xxyy:/malformedUrl.zip"), null, callbackRequest, null))
                 .contentType(APPLICATION_JSON)
                 .when()
-                .post(analyzeUrl)
+                .post(ANALYZE_URL)
                 .thenReturn();
 
         // then
         assertEquals(jakarta.ws.rs.core.Response.Status.OK.getStatusCode(), response.getStatusCode());
         assertEquals("676017a772b1df2ef4b79e95827fd563f6482c366bb002221cc19903ad75c95f", response.getBody().asString());
         verifyCallback(
-                () -> wiremock.verify(
+                () -> WIREMOCK.verify(
                         1,
-                        postRequestedFor(urlEqualTo(callbackRelativePath)).withRequestBody(
+                        postRequestedFor(urlEqualTo(CALLBACK_RELATIVE_PATH)).withRequestBody(
                                 containing("java.net.MalformedURLException: unknown protocol: xxyy"))));
     }
 

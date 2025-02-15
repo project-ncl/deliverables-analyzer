@@ -31,12 +31,11 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.SetSystemProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.http.HttpHeaders;
@@ -51,21 +50,8 @@ import io.restassured.response.Response;
  */
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstract {
-    @BeforeAll
-    void beforeAll() {
-        wiremock.start();
-    }
-
-    @AfterAll
-    void afterAll() {
-        wiremock.stop();
-    }
-
-    @BeforeEach
-    void beforeEach() {
-        wiremock.resetAll();
-    }
+class AnalyzeResourceWithMockedBrewTest extends AbstractAnalyzeResourceTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeResourceWithMockedBrewTest.class);
 
     AnalyzeResourceWithMockedBrewTest() throws URISyntaxException {
     }
@@ -99,9 +85,9 @@ class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstract {
     void analyzeTestOKSimple() throws InterruptedException {
         // given
         // callback
-        wiremock.addMockServiceRequestListener(new LoggingRequestListener());
-        wiremock.stubFor(
-                post(urlEqualTo(callbackRelativePath))
+        WIREMOCK.addMockServiceRequestListener(new LoggingRequestListener());
+        WIREMOCK.stubFor(
+                post(urlEqualTo(CALLBACK_RELATIVE_PATH))
                         .willReturn(aResponse().withBodyFile("threeArtsAnalysis.json").withStatus(HTTP_OK)));
 
         // Remote servers stubs
@@ -121,7 +107,7 @@ class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstract {
                     new AnalyzePayload("1234", List.of(stubThreeArtsZip(1)), testConfigJson, callbackRequest, null))
                     .contentType(APPLICATION_JSON)
                     .when()
-                    .post(analyzeUrl)
+                    .post(ANALYZE_URL)
                     .thenReturn();
 
             // then
@@ -129,9 +115,9 @@ class AnalyzeResourceWithMockedBrewTest extends AnalyzeResourceTestAbstract {
             String jsonMatchString = "$.results[*].builds[*].artifacts[*].licenses[?(@.spdxLicenseId == 'Apache-2.0')]";
 
             verifyCallback(
-                    () -> wiremock.verify(
+                    () -> WIREMOCK.verify(
                             1,
-                            postRequestedFor(urlEqualTo(callbackRelativePath))
+                            postRequestedFor(urlEqualTo(CALLBACK_RELATIVE_PATH))
                                     .withRequestBody(containing("\"success\":true"))
                                     .withRequestBody(matchingJsonPath(jsonMatchString))
                                     .withRequestBody(containing("\"spdxLicenseId\":\"Apache-2.0\""))));
