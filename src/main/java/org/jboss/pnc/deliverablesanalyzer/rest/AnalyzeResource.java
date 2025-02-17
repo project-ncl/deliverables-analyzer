@@ -192,13 +192,12 @@ public class AnalyzeResource implements AnalyzeService {
         if (urls.isEmpty()) {
             throw new BadRequestException("No URL was specified");
         }
-        BuildConfig specificConfig;
+
         try {
-            specificConfig = prepareConfig(config);
+            return prepareConfig(config);
         } catch (IOException e) {
             throw new BadRequestException("The provided config couldn't be parsed!", e);
         }
-        return specificConfig;
     }
 
     private BuildConfig prepareConfig(String rawConfig) throws IOException {
@@ -206,6 +205,7 @@ public class AnalyzeResource implements AnalyzeService {
 
         if (rawConfig != null) {
             BuildConfig config = BuildConfig.load(rawConfig);
+
             if (config.getExcludes() != null) {
                 specificConfig.setExcludes(config.getExcludes());
             }
@@ -229,7 +229,6 @@ public class AnalyzeResource implements AnalyzeService {
      * @param httpHeaders the HTTP headers
      */
     private static void mergeHttpHeaders(Request request, Map<String, String> httpHeaders) {
-
         List<Request.Header> callbackHeaders = request.getHeaders();
         Set<String> existingHeaderKeys = callbackHeaders.stream()
                 .map(Request.Header::getName)
@@ -247,5 +246,4 @@ public class AnalyzeResource implements AnalyzeService {
         List<Request.Header> headers = callback.getHeaders();
         headers.add(new Request.Header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
     }
-
 }

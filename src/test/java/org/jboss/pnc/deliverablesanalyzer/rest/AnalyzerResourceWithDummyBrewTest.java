@@ -28,6 +28,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static org.jboss.pnc.api.dto.Request.Method.GET;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -69,7 +70,8 @@ import io.restassured.response.Response;
 class AnalyzerResourceWithDummyBrewTest extends AbstractAnalyzeResourceTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzerResourceWithDummyBrewTest.class);
 
-    AnalyzerResourceWithDummyBrewTest() throws URISyntaxException {
+    AnalyzerResourceWithDummyBrewTest() throws IOException {
+
     }
 
     @Test

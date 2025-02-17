@@ -40,7 +40,7 @@ import jakarta.enterprise.inject.Produces;
 public class ConfigProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigProvider.class);
 
-    private static final String CONFIG_FILE = "custom_config.json";
+    public static final String CONFIG_FILE = "custom_config.json";
 
     private final BuildConfig config;
 

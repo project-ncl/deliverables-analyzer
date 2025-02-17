@@ -25,18 +25,21 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static io.restassured.RestAssured.given;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static org.jboss.pnc.build.finder.core.JSONUtils.dumpString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.net.URISyntaxException;
+import java.io.IOException;
 import java.util.List;
 
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junitpioneer.jupiter.RestoreSystemProperties;
 import org.junitpioneer.jupiter.SetSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.http.HttpHeaders;
 import com.github.tomakehurst.wiremock.http.RequestListener;
@@ -53,7 +56,8 @@ import io.restassured.response.Response;
 class AnalyzeResourceWithMockedBrewTest extends AbstractAnalyzeResourceTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeResourceWithMockedBrewTest.class);
 
-    AnalyzeResourceWithMockedBrewTest() throws URISyntaxException {
+    AnalyzeResourceWithMockedBrewTest() throws IOException {
+
     }
 
     public static class LoggingRequestListener implements RequestListener {
@@ -61,7 +65,6 @@ class AnalyzeResourceWithMockedBrewTest extends AbstractAnalyzeResourceTest {
         public void requestReceived(
                 com.github.tomakehurst.wiremock.http.Request request,
                 com.github.tomakehurst.wiremock.http.Response response) {
-
             RequestMethod method = request.getMethod();
             String url = request.getUrl();
             String body = request.getBodyAsString();
@@ -82,7 +85,8 @@ class AnalyzeResourceWithMockedBrewTest extends AbstractAnalyzeResourceTest {
 
     @Test
     @SetSystemProperty(key = "org.spdx.useJARLicenseInfoOnly", value = "true")
-    void analyzeTestOKSimple() throws InterruptedException {
+    @RestoreSystemProperties
+    void analyzeTestOKSimple() throws InterruptedException, JsonProcessingException {
         // given
         // callback
         WIREMOCK.addMockServiceRequestListener(new LoggingRequestListener());
@@ -92,19 +96,26 @@ class AnalyzeResourceWithMockedBrewTest extends AbstractAnalyzeResourceTest {
 
         // Remote servers stubs
         WireMockServer pncServer = new WireMockServer(
-                options().port(8083).usingFilesUnderClasspath("analyzeTestOKSimple/pnc"));
+                options().dynamicPort().usingFilesUnderClasspath("analyzeTestOKSimple/pnc"));
         pncServer.addMockServiceRequestListener(new LoggingRequestListener());
         WireMockServer brewHub = new WireMockServer(
-                options().port(8085).usingFilesUnderClasspath("analyzeTestOKSimple/brewHub"));
+                options().dynamicPort().usingFilesUnderClasspath("analyzeTestOKSimple/brewHub"));
         brewHub.addMockServiceRequestListener(new LoggingRequestListener());
 
         try {
             pncServer.start();
+            System.setProperty("pnc.url", pncServer.baseUrl());
             brewHub.start();
+            System.setProperty("koji.hub.url", brewHub.baseUrl());
 
             // when
             Response response = given().body(
-                    new AnalyzePayload("1234", List.of(stubThreeArtsZip(1)), testConfigJson, callbackRequest, null))
+                    new AnalyzePayload(
+                            "1234",
+                            List.of(stubThreeArtsZip(1)),
+                            dumpString(testConfigJson),
+                            callbackRequest,
+                            null))
                     .contentType(APPLICATION_JSON)
                     .when()
                     .post(ANALYZE_URL)

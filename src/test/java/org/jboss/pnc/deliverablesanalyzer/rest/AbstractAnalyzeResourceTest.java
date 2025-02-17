@@ -21,6 +21,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.jboss.pnc.api.dto.Request.Method.POST;
+import static org.jboss.pnc.deliverablesanalyzer.ConfigProvider.CONFIG_FILE;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -36,6 +37,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Date;
 
 import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -55,8 +57,6 @@ import jakarta.inject.Inject;
  * @author Jakub Bartecek
  */
 public class AbstractAnalyzeResourceTest {
-    private static final String CONFIG_FILE = "custom_config.json";
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAnalyzeResourceTest.class);
 
     protected static final WireMockServer WIREMOCK = new WireMockServer(
@@ -68,7 +68,7 @@ public class AbstractAnalyzeResourceTest {
 
     protected static Request callbackRequest;
 
-    protected String testConfigJson = null;
+    protected BuildConfig testConfigJson;
 
     protected static final int TIMEOUT_MILLISECONDS = 60000;
 
@@ -107,14 +107,11 @@ public class AbstractAnalyzeResourceTest {
         WIREMOCK.resetAll();
     }
 
-    protected AbstractAnalyzeResourceTest() {
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE)) {
-            assertNotNull(is);
-            testConfigJson = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-            LOGGER.debug("Found TEST configuration: {}", testConfigJson);
-        } catch (IOException e) {
-            LOGGER.error("Could not read the TEST configuration", e);
-        }
+    protected AbstractAnalyzeResourceTest() throws IOException {
+        URL url = getClass().getClassLoader().getResource(CONFIG_FILE);
+        assertNotNull(url);
+        testConfigJson = BuildConfig.load(url);
+        LOGGER.debug("Found TEST configuration: {}", testConfigJson);
     }
 
     protected String stubThreeArtsZip(int milliseconds) {
