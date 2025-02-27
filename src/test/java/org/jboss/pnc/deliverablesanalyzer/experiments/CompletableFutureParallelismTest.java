@@ -111,7 +111,7 @@ class CompletableFutureParallelismTest {
 
         executor.runAsync(() -> {
             try {
-                Thread.sleep(10);
+                Thread.sleep(10L);
                 System.out.println("Will cancel");
                 assertTrue(future.cancel(true));
             } catch (InterruptedException e) {

@@ -96,7 +96,7 @@ class AnalyzerResourceWithDummyBrewTest extends AbstractAnalyzeResourceTest {
         AnalyzeResponse analyzeResponse = getAnalyzeResponse(response.getBody().asString());
         LOGGER.warn("AnalyzeResponse: {}", analyzeResponse);
 
-        Thread.sleep(1000);
+        Thread.sleep(1000L);
 
         // Cancel the running analysis
         given().when()
@@ -149,7 +149,7 @@ class AnalyzerResourceWithDummyBrewTest extends AbstractAnalyzeResourceTest {
                 .post("/api/analyze/" + id + "/cancel")
                 .then()
                 .statusCode(jakarta.ws.rs.core.Response.Status.OK.getStatusCode());
-        Thread.sleep(1000);
+        Thread.sleep(1000L);
     }
 
     @Test

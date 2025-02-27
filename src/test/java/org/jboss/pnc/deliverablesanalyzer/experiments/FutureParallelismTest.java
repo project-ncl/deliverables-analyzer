@@ -138,7 +138,7 @@ class FutureParallelismTest {
         CancelWrapper cancelWrapper = new CancelWrapper();
         executor.runAsync(() -> {
             try {
-                Thread.sleep(20);
+                Thread.sleep(20L);
                 System.out.println("Will cancel");
                 cancelWrapper.cancel();
             } catch (InterruptedException e) {
