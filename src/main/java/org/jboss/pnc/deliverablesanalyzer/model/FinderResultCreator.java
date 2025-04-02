@@ -42,7 +42,6 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact.NPMArtifactBuilder;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.WindowsArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.WindowsArtifact.WindowsArtifactBuilder;
-import org.jboss.pnc.api.enums.LicenseSource;
 import org.jboss.pnc.build.finder.core.BuildSystem;
 import org.jboss.pnc.build.finder.core.BuildSystemInteger;
 import org.jboss.pnc.build.finder.core.Checksum;
@@ -88,33 +87,8 @@ public final class FinderResultCreator {
                 .distribution(license.getDistribution())
                 .name(license.getName())
                 .spdxLicenseId(license.getSpdxLicenseId())
-                .url(license.getUrl());
-
-        org.jboss.pnc.build.finder.core.LicenseSource source = license.getSource();
-        if (source == null) {
-            throw new IllegalArgumentException("License source cannot be null");
-        }
-
-        switch (source) {
-            case UNKNOWN:
-                licenseBuilder.source(LicenseSource.UNKNOWN);
-                break;
-            case POM:
-                licenseBuilder.source(LicenseSource.POM);
-                break;
-            case POM_XML:
-                licenseBuilder.source(LicenseSource.POM_XML);
-                break;
-            case BUNDLE_LICENSE:
-                licenseBuilder.source(LicenseSource.BUNDLE_LICENSE);
-                break;
-            case TEXT:
-                licenseBuilder.source(LicenseSource.TEXT);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown license source " + source);
-        }
-
+                .url(license.getUrl())
+                .sourceUrl(license.getSourceUrl());
         return licenseBuilder.build();
     }
 
