@@ -65,7 +65,7 @@
     <skipITs>true</skipITs>
     <version.central-publishing-maven-plugin>0.8.0</version.central-publishing-maven-plugin>
     <version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>4.0.0</version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>
-    <version.com.fasterxml.jackson>2.19.1</version.com.fasterxml.jackson>
+    <version.com.fasterxml.jackson>2.19.2</version.com.fasterxml.jackson>
     <version.com.github.eirslett>1.9.1</version.com.github.eirslett>
     <version.com.github.ekryd.sortpom>4.0.0</version.com.github.ekryd.sortpom>
     <version.com.github.spotbugs>4.9.3.2</version.com.github.spotbugs>
