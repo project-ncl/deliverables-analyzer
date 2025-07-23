@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.deliverablesanalyzer.rest.exception.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,10 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.OK;
 
 /**
  * Simple HTTP client wrapper
@@ -71,7 +76,7 @@ public class HttpClient {
 
         try (Response response = invokeHttpRequest(request, null)) {
             validateResponse(response);
-        } catch (ProcessingException | IOException e) {
+        } catch (ProcessingException | IOException | BadRequestException e) {
             LOGGER.debug("HTTP request failed!", e);
             throw e;
         }
@@ -95,7 +100,7 @@ public class HttpClient {
             Entity<String> entity = Entity.json(json);
             response = invokeHttpRequest(request, entity);
             validateResponse(response);
-        } catch (ProcessingException | IOException e) {
+        } catch (ProcessingException | IOException | BadRequestException e) {
             LOGGER.debug("HTTP request failed!", e);
             throw e;
         } finally {
@@ -130,16 +135,23 @@ public class HttpClient {
     private void validateResponse(Response response) throws IOException {
         String responseEntity = response.readEntity(String.class);
 
-        if (response.getStatus() != Response.Status.OK.getStatusCode()
-                && response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
+        if (response.getStatus() == BAD_REQUEST.getStatusCode()) { // 400 Bad Request
             String failureMsg = String.format(
                     "Http request failed! ResponseCode: %s, Entity: %s",
                     response.getStatus(),
                     responseEntity != null ? responseEntity : "");
-
             LOGGER.warn(failureMsg);
-            throw new IOException(failureMsg);
 
+            throw new BadRequestException(failureMsg);
+        } else if (response.getStatus() != OK.getStatusCode()
+                && response.getStatus() != NO_CONTENT.getStatusCode()) {
+            String failureMsg = String.format(
+                    "Http request failed! ResponseCode: %s, Entity: %s",
+                    response.getStatus(),
+                    responseEntity != null ? responseEntity : "");
+            LOGGER.warn(failureMsg);
+
+            throw new IOException(failureMsg);
         } else {
             LOGGER.debug(
                     "Http request sent successfully. ResponseCode: {}, Entity: {}",
