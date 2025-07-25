@@ -23,6 +23,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.jboss.pnc.api.dto.Request.Method.GET;
 import static org.jboss.pnc.api.dto.Request.Method.POST;
@@ -33,6 +34,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.deliverablesanalyzer.rest.exception.BadRequestException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -128,6 +130,20 @@ class HttpClientTest {
                 1,
                 postRequestedFor(urlEqualTo(relativePath))
                         .withRequestBody(equalToJson("{\"a\" : 1, \"b\" : \"str\"}")));
+    }
+
+    @Test
+    void testThrownExceptionOnBadRequest() throws Exception {
+        // given
+        String relativePath = "/testBadRequest";
+        String fullUrl = wiremock.baseUrl() + relativePath;
+
+        Request request = new Request(POST, new URI(fullUrl));
+
+        wiremock.stubFor(post(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(BAD_REQUEST.getStatusCode())));
+
+        // when - then
+        assertThrows(BadRequestException.class, () -> httpClient.performHttpRequest(request, new TestPayload(1, "str")));
     }
 
     record TestPayload(Integer a, String b) {

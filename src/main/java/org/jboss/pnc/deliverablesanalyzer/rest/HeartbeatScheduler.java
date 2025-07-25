@@ -27,6 +27,7 @@ import org.jboss.pnc.api.dto.HeartbeatConfig;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.common.concurrent.MDCScheduledThreadPoolExecutor;
 import org.jboss.pnc.common.concurrent.NamedThreadFactory;
+import org.jboss.pnc.deliverablesanalyzer.rest.exception.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +61,7 @@ public class HeartbeatScheduler {
 
     public void subscribeRequest(String id, HeartbeatConfig heartbeatConfig) {
         Future<?> beat = this.executor.scheduleAtFixedRate(
-                () -> this.sendHeartbeat(heartbeatConfig.getRequest()),
+                () -> this.sendHeartbeat(id, heartbeatConfig.getRequest()),
                 0L,
                 heartbeatConfig.getDelay(),
                 heartbeatConfig.getDelayTimeUnit());
@@ -76,7 +77,7 @@ public class HeartbeatScheduler {
         }
     }
 
-    private void sendHeartbeat(Request heartbeatRequest) {
+    private void sendHeartbeat(String id, Request heartbeatRequest) {
 
         try {
             List<Request.Header> headers = heartbeatRequest.getHeaders();
@@ -96,6 +97,11 @@ public class HeartbeatScheduler {
             headers.add(new Request.Header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
 
             this.httpClient.performHttpRequest(heartbeatRequest);
+        } catch (BadRequestException e) {
+            LOGGER.warn("Heartbeat task no longer exists in target service!", e);
+
+            // avoid never ending spam of target service on 404/400 which are non-recoverable
+            unsubscribeRequest(id);
         } catch (Exception e) {
             LOGGER.warn("Heartbeat failed with an exception!", e);
         }
