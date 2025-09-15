@@ -784,8 +784,8 @@ limitations under the License.]]></inlineHeader>
         <version>${version.central-publishing-maven-plugin}</version>
         <extensions>true</extensions>
         <configuration>
-            <!-- as defined in your settings.xml -->
-            <publishingServerId>central-publisher</publishingServerId>
+          <!-- as defined in your settings.xml -->
+          <publishingServerId>central-publisher</publishingServerId>
         </configuration>
       </plugin>
       <plugin>

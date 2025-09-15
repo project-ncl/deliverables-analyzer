@@ -140,10 +140,13 @@ class HttpClientTest {
 
         Request request = new Request(POST, new URI(fullUrl));
 
-        wiremock.stubFor(post(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(BAD_REQUEST.getStatusCode())));
+        wiremock.stubFor(
+                post(urlEqualTo(relativePath)).willReturn(aResponse().withStatus(BAD_REQUEST.getStatusCode())));
 
         // when - then
-        assertThrows(BadRequestException.class, () -> httpClient.performHttpRequest(request, new TestPayload(1, "str")));
+        assertThrows(
+                BadRequestException.class,
+                () -> httpClient.performHttpRequest(request, new TestPayload(1, "str")));
     }
 
     record TestPayload(Integer a, String b) {

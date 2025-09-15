@@ -15,6 +15,10 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.OK;
+
 import java.io.IOException;
 import java.util.Collection;
 
@@ -36,10 +40,6 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-
-import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
-import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
-import static jakarta.ws.rs.core.Response.Status.OK;
 
 /**
  * Simple HTTP client wrapper
