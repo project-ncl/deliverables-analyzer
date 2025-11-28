@@ -130,7 +130,7 @@ public class AnalyzeResource implements AnalyzeService {
                 LOGGER.warn(
                         "Analysis with ID {} failed due to {}",
                         id,
-                        e.getMessage() == null ? e.toString() : e.getMessage(),
+                        e.getMessage() == null ? e.toString() : e.getMessage() + e.getCause(),
                         e);
             }
 
