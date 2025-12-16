@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 
@@ -29,12 +30,15 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
+import org.jboss.pnc.api.dto.ExceptionResolution;
 import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.Finder;
 import org.jboss.pnc.deliverablesanalyzer.StatusCache;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderStatus;
+import org.jboss.pnc.deliverablesanalyzer.rest.exception.ReasonedException;
 import org.jboss.pnc.deliverablesanalyzer.utils.MdcUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,10 +129,32 @@ public class AnalyzeResource implements AnalyzeService {
                         "Analysis with ID {} was cancelled. No callback will be performed. Exception: {}",
                         id,
                         ce.toString());
-            } catch (Throwable e) {
-                analysisReport = new AnalysisReport();
+            } catch (ReasonedException e) {
+                analysisReport = AnalysisReport.processWithResolution(e.getResult(), e.getExceptionResolution());
                 LOGGER.warn(
-                        "Analysis with ID {} failed due to {}",
+                        "ErrorId={} Analysis with ID {} failed: {}",
+                        e.getErrorId(),
+                        id,
+                        e.getMessage() == null ? e.toString() : e.getMessage(),
+                        e.getCause());
+            } catch (Throwable e) {
+                // For now, mark unreasoned exceptions as SYSTEM_ERROR
+                final String errorId = UUID.randomUUID().toString();
+                final ExceptionResolution exceptionResolution = ExceptionResolution.builder()
+                        .reason(
+                                String.format(
+                                        "Analysis with ID %s failed: %s",
+                                        id,
+                                        e.getMessage() == null ? errorId : e.getMessage()))
+                        .proposal(
+                                String.format(
+                                        "There is an internal system error, please contact PNC team at #forum-pnc-users (with the following ID: %s)",
+                                        errorId))
+                        .build();
+                analysisReport = AnalysisReport.processWithResolution(ResultStatus.SYSTEM_ERROR, exceptionResolution);
+                LOGGER.warn(
+                        "ErrorId={} Analysis with ID {} failed: {}",
+                        errorId,
                         id,
                         e.getMessage() == null ? e.toString() : e.getMessage(),
                         e);
