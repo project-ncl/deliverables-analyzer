@@ -148,7 +148,8 @@ public class AnalyzeResource implements AnalyzeService {
                                         e.getMessage() == null ? errorId : e.getMessage()))
                         .proposal(
                                 String.format(
-                                        "There is an internal system error, please contact PNC team at #forum-pnc-users (with the following ID: %s)",
+                                        "There is an internal system error, please contact PNC team " +
+                                                "at #forum-pnc-users (with the following ID: %s)",
                                         errorId))
                         .build();
                 analysisReport = AnalysisReport.processWithResolution(ResultStatus.SYSTEM_ERROR, exceptionResolution);
