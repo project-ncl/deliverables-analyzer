@@ -34,6 +34,8 @@ import org.apache.commons.collections4.MultiValuedMap;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
+import org.jboss.pnc.api.dto.exception.ReasonedException;
+import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.BuildFinder;
 import org.jboss.pnc.build.finder.core.BuildFinderListener;
@@ -112,15 +114,13 @@ public class Finder {
      * @param config Configuration of the analysis
      * @return The results of the analysis, if the whole operation was successful, or the partially failed results
      *         otherwise
-     * @throws CancellationException Thrown in case of cancel operation performed during the analysis
-     * @throws Throwable Thrown in case of any errors during the analysis
      */
     public List<FinderResult> find(
             String id,
             List<String> urls,
             DistributionAnalyzerListener distributionAnalyzerListener,
             BuildFinderListener buildFinderListener,
-            BuildConfig config) throws Throwable {
+            BuildConfig config) {
         CancelWrapper cancelWrapper = new CancelWrapper();
         runningOperations.put(id, cancelWrapper);
 
@@ -139,8 +139,10 @@ public class Finder {
                 LOGGER.debug("Analysis of URL {} finished.", url);
 
                 return result;
-            } catch (KojiClientException | MalformedURLException e) {
-                throw new ExecutionException(e);
+            } catch (KojiClientException e) {
+                throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "Error in Build Finder", e);
+            } catch (MalformedURLException e) {
+                throw new ReasonedException(ResultStatus.FAILED, e.getMessage(), "Please check the URL.", e);
             }
         })).collect(Collectors.toList());
         List<Future<FinderResult>> allTasks = new ArrayList<>(submittedTasks);
@@ -151,8 +153,12 @@ public class Finder {
             LOGGER.debug("Analysis {} was cancelled", id, e);
             throw e;
         } catch (ExecutionException e) {
-            LOGGER.debug("Analysis {} failed due to ", id, e);
-            throw e.getCause();
+            final Throwable cause = e.getCause();
+            LOGGER.debug("Analysis {} failed due to ", id, cause);
+            throw new ReasonedException(
+                    ResultStatus.SYSTEM_ERROR,
+                    cause.getMessage() == null ? cause.toString() : cause.getMessage(),
+                    cause);
         } finally {
             runningOperations.remove(id);
         }
@@ -232,7 +238,7 @@ public class Finder {
         try {
             checksums = analyzer.call();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to analyze checksums", e);
+            throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "Failed to analyze checksums", e);
         }
         result = findBuilds(id, url, analyzer, checksums, buildFinderListener, config);
 
@@ -288,8 +294,6 @@ public class Finder {
             LOGGER.info("Returning result for {}", url);
 
             return result;
-        } catch (Exception e) {
-            throw new KojiClientException("Got Exception", e);
         }
     }
 
