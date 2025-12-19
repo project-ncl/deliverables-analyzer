@@ -34,7 +34,7 @@ public class ReasonedException extends RuntimeException {
             String reason,
             String proposal,
             Throwable cause) {
-        super(cause);
+        super(reason, cause);
         this.errorId = UUID.randomUUID().toString();
         this.result = result;
         this.exceptionResolution = ExceptionResolution.builder()
@@ -47,7 +47,7 @@ public class ReasonedException extends RuntimeException {
             ResultStatus result,
             String reason,
             Throwable cause) {
-        super(cause);
+        super(reason, cause);
         this.errorId = UUID.randomUUID().toString();
         this.result = result;
         this.exceptionResolution = ExceptionResolution.builder()

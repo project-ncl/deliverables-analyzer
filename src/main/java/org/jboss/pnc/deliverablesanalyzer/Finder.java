@@ -140,7 +140,7 @@ public class Finder {
 
                 return result;
             } catch (KojiClientException e) {
-                throw new ReasonedException(ResultStatus.SYSTEM_ERROR, e.getMessage(), e);
+                throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "Error in Build Finder", e);
             } catch (MalformedURLException e) {
                 throw new ReasonedException(ResultStatus.FAILED, e.getMessage(), "Please check the URL.", e);
             }
@@ -153,11 +153,13 @@ public class Finder {
             LOGGER.debug("Analysis {} was cancelled", id, e);
             throw e;
         } catch (ExecutionException e) {
-            LOGGER.debug("Analysis {} failed due to ", id, e);
+            final Throwable cause = e.getCause();
+            LOGGER.debug("Analysis {} failed due to ", id, cause);
             throw new ReasonedException(
                     ResultStatus.SYSTEM_ERROR,
-                    e.getMessage() == null ? String.format("Analysis %s failed", id) : e.getMessage(),
-                    e);
+                    cause.getMessage() == null ? String.format("Analysis %s failed", id)
+                            : "Analysis failed with: " + cause.getMessage(),
+                    cause);
         } finally {
             runningOperations.remove(id);
         }
@@ -237,7 +239,7 @@ public class Finder {
         try {
             checksums = analyzer.call();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to analyze checksums", e);
+            throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "Failed to analyze checksums", e);
         }
         result = findBuilds(id, url, analyzer, checksums, buildFinderListener, config);
 
@@ -293,8 +295,6 @@ public class Finder {
             LOGGER.info("Returning result for {}", url);
 
             return result;
-        } catch (Exception e) {
-            throw new KojiClientException("Got Exception", e);
         }
     }
 
