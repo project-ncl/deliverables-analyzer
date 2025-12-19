@@ -32,13 +32,13 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.dto.ExceptionResolution;
 import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.Finder;
 import org.jboss.pnc.deliverablesanalyzer.StatusCache;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderStatus;
-import org.jboss.pnc.deliverablesanalyzer.rest.exception.ReasonedException;
 import org.jboss.pnc.deliverablesanalyzer.utils.MdcUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -140,17 +140,17 @@ public class AnalyzeResource implements AnalyzeService {
             } catch (Throwable e) {
                 // For now, mark unreasoned exceptions as SYSTEM_ERROR
                 final String errorId = UUID.randomUUID().toString();
+                final String errorReason = String.format(
+                        "Analysis with ID %s failed: %s",
+                        id,
+                        e.getMessage() == null ? e.toString() : e.getMessage());
+                final String errorProposal = String.format(
+                        "There is an internal system error, please contact PNC team "
+                                + "at #forum-pnc-users (with the following ID: %s)",
+                        errorId);
                 final ExceptionResolution exceptionResolution = ExceptionResolution.builder()
-                        .reason(
-                                String.format(
-                                        "Analysis with ID %s failed: %s",
-                                        id,
-                                        e.getMessage() == null ? errorId : e.getMessage()))
-                        .proposal(
-                                String.format(
-                                        "There is an internal system error, please contact PNC team "
-                                                + "at #forum-pnc-users (with the following ID: %s)",
-                                        errorId))
+                        .reason(errorReason)
+                        .proposal(errorProposal)
                         .build();
                 analysisReport = AnalysisReport.processWithResolution(ResultStatus.SYSTEM_ERROR, exceptionResolution);
                 LOGGER.warn(

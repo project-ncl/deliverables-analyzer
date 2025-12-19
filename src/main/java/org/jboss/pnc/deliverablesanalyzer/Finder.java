@@ -34,6 +34,7 @@ import org.apache.commons.collections4.MultiValuedMap;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
+import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.build.finder.core.BuildConfig;
 import org.jboss.pnc.build.finder.core.BuildFinder;
@@ -48,7 +49,6 @@ import org.jboss.pnc.build.finder.koji.KojiBuild;
 import org.jboss.pnc.build.finder.pnc.client.PncClient;
 import org.jboss.pnc.build.finder.pnc.client.PncClientImpl;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderResultCreator;
-import org.jboss.pnc.deliverablesanalyzer.rest.exception.ReasonedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,8 +157,7 @@ public class Finder {
             LOGGER.debug("Analysis {} failed due to ", id, cause);
             throw new ReasonedException(
                     ResultStatus.SYSTEM_ERROR,
-                    cause.getMessage() == null ? String.format("Analysis %s failed", id)
-                            : "Analysis failed with: " + cause.getMessage(),
+                    cause.getMessage() == null ? cause.toString() : cause.getMessage(),
                     cause);
         } finally {
             runningOperations.remove(id);
