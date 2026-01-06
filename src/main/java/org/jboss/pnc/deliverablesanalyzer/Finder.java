@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -237,6 +238,8 @@ public class Finder {
         Map<ChecksumType, MultiValuedMap<String, LocalFile>> checksums;
         try {
             checksums = analyzer.call();
+        } catch (UnknownHostException e) {
+            throw new ReasonedException(ResultStatus.FAILED, "Invalid URL", "Please check the URL", e);
         } catch (IOException e) {
             throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "Failed to analyze checksums", e);
         }
