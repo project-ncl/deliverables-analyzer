@@ -20,7 +20,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.file.FileSystemException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -33,6 +32,7 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.vfs2.FileSystemException;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
