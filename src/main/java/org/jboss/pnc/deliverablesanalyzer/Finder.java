@@ -156,6 +156,10 @@ public class Finder {
             throw e;
         } catch (ExecutionException e) {
             final Throwable cause = e.getCause();
+            if (cause instanceof ReasonedException ex) {
+                throw ex;
+            }
+
             LOGGER.debug("Analysis {} failed due to ", id, cause);
             throw new ReasonedException(
                     ResultStatus.SYSTEM_ERROR,
