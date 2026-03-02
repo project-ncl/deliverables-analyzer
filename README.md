@@ -117,3 +117,9 @@ $ docker-compose pull
 $ docker-compose up --build
 $ docker-compose down --rmi --remove-orphans -v
 ```
+
+## Related Guides
+
+- Infinispan Client ([guide](https://quarkus.io/guides/infinispan-client)): Connect to the Infinispan data grid for distributed caching
+- OpenID Connect ([guide](https://quarkus.io/guides/security-openid-connect)): Verify Bearer access tokens and authenticate users with Authorization Code Flow
+- Logging JSON ([guide](https://quarkus.io/guides/logging#json-logging)): Add JSON formatter for console logging
