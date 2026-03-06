@@ -18,7 +18,6 @@ package org.jboss.pnc.deliverablesanalyzer.rest;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,10 +39,10 @@ import org.jboss.pnc.deliverablesanalyzer.StatusCache;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
 import org.jboss.pnc.deliverablesanalyzer.model.FinderStatus;
 import org.jboss.pnc.deliverablesanalyzer.utils.MdcUtils;
+import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.quarkus.oidc.client.OidcClient;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
@@ -77,7 +76,7 @@ public class AnalyzeResource implements AnalyzeService {
     HttpClient httpClient;
 
     @Inject
-    OidcClient oidcClient;
+    PNCClientAuth pncClientAuth;
 
     @Context
     UriInfo uriInfo;
@@ -269,8 +268,7 @@ public class AnalyzeResource implements AnalyzeService {
     }
 
     private void addAuthenticationHeaderToCallback(org.jboss.pnc.api.dto.Request callback) {
-        String accessToken = oidcClient.getTokens().await().atMost(Duration.ofMinutes(1)).getAccessToken();
         List<Request.Header> headers = callback.getHeaders();
-        headers.add(new Request.Header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
+        headers.add(new Request.Header(HttpHeaders.AUTHORIZATION, pncClientAuth.getHttpAuthorizationHeaderValue()));
     }
 }

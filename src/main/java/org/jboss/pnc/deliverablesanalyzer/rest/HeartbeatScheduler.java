@@ -15,7 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,10 +27,10 @@ import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.common.concurrent.MDCScheduledThreadPoolExecutor;
 import org.jboss.pnc.common.concurrent.NamedThreadFactory;
 import org.jboss.pnc.deliverablesanalyzer.rest.exception.BadRequestException;
+import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.quarkus.oidc.client.OidcClient;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -55,7 +54,7 @@ public class HeartbeatScheduler {
     HttpClient httpClient;
 
     @Inject
-    OidcClient oidcClient;
+    PNCClientAuth pncClientAuth;
 
     private final Map<String, Future<?>> subscribedRequests = new ConcurrentHashMap<>();
 
@@ -93,8 +92,7 @@ public class HeartbeatScheduler {
             headers.removeAll(existingAuthHeaders);
 
             // Add an authorization header with a fresh token
-            String accessToken = oidcClient.getTokens().await().atMost(Duration.ofMinutes(1)).getAccessToken();
-            headers.add(new Request.Header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
+            headers.add(new Request.Header(HttpHeaders.AUTHORIZATION, pncClientAuth.getHttpAuthorizationHeaderValue()));
 
             this.httpClient.performHttpRequest(heartbeatRequest);
         } catch (BadRequestException e) {
