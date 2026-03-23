@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.app;
+package org.jboss.pnc.deliverablesanalyzer.model.finder;
 
-/**
- * The values in here are auto-generated from Maven plugin maven-replacer-plugin and the template is found in the
- * template folder
- */
-public final class BuildInformationConstants {
+import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
+import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    public static final String VERSION = "1.2.10-SNAPSHOT";
-    public static final String COMMIT_HASH = "89a0aab";
-    public static final String BUILD_TIME = "2026-03-23T09:51:46Z";
+import java.util.List;
 
-    private BuildInformationConstants() {
-        // Prevent instantiation
-    }
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class KojiBuild {
+
+    private KojiBuildInfo info;
+    private List<KojiTagInfo> tags;
 }

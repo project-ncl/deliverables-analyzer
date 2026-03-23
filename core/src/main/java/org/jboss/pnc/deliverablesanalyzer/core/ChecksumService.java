@@ -17,6 +17,7 @@ package org.jboss.pnc.deliverablesanalyzer.core;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileName;
 import org.apache.commons.vfs2.FileObject;
@@ -34,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 import static org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils.normalizePath;
@@ -56,8 +56,8 @@ public class ChecksumService {
     }
 
     private Checksum checksumStandard(FileObject fo, String root) throws IOException {
-        Checksum checksum;
-        MessageDigest md = createDigest();
+        MessageDigest sha256Digest = DigestUtils.getSha256Digest();
+        MessageDigest md5Digest = DigestUtils.getMd5Digest();
 
         try (FileContent fc = fo.getContent(); InputStream is = fc.getInputStream()) {
             long fileSize = determineFileSize(fc);
@@ -65,13 +65,15 @@ public class ChecksumService {
             int read;
 
             while ((read = is.read(buffer)) > 0) {
-                md.update(buffer, 0, read);
+                sha256Digest.update(buffer, 0, read);
+                md5Digest.update(buffer, 0, read);
             }
 
-            String sha256 = Hex.encodeHexString(md.digest());
-            checksum = Checksum.create(sha256, normalizePath(fo, root), fileSize);
+            String sha256 = Hex.encodeHexString(sha256Digest.digest());
+            String md5 = Hex.encodeHexString(md5Digest.digest());
+
+            return Checksum.create(sha256, md5, normalizePath(fo, root), fileSize);
         }
-        return checksum;
     }
 
     private Checksum checksumRpm(FileObject fo, String root) throws IOException {
@@ -88,29 +90,25 @@ public class ChecksumService {
 
             LOGGER.debug("Handle checksum type {} for RPM {}", ChecksumType.SHA256.getAlgorithm(), fo.getName());
 
-            String sha256 = extractRpmSignature(in, fo);
-            checksum = Checksum.create(sha256, normalizePath(fo, root), fileSize);
+            String sha256 = extractRpmSignature(
+                    in,
+                    RpmSignatureTag.SHA256HEADER,
+                    ChecksumType.SHA256.getAlgorithm(),
+                    fo);
+            String md5 = extractRpmSignature(in, RpmSignatureTag.MD5, ChecksumType.MD5.getAlgorithm(), fo);
+            checksum = Checksum.create(sha256, md5, normalizePath(fo, root), fileSize);
         }
         return checksum;
     }
 
-    private String extractRpmSignature(RpmInputStream in, FileObject fo) throws IOException {
-        Object sha256 = in.getSignatureHeader().getTag(RpmSignatureTag.SHA256HEADER);
-        if (!(sha256 instanceof byte[])) {
-            LOGGER.warn("Missing {} for {}", ChecksumType.SHA256.getAlgorithm(), fo);
-            throw new IOException("Missing " + ChecksumType.SHA256.getAlgorithm() + " for " + fo);
+    private String extractRpmSignature(RpmInputStream in, RpmSignatureTag tag, String algorithm, FileObject fo)
+            throws IOException {
+        Object hash = in.getSignatureHeader().getTag(tag);
+        if (!(hash instanceof byte[])) {
+            LOGGER.warn("Missing {} for {}", algorithm, fo);
+            throw new IOException("Missing " + algorithm + " for " + fo);
         }
-        return Hex.encodeHexString((byte[]) sha256);
-    }
-
-    private MessageDigest createDigest() throws IOException {
-        MessageDigest md;
-        try {
-            md = MessageDigest.getInstance(ChecksumType.SHA256.getAlgorithm());
-        } catch (NoSuchAlgorithmException e) {
-            throw new IOException("Missing digest algorithm", e);
-        }
-        return md;
+        return Hex.encodeHexString((byte[]) hash);
     }
 
     private long determineFileSize(FileContent fc) throws FileSystemException {

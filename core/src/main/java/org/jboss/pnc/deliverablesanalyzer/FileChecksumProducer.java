@@ -37,6 +37,7 @@ import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumHashPair;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumType;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
@@ -182,7 +183,7 @@ public class FileChecksumProducer {
             Checksum rootChecksum,
             String inputPath,
             BlockingQueue<QueueEntry> queue) throws IOException {
-        String rootChecksumValue = rootChecksum.getValue();
+        String rootChecksumValue = rootChecksum.getSha256Value();
         if (rootChecksumValue == null || fileCache == null) {
             return false;
         }
@@ -190,7 +191,7 @@ public class FileChecksumProducer {
         ArchiveInfo archiveInfo = fileCache.get(rootChecksumValue);
         if (archiveInfo != null) {
             for (ArchiveEntry entry : archiveInfo.entries()) {
-                Checksum checksum = Checksum.create(entry.checksum(), entry.file());
+                Checksum checksum = Checksum.create(entry.sha256Checksum(), entry.md5Checksum(), entry.file());
 
                 try {
                     LOGGER.debug("Adding checksum {} for file {} to queue", checksum, entry.file());
@@ -220,7 +221,7 @@ public class FileChecksumProducer {
             BlockingQueue<QueueEntry> queue,
             BuildSpecificConfig buildSpecificConfig) throws IOException {
 
-        Map<String, Set<LocalFile>> jobMap = new HashMap<>();
+        Map<ChecksumHashPair, Set<LocalFile>> jobMap = new HashMap<>();
         Map<String, List<LicenseInfo>> licensesMap = new ConcurrentHashMap<>();
 
         logFindingChecksums(fileObject, rootPath);
@@ -236,24 +237,25 @@ public class FileChecksumProducer {
 
     private void updateCacheWithNewScan(
             Checksum rootChecksum,
-            Map<String, Set<LocalFile>> jobMap,
+            Map<ChecksumHashPair, Set<LocalFile>> jobMap,
             Map<String, List<LicenseInfo>> licensesMap) throws IOException {
-        String value = rootChecksum.getValue();
+        String value = rootChecksum.getSha256Value();
         if (value == null) {
             throw new IOException("Checksum type " + ChecksumType.SHA256 + " not found after scan");
         }
 
         Set<ArchiveEntry> entries = new HashSet<>();
 
-        for (Map.Entry<String, Set<LocalFile>> entry : jobMap.entrySet()) {
-            String checksumKey = entry.getKey();
+        for (Map.Entry<ChecksumHashPair, Set<LocalFile>> entry : jobMap.entrySet()) {
+            String sha256Checksum = entry.getKey().sha256();
+            String md5Checksum = entry.getKey().md5();
             for (LocalFile file : entry.getValue()) {
                 List<LicenseInfo> licenseInfos = licensesMap.getOrDefault(file.filename(), Collections.emptyList());
-                entries.add(new ArchiveEntry(checksumKey, file, licenseInfos));
+                entries.add(new ArchiveEntry(sha256Checksum, md5Checksum, file, licenseInfos));
             }
         }
 
-        fileCache.put(rootChecksum.getValue(), new ArchiveInfo(entries));
+        fileCache.put(rootChecksum.getSha256Value(), new ArchiveInfo(entries));
     }
 
     private FileObject resolveFile(String inputPath) throws IOException {
@@ -353,7 +355,11 @@ public class FileChecksumProducer {
             return new ReasonedException(ResultStatus.FAILED, errorMessage, "Please check the URL.", e);
         }
         if (e instanceof IllegalArgumentException) {
-            return new ReasonedException(ResultStatus.FAILED, "Invalid input URI: " + inputPath, "Please check the URL.", e);
+            return new ReasonedException(
+                    ResultStatus.FAILED,
+                    "Invalid input URI: " + inputPath,
+                    "Please check the URL.",
+                    e);
         }
 
         // Default to System Error for everything else (VFS crash, Network, Disk full)
@@ -382,10 +388,7 @@ public class FileChecksumProducer {
 
     private void logFindingChecksums(FileObject fo, String rootPath) {
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(
-                    "Finding checksums: {} for file: {}",
-                    ChecksumType.SHA256,
-                    AnalyzerUtils.normalizePath(fo, rootPath));
+            LOGGER.info("Finding checksums for file: {}", AnalyzerUtils.normalizePath(fo, rootPath));
         }
     }
 }

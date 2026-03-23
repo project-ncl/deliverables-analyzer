@@ -21,8 +21,8 @@ import jakarta.inject.Inject;
 import org.jboss.pnc.deliverablesanalyzer.core.PncBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.core.ResultAggregator;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.PncBuild;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -53,16 +53,16 @@ class BuildLookupConsumerTest {
         // Given
         BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
         String path = "http://test";
-        Checksum checksum = new Checksum("123", "file.jar", 100L);
+        Checksum checksum = new Checksum("123", "123", "file.jar", 100L);
 
         queue.put(new QueueEntry(path, checksum, Collections.emptyList()));
         queue.put(QueueEntry.POISON_PILL); // Signal to stop
 
-        Map<String, Map<String, PncBuild>> globalResults = new ConcurrentHashMap<>();
-        globalResults.put(path, new ConcurrentHashMap<>());
+        Map<String, AnalyzerResult> globalResults = new ConcurrentHashMap<>();
+        globalResults.put(path, AnalyzerResult.empty());
 
         // Mock Finder to return empty map
-        when(pncBuildFinder.findBuilds(any())).thenReturn(Collections.emptyMap());
+        when(pncBuildFinder.findBuilds(any())).thenReturn(AnalyzerResult.empty());
 
         // When
         consumer.consume(queue, globalResults);

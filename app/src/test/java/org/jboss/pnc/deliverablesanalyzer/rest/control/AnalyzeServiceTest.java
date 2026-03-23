@@ -28,7 +28,7 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.dto.HeartbeatConfig;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.common.concurrent.HeartbeatScheduler;
-import org.jboss.pnc.deliverablesanalyzer.BuildFinderOrchestrator;
+import org.jboss.pnc.deliverablesanalyzer.AnalyzerOrchestrator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -62,7 +62,7 @@ class AnalyzeServiceTest {
     HeartbeatScheduler heartbeatScheduler;
 
     @InjectMock
-    BuildFinderOrchestrator orchestrator;
+    AnalyzerOrchestrator orchestrator;
 
     @InjectMock
     CallbackService callbackService;

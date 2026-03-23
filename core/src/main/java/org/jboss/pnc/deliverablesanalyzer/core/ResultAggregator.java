@@ -16,78 +16,62 @@
 package org.jboss.pnc.deliverablesanalyzer.core;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.EnhancedArtifact;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.PncBuild;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerArtifact;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ResultAggregator {
 
-    private static final String BUILD_ID_ZERO = "0";
     private static final String BANG_SLASH = "!/";
 
     /**
      * Merges a batch of found builds into the accumulated results for a specific path
      */
-    public void mergeBatchResults(Map<String, PncBuild> pathResults, Map<String, PncBuild> foundBuilds) {
-        foundBuilds.forEach((buildId, incomingBuild) -> {
-            // deduplicateArtifacts(incomingBuild); // TODO Tomas: Use or not?
+    public void mergeBatchResults(AnalyzerResult pathResults, Map<String, AnalyzerBuild> foundBuilds) {
+        foundBuilds.forEach(
+                (buildId, incomingBuild) -> pathResults.foundBuilds()
+                        .merge(buildId, incomingBuild, (existingBuild, newBuild) -> {
+                            mergeArtifacts(existingBuild, newBuild);
+                            return existingBuild;
+                        }));
 
-            pathResults.merge(buildId, incomingBuild, (existingBuild, newBuild) -> {
-                mergeArtifacts(existingBuild, newBuild);
-                return existingBuild;
-            });
-        });
+        // TODO Tomas: What if koji and pnc get the same build ID?!
+        /*
+         * foundBuilds.forEach((buildId, incomingBuild) -> {
+         *
+         * // Generate a universally unique key (e.g., "PNC-12345" or "BREW-67890") // We pull the system type from the
+         * first artifact in the build to know where it came from String systemPrefix =
+         * incomingBuild.getBuiltArtifacts().stream() .findFirst() .map(a -> a.getSystemType().name())
+         * .orElse("UNKNOWN");
+         *
+         * String globallyUniqueId = systemPrefix + "-" + buildId;
+         *
+         * pathResults.foundBuilds().merge(globallyUniqueId, incomingBuild, (existingBuild, newBuild) -> {
+         * mergeArtifacts(existingBuild, newBuild); return existingBuild; }); });
+         */
     }
 
     /**
-     * Performs final clean-up across all results, removing nested artifacts from Build Zero
+     * Performs final clean-up across all results, marking nested artifacts from Build Zero
      */
-    public void cleanUp(Map<String, Map<String, PncBuild>> globalResults) {
-        for (Map<String, PncBuild> buildMap : globalResults.values()) {
-             cleanUpBuildZero(buildMap); // TODO Tomas: Cleanup or not?
+    public void cleanUp(Map<String, AnalyzerResult> globalResults) {
+        for (AnalyzerResult pathResult : globalResults.values()) {
+            // cleanUpNotFound(pathResult); // TODO Tomas: cleanup logic
         }
     }
 
     // --- Internal Logic ---
 
-    private void deduplicateArtifacts(PncBuild build) {
-        if (build.getBuiltArtifacts() == null || build.getBuiltArtifacts().isEmpty()) {
-            return;
-        }
-
-        Map<String, EnhancedArtifact> uniqueMap = new LinkedHashMap<>();
-
-        for (EnhancedArtifact artifact : build.getBuiltArtifacts()) {
-            String checksum = artifact.getChecksum().getValue();
-            EnhancedArtifact existing = uniqueMap.get(checksum);
-
-            if (existing != null) {
-                // Duplicate found - merge the filenames into the existing artifact
-                existing.getFilenames().addAll(artifact.getFilenames());
-
-                if (artifact.getUnmatchedFilenames() != null) {
-                    if (existing.getUnmatchedFilenames() == null) {
-                        existing.setUnmatchedFilenames(new HashSet<>());
-                    }
-                    existing.getUnmatchedFilenames().addAll(artifact.getUnmatchedFilenames());
-                }
-            } else {
-                uniqueMap.put(checksum, artifact);
-            }
-        }
-
-        build.setBuiltArtifacts(new ArrayList<>(uniqueMap.values()));
-    }
-
-    private void mergeArtifacts(PncBuild existingBuild, PncBuild incomingBuild) {
+    private void mergeArtifacts(AnalyzerBuild existingBuild, AnalyzerBuild incomingBuild) {
         if (incomingBuild.getBuiltArtifacts() == null) {
             return;
         }
@@ -96,12 +80,13 @@ public class ResultAggregator {
             existingBuild.setBuiltArtifacts(new ArrayList<>());
         }
 
-        for (EnhancedArtifact incomingArtifact : incomingBuild.getBuiltArtifacts()) {
-            EnhancedArtifact existingArtifact = existingBuild.getBuiltArtifacts()
-                    .stream()
-                    .filter(a -> a.getChecksum().getValue().equals(incomingArtifact.getChecksum().getValue()))
-                    .findFirst()
-                    .orElse(null);
+        Map<String, AnalyzerArtifact> existingArtifactsByHash = existingBuild.getBuiltArtifacts()
+                .stream()
+                .collect(Collectors.toMap(a -> a.getChecksum().getSha256Value(), a -> a, (a1, a2) -> a1));
+
+        for (AnalyzerArtifact incomingArtifact : incomingBuild.getBuiltArtifacts()) {
+            AnalyzerArtifact existingArtifact = existingArtifactsByHash
+                    .get(incomingArtifact.getChecksum().getSha256Value());
 
             if (existingArtifact != null) {
                 // Merge filenames and unmatched filenames
@@ -115,19 +100,18 @@ public class ResultAggregator {
                 }
             } else {
                 existingBuild.getBuiltArtifacts().add(incomingArtifact);
+                existingArtifactsByHash.put(incomingArtifact.getChecksum().getSha256Value(), incomingArtifact);
             }
         }
     }
 
-    private void cleanUpBuildZero(Map<String, PncBuild> buildMap) {
-        PncBuild buildZero = buildMap.get(BUILD_ID_ZERO);
-        if (buildZero == null || buildZero.getBuiltArtifacts() == null) {
-            return;
-        }
+    private void cleanUpNotFound(AnalyzerResult pathResult) {
+        // TODO Tomas: Only mark not found as unmatched in parent, but don't remove them from not found artifacts
 
         // Index filenames (Map of filename -> artifact)
-        Map<String, EnhancedArtifact> fileIndex = new HashMap<>();
-        buildMap.values()
+        Map<String, AnalyzerArtifact> fileIndex = new HashMap<>();
+        pathResult.foundBuilds()
+                .values()
                 .stream()
                 .filter(b -> b.getBuiltArtifacts() != null)
                 .flatMap(b -> b.getBuiltArtifacts().stream())
@@ -142,9 +126,9 @@ public class ResultAggregator {
         }
 
         // Iterate over not found artifacts
-        Iterator<EnhancedArtifact> it = buildZero.getBuiltArtifacts().iterator();
+        Iterator<AnalyzerArtifact> it = pathResult.notFoundArtifacts().iterator();
         while (it.hasNext()) {
-            EnhancedArtifact childArtifact = it.next();
+            AnalyzerArtifact childArtifact = it.next();
 
             // Track files moved to parent
             List<String> filesToMove = new ArrayList<>();
@@ -157,6 +141,7 @@ public class ResultAggregator {
                 if (parentFilename != null) {
                     addUnmatchedFilename(fileIndex.get(parentFilename), filename);
                     if (parentFilename.contains(BANG_SLASH)) {
+                        // If parent isn't the distribution itself, remove them from child
                         filesToMove.add(filename);
                     }
                 }
@@ -174,7 +159,7 @@ public class ResultAggregator {
         }
     }
 
-    private String findParentInIndex(String filename, Map<String, EnhancedArtifact> fileIndex) {
+    private String findParentInIndex(String filename, Map<String, AnalyzerArtifact> fileIndex) {
         int index = filename.lastIndexOf(BANG_SLASH);
         if (index == -1) {
             index = filename.length();
@@ -193,10 +178,10 @@ public class ResultAggregator {
         return findParentInIndex(parentFilename, fileIndex);
     }
 
-    private void addUnmatchedFilename(EnhancedArtifact enhancedArtifact, String filename) {
-        if (enhancedArtifact.getUnmatchedFilenames() == null) {
-            enhancedArtifact.setUnmatchedFilenames(new HashSet<>());
+    private void addUnmatchedFilename(AnalyzerArtifact analyzerArtifact, String filename) {
+        if (analyzerArtifact.getUnmatchedFilenames() == null) {
+            analyzerArtifact.setUnmatchedFilenames(new HashSet<>());
         }
-        enhancedArtifact.getUnmatchedFilenames().add(filename);
+        analyzerArtifact.getUnmatchedFilenames().add(filename);
     }
 }

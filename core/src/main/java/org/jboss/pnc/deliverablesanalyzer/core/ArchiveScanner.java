@@ -23,6 +23,7 @@ import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.InvertIncludeFileSelector;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumHashPair;
 import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
 import org.jboss.pnc.deliverablesanalyzer.utils.MavenUtils;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
@@ -70,7 +71,7 @@ public class ArchiveScanner {
     public void scan(
             FileObject fileObject,
             String rootPath,
-            Map<String, Set<LocalFile>> checksumMap,
+            Map<ChecksumHashPair, Set<LocalFile>> checksumMap,
             Map<String, List<LicenseInfo>> licensesMap,
             String inputPath,
             BlockingQueue<QueueEntry> queue,
@@ -81,7 +82,7 @@ public class ArchiveScanner {
     private void listChildren(
             FileObject fileObject,
             String rootPath,
-            Map<String, Set<LocalFile>> checksumMap,
+            Map<ChecksumHashPair, Set<LocalFile>> checksumMap,
             Map<String, List<LicenseInfo>> licensesMap,
             String inputPath,
             BlockingQueue<QueueEntry> queue,
@@ -154,7 +155,7 @@ public class ArchiveScanner {
 
     private void handleChecksum(
             Checksum checksum,
-            Map<String, Set<LocalFile>> checksumMap,
+            Map<ChecksumHashPair, Set<LocalFile>> checksumMap,
             Map<String, List<LicenseInfo>> licensesMap,
             String inputPath,
             BlockingQueue<QueueEntry> queue) {
@@ -164,12 +165,15 @@ public class ArchiveScanner {
         }
 
         // Update Map, Attach Licenses and Queue
-        checksumMap.computeIfAbsent(checksum.getValue(), k -> new HashSet<>())
+        ChecksumHashPair key = new ChecksumHashPair(checksum.getSha256Value(), checksum.getMd5Value());
+        checksumMap.computeIfAbsent(key, k -> new HashSet<>())
                 .add(new LocalFile(checksum.getFilename(), checksum.getFileSize()));
 
         List<LicenseInfo> licenses = licensesMap.getOrDefault(checksum.getFilename(), Collections.emptyList());
-        Checksum fullChecksum = Checksum
-                .create(checksum.getValue(), new LocalFile(checksum.getFilename(), checksum.getFileSize()));
+        Checksum fullChecksum = Checksum.create(
+                checksum.getSha256Value(),
+                checksum.getMd5Value(),
+                new LocalFile(checksum.getFilename(), checksum.getFileSize()));
 
         if (queue != null) {
             try {
@@ -185,7 +189,7 @@ public class ArchiveScanner {
     private void processArchive(
             FileObject file,
             String rootPath,
-            Map<String, Set<LocalFile>> checksumMap,
+            Map<ChecksumHashPair, Set<LocalFile>> checksumMap,
             Map<String, List<LicenseInfo>> licensesMap,
             String inputPath,
             BlockingQueue<QueueEntry> queue,

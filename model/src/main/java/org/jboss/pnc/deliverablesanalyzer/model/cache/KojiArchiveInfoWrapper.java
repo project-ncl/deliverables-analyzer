@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.app;
+package org.jboss.pnc.deliverablesanalyzer.model.cache;
 
-/**
- * The values in here are auto-generated from Maven plugin maven-replacer-plugin and the template is found in the
- * template folder
- */
-public final class BuildInformationConstants {
+import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
+import org.infinispan.protostream.annotations.ProtoField;
 
-    public static final String VERSION = "1.2.10-SNAPSHOT";
-    public static final String COMMIT_HASH = "89a0aab";
-    public static final String BUILD_TIME = "2026-03-23T09:51:46Z";
+import java.util.Collections;
+import java.util.List;
 
-    private BuildInformationConstants() {
-        // Prevent instantiation
-    }
-}
+public record KojiArchiveInfoWrapper(@ProtoField(number=1)List<KojiArchiveInfo>data){
+
+public KojiArchiveInfoWrapper{data=data!=null?data:Collections.emptyList();}}

@@ -18,20 +18,22 @@ package org.jboss.pnc.deliverablesanalyzer.core;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.pnc.PncClient;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.PncBuild;
 import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.dto.Build;
+import org.jboss.pnc.dto.BuildConfigurationRevision;
 import org.jboss.pnc.dto.ProductMilestone;
 import org.jboss.pnc.dto.ProductVersion;
 import org.jboss.pnc.enums.ArtifactQuality;
+import org.jboss.pnc.enums.BuildType;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,9 +47,6 @@ class PncBuildFinderTest {
     @Inject
     PncBuildFinder pncBuildFinder;
 
-    @Inject
-    BuildConfig buildConfig;
-
     @InjectMock
     PncClient pncClient;
 
@@ -55,8 +54,9 @@ class PncBuildFinderTest {
     void testFindBuilds() {
         // Given
         String sha256 = "testSha256";
+        String md5 = "testMd5";
         String buildId = "100";
-        Checksum checksum = new Checksum(sha256, "test.jar", 100L);
+        Checksum checksum = new Checksum(sha256, md5, "test.jar", 100L);
 
         QueueEntry entry = new QueueEntry("http://source", checksum, Collections.emptyList());
         ConcurrentHashMap<QueueEntry, Collection<String>> table = new ConcurrentHashMap<>();
@@ -64,13 +64,18 @@ class PncBuildFinderTest {
 
         // Mock PNC Artifact Response
         ProductMilestone milestone = ProductMilestone.builder().id("50").build();
-        Build build = Build.builder().id(buildId).productMilestone(milestone).build();
+        Build build = Build.builder()
+            .id(buildId)
+            .productMilestone(milestone)
+            .buildConfigRevision(BuildConfigurationRevision.builder().buildType(BuildType.MVN).build())
+            .build();
         Artifact artifact = Artifact.builder()
-                .id("1")
-                .sha256(sha256)
-                .build(build)
-                .artifactQuality(ArtifactQuality.VERIFIED)
-                .build();
+            .id("1")
+            .identifier("")
+            .sha256(sha256)
+            .build(build)
+            .artifactQuality(ArtifactQuality.VERIFIED)
+            .build();
 
         when(pncClient.getArtifactsBySha256(sha256)).thenReturn(List.of(artifact));
 
@@ -80,22 +85,22 @@ class PncBuildFinderTest {
         // getBuildPushReport returns null/void in mock by default, which is fine
 
         // When
-        Map<String, PncBuild> results = pncBuildFinder.findBuilds(table);
+        AnalyzerResult results = pncBuildFinder.findBuilds(table);
 
         // Then
         assertNotNull(results);
-        assertTrue(results.containsKey(buildId));
+        assertTrue(results.foundBuilds().containsKey(buildId));
 
-        PncBuild resultBuild = results.get(buildId);
-        assertEquals(version.getId(), resultBuild.getProductVersion().getId(), "Should have populated Product Version");
+        AnalyzerBuild resultBuild = results.foundBuilds().get(buildId);
         assertEquals(1, resultBuild.getBuiltArtifacts().size());
-        assertEquals(sha256, resultBuild.getBuiltArtifacts().iterator().next().getChecksum().getValue());
+        assertEquals(sha256, resultBuild.getBuiltArtifacts().iterator().next().getChecksum().getSha256Value());
     }
 
     @Test
     void testFindBuildsHandlesEmptyResult() {
         ConcurrentHashMap<QueueEntry, Collection<String>> table = new ConcurrentHashMap<>();
-        Map<String, PncBuild> results = pncBuildFinder.findBuilds(table);
-        assertTrue(results.isEmpty());
+        AnalyzerResult results = pncBuildFinder.findBuilds(table);
+        assertTrue(results.foundBuilds().isEmpty());
+        assertTrue(results.notFoundArtifacts().isEmpty());
     }
 }

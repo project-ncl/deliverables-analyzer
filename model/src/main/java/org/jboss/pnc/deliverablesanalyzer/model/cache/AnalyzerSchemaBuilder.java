@@ -21,9 +21,10 @@ import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
 
 @ProtoSchema(
-        includeClasses = { ArchiveInfo.class, ArchiveEntry.class, LicenseInfo.class, LocalFile.class, },
-        schemaFileName = "finder.proto",
+        includeClasses = { ArchiveInfo.class, ArchiveEntry.class, LicenseInfo.class, LocalFile.class,
+                KojiArchiveInfoAdapter.class, KojiArchiveInfoWrapper.class, KojiBuildAdapter.class, },
+        schemaFileName = "deliverables-analyzer.proto",
         schemaFilePath = "proto/",
-        schemaPackageName = "org.jboss.pnc.finder")
-public interface FinderSchemaBuilder extends GeneratedSchema {
+        schemaPackageName = "org.jboss.pnc.analyzer")
+public interface AnalyzerSchemaBuilder extends GeneratedSchema {
 }
