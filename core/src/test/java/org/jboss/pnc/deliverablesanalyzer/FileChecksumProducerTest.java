@@ -103,8 +103,9 @@ class FileChecksumProducerTest {
         Files.writeString(testFile, "dummy content");
         String inputPath = testFile.toUri().toString();
 
-        Checksum rootChecksum = new Checksum("root-hash", "cached-file.zip", 100L);
+        Checksum rootChecksum = new Checksum("root-hash", "root-hash", "cached-file.zip", 100L);
         ArchiveEntry cachedEntry = new ArchiveEntry(
+                "inner-hash",
                 "inner-hash",
                 new LocalFile("inner.txt", 50L),
                 Collections.emptyList());
@@ -139,7 +140,7 @@ class FileChecksumProducerTest {
         Files.writeString(testFile, "content");
         String inputPath = testFile.toUri().toString();
 
-        Checksum rootChecksum = new Checksum("new-hash", "new-file.zip", 100L);
+        Checksum rootChecksum = new Checksum("new-hash", "new-hash", "new-file.zip", 100L);
 
         when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksum);
         // Mock Cache MISS

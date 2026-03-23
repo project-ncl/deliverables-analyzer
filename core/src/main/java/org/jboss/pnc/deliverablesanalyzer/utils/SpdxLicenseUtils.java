@@ -370,7 +370,8 @@ public final class SpdxLicenseUtils {
             }
 
             // B. Check for "SPDX-License-Identifier" tag or fallback full match
-            return findMatchingSPDXLicenseIdentifier(licenseText).or(() -> findMatchingLicense(licenseText, null));
+            String cleanedText = LicenseStringUtils.licenseFileToText(licenseText);
+            return findMatchingSPDXLicenseIdentifier(cleanedText).or(() -> findMatchingLicense(cleanedText, null));
 
         } catch (IOException e) {
             LOGGER.warn("Failed to read license file content: {}", licenseFileObject.getName(), e);

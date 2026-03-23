@@ -30,13 +30,17 @@ public interface BuildConfig {
     @WithDefault("false")
     boolean disableCache();
 
+    @WithName("cache-lifespan")
+    @WithDefault("3600000") // 1 hour
+    long cacheLifespan();
+
     @WithName("disable-recursion")
     @WithDefault("false")
     boolean disableRecursion();
 
     @WithName("archive-extensions")
     @WithDefault("dll,dylib,ear,jar,jdocbook,jdocbook-style,kar,plugin,pom,rar,sar,so,war,xml,exe,msi,zip")
-    List<String> archiveExtensions();
+    List<String> archiveExtensions(); // TODO Tomas: Add rpm here?!
 
     @WithName("excludes")
     @WithDefault("^(?!.*/pom\\.xml$).*/.*\\.xml$")
@@ -46,10 +50,17 @@ public interface BuildConfig {
     @WithDefault("10")
     int pncNumThreads();
 
-    @WithName("cache-lifespan")
-    @WithDefault("3600000") // 1 hour
-    long cacheLifespan();
-
     @WithName("pnc-url")
     URL pncURL();
+
+    @WithName("koji-num-threads")
+    @WithDefault("12")
+    int kojiNumThreads();
+
+    @WithName("koji-multicall-size")
+    @WithDefault("8")
+    int kojiMultiCallSize();
+
+    @WithName("koji-url")
+    URL kojiURL();
 }

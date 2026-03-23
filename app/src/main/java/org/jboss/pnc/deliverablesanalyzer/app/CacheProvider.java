@@ -30,7 +30,7 @@ import org.infinispan.configuration.global.GlobalConfigurationChildBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.jboss.pnc.deliverablesanalyzer.core.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ConfigDefaults;
-import org.jboss.pnc.deliverablesanalyzer.model.cache.FinderSchemaBuilderImpl;
+import org.jboss.pnc.deliverablesanalyzer.model.cache.AnalyzerSchemaBuilderImpl;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +95,7 @@ public class CacheProvider {
         globalConfig.globalState()
                 .persistentLocation(cacheLocation)
                 .serialization()
-                .addContextInitializer(new FinderSchemaBuilderImpl())
+                .addContextInitializer(new AnalyzerSchemaBuilderImpl())
                 .allowList()
                 .addRegexp(".*")
                 .create();
@@ -150,7 +150,7 @@ public class CacheProvider {
 
         builder.security().authentication().username(infinispanUsername.get()).password(infinispanPassword.get());
 
-        builder.addContextInitializer(new FinderSchemaBuilderImpl());
+        builder.addContextInitializer(new AnalyzerSchemaBuilderImpl());
 
         return new RemoteCacheManager(builder.build());
     }

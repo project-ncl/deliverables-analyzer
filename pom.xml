@@ -111,6 +111,10 @@
     <version.pnc-common>3.3.4</version.pnc-common>
     <version.pnc-logging-kafka>3.0.3</version.pnc-logging-kafka>
 
+    <!-- Versions Koji -->
+    <version.kojiji>2.25</version.kojiji>
+    <version.jhttpc>1.16</version.jhttpc>
+
     <!-- Versions -->
     <version.commons-vfs2>2.10.0</version.commons-vfs2>
     <version.dkanejs-compose>4.0.0</version.dkanejs-compose>
@@ -178,6 +182,67 @@
           <exclusion>
             <groupId>org.jboss.pnc</groupId>
             <artifactId>pnc-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <!-- Koji -->
+      <!-- TODO Tomas: Other deps for kojiji? -->
+      <dependency>
+        <groupId>com.redhat.red.build</groupId>
+        <artifactId>kojiji</artifactId>
+        <version>${version.kojiji}</version>
+        <exclusions>
+<!--          <exclusion>-->
+<!--            <groupId>org.commonjava.rwx</groupId>-->
+<!--            <artifactId>rwx</artifactId>-->
+<!--          </exclusion>-->
+          <exclusion>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-templates</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-xml</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.commonjava.util</groupId>
+            <artifactId>jhttpc</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.commonjava.util</groupId>
+        <artifactId>jhttpc</artifactId>
+        <version>${version.jhttpc}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

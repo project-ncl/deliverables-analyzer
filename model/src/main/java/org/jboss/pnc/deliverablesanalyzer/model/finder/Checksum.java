@@ -31,7 +31,8 @@ public class Checksum implements Comparable<Checksum>, Serializable {
     @Serial
     private static final long serialVersionUID = -7347509034711302799L;
 
-    private String value;
+    private String sha256Value;
+    private String md5Value;
 
     @JsonIgnore
     private String filename;
@@ -39,18 +40,19 @@ public class Checksum implements Comparable<Checksum>, Serializable {
     @JsonIgnore
     private long fileSize;
 
-    public Checksum(String value, LocalFile localFile) {
-        this.value = value;
+    public Checksum(String sha256Value, String md5Value, LocalFile localFile) {
+        this.sha256Value = sha256Value;
+        this.md5Value = md5Value;
         this.filename = localFile.filename();
         this.fileSize = localFile.size();
     }
 
-    public static Checksum create(String sha256Value, LocalFile localFile) {
-        return new Checksum(sha256Value, localFile);
+    public static Checksum create(String sha256Value, String md5Value, LocalFile localFile) {
+        return new Checksum(sha256Value, md5Value, localFile);
     }
 
-    public static Checksum create(String sha256Value, String filename, long fileSize) {
-        return new Checksum(sha256Value, filename, fileSize);
+    public static Checksum create(String sha256Value, String md5Value, String filename, long fileSize) {
+        return new Checksum(sha256Value, md5Value, filename, fileSize);
     }
 
     /**
@@ -62,7 +64,7 @@ public class Checksum implements Comparable<Checksum>, Serializable {
             return 1;
         }
 
-        return Comparator.comparing(Checksum::getValue)
+        return Comparator.comparing(Checksum::getSha256Value)
                 .thenComparing(Checksum::getFilename)
                 .thenComparingLong(Checksum::getFileSize)
                 .compare(this, other);

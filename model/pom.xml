@@ -69,6 +69,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.redhat.red.build</groupId>
+      <artifactId>kojiji</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
     </dependency>

@@ -29,7 +29,7 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.common.concurrent.HeartbeatScheduler;
-import org.jboss.pnc.deliverablesanalyzer.BuildFinderOrchestrator;
+import org.jboss.pnc.deliverablesanalyzer.AnalyzerOrchestrator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class AnalyzeService {
     HeartbeatScheduler heartbeatScheduler;
 
     @Inject
-    BuildFinderOrchestrator buildFinderOrchestrator;
+    AnalyzerOrchestrator analyzerOrchestrator;
 
     @Inject
     CallbackService callbackService;
@@ -168,7 +168,7 @@ public class AnalyzeService {
         AnalysisReport analysisReport = null;
 
         try {
-            List<FinderResult> finderResults = buildFinderOrchestrator.analyze(id, urls, specificConfig);
+            List<FinderResult> finderResults = analyzerOrchestrator.analyze(id, urls, specificConfig);
             analysisReport = new AnalysisReport(finderResults);
             LOGGER.info("Analysis with ID {} finished successfully.", id);
             LOGGER.warn("Analysis ID {} - Analysis Result: {}", id, analysisReport);

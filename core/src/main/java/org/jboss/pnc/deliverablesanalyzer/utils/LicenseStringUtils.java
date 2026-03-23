@@ -23,17 +23,22 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static org.apache.commons.lang3.StringUtils.SPACE;
 
 public final class LicenseStringUtils {
 
     private static final Pattern PUNCT_PATTERN = Pattern.compile("\\p{Punct}");
-    private static final Pattern SINGLE_DIGIT_PATTERN = Pattern.compile("(?<b>[^\\d.])(?<major>[1-9])(?<a>[^\\d.])");
     private static final Pattern NAME_VERSION_PATTERN = Pattern
             .compile("(?<name>[A-Z-a-z])[Vv]?(?<major>[1-9]+)(\\.(?<minor>\\d+))?");
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
+    private static final Pattern SINGLE_DIGIT_PATTERN = Pattern.compile("(?<b>[^\\d.])(?<major>[1-9])(?<a>[^\\d.])");
     private static final Pattern TWO_DIGIT_PATTERN = Pattern.compile("(\\d)(\\d)");
     private static final Pattern LETTER_DIGIT_PATTERN = Pattern.compile("([A-Za-z])(\\d)");
     private static final List<String> TEXT_EXTENSIONS = List.of(".html", ".md", ".php", ".txt");
+
+    private static final int LINE_LIMIT = 5;
 
     private static final String URL_MARKER = ":/";
     private static final String UNINTERPOLATED_PROPERTY_MARKER = "${";
@@ -122,6 +127,10 @@ public final class LicenseStringUtils {
             }
         }
         return Optional.empty();
+    }
+
+    public static String licenseFileToText(String text) {
+        return text.lines().limit(LINE_LIMIT).map(String::trim).collect(Collectors.joining(SPACE));
     }
 
     // --- Matching / Tokenization Logic ---

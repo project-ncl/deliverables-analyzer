@@ -67,7 +67,7 @@ class ChecksumServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedSha256, result.getValue(), "SHA-256 should match content");
+        assertEquals(expectedSha256, result.getSha256Value(), "SHA-256 should match content");
         assertEquals("/test.txt", result.getFilename());
         assertEquals(content.length(), result.getFileSize());
     }
@@ -84,7 +84,7 @@ class ChecksumServiceTest {
         Checksum result = checksumService.checksum(file, root.getName().getPath());
 
         // Then
-        assertEquals(expectedSha256, result.getValue());
+        assertEquals(expectedSha256, result.getSha256Value());
         assertEquals(0, result.getFileSize());
     }
 

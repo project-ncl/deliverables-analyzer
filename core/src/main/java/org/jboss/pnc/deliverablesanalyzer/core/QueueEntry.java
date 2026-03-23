@@ -21,12 +21,9 @@ import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import java.util.Collections;
 import java.util.List;
 
-public record QueueEntry(String sourceUrl, Checksum checksum, List<LicenseInfo> licenses) {
+public record QueueEntry(String sourceUrl,Checksum checksum,List<LicenseInfo>licenses){
 
-    // Poison Pill Constant
-    public static final QueueEntry POISON_PILL = new QueueEntry(null, null, Collections.emptyList());
+// Poison Pill Constant
+public static final QueueEntry POISON_PILL=new QueueEntry(null,null,Collections.emptyList());
 
-    public QueueEntry {
-        licenses = (licenses != null) ? licenses : Collections.emptyList();
-    }
-}
+public QueueEntry{licenses=(licenses!=null)?licenses:Collections.emptyList();}}

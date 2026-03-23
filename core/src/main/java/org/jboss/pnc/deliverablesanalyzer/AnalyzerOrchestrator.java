@@ -24,8 +24,8 @@ import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.deliverablesanalyzer.core.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ConfigParser;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.FinderResultCreator;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.PncBuild;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.utils.FinderResultCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,8 +41,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @ApplicationScoped
-public class BuildFinderOrchestrator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BuildFinderOrchestrator.class);
+public class AnalyzerOrchestrator {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzerOrchestrator.class);
 
     @Inject
     FileChecksumProducer fileChecksumProducer;
@@ -66,8 +66,8 @@ public class BuildFinderOrchestrator {
     public List<FinderResult> analyze(String id, Set<String> inputPaths, String specificConfig) {
         // Setup Shared Resources
         BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>(1000);
-        Map<String, Map<String, PncBuild>> results = new ConcurrentHashMap<>();
-        inputPaths.forEach(path -> results.put(path, new ConcurrentHashMap<>()));
+        Map<String, AnalyzerResult> results = new ConcurrentHashMap<>();
+        inputPaths.forEach(path -> results.put(path, AnalyzerResult.init()));
 
         BuildSpecificConfig buildSpecificConfig = configParser.parseConfig(specificConfig);
 

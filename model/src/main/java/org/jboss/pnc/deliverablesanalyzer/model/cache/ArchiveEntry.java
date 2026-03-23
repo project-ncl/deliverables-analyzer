@@ -22,6 +22,6 @@ import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
 import java.util.Collections;
 import java.util.List;
 
-public record ArchiveEntry(@ProtoField(number=1)String checksum,@ProtoField(number=2)LocalFile file,@ProtoField(number=3)List<LicenseInfo>licenses){
+public record ArchiveEntry(@ProtoField(number=1)String sha256Checksum,@ProtoField(number=2)String md5Checksum,@ProtoField(number=3)LocalFile file,@ProtoField(number=4)List<LicenseInfo>licenses){
 
 public ArchiveEntry{licenses=(licenses!=null)?licenses:Collections.emptyList();}}

@@ -18,19 +18,18 @@ package org.jboss.pnc.deliverablesanalyzer;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.deliverablesanalyzer.core.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ConfigParser;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.PncBuild;
-import org.jboss.pnc.dto.Build;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -47,10 +46,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
-class BuildFinderOrchestratorTest {
+class AnalyzerOrchestratorTest {
 
     @Inject
-    BuildFinderOrchestrator orchestrator;
+    AnalyzerOrchestrator orchestrator;
 
     @InjectMock
     FileChecksumProducer producer;
@@ -72,12 +71,13 @@ class BuildFinderOrchestratorTest {
 
         // Mock Consumer: Populate the results map directly to simulate finding a build
         doAnswer(invocation -> {
-            BlockingQueue<QueueEntry> queue = invocation.getArgument(0);
-            Map<String, Map<String, PncBuild>> results = invocation.getArgument(1);
+            Map<String, AnalyzerResult> results = invocation.getArgument(1);
 
             // Simulate processing
-            Build build = Build.builder().id("test-id").build();
-            results.get("http://example.com/file1.zip").put("100", new PncBuild(build));
+            AnalyzerBuild build = new AnalyzerBuild();
+            build.setBuildId("test-id");
+            build.setBuildSystemType(BuildSystemType.PNC);
+            results.get("http://example.com/file1.zip").foundBuilds().put("test-id", build);
             return null;
         }).when(consumer).consume(any(), any());
 
