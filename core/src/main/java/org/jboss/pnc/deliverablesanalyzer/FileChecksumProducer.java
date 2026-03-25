@@ -72,10 +72,13 @@ public class FileChecksumProducer {
 
     @Inject
     BuildConfig config;
+
     @Inject
     Provider<BasicCacheContainer> cacheProvider;
+
     @Inject
     ChecksumService checksumService;
+
     @Inject
     ArchiveScanner archiveScanner;
 
@@ -93,6 +96,7 @@ public class FileChecksumProducer {
         int licenseListSize = SpdxLicenseUtils.getNumberOfSPDXLicenses();
         LOGGER.info("Using SPDX License List {} containing {} licenses", licenseListVersion, licenseListSize);
 
+        // TODO Tomas: Replace with REMOTE cache only
         if (!config.disableCache()) {
             try {
                 BasicCacheContainer cacheManager = cacheProvider.get();

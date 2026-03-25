@@ -18,13 +18,11 @@ package org.jboss.pnc.deliverablesanalyzer.core;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -37,27 +35,13 @@ public class ResultAggregator {
      * Merges a batch of found builds into the accumulated results for a specific path
      */
     public void mergeBatchResults(AnalyzerResult pathResults, Map<String, AnalyzerBuild> foundBuilds) {
+        // TODO Tomas: Problem if koji and pnc artifacts get the same build ID
         foundBuilds.forEach(
                 (buildId, incomingBuild) -> pathResults.foundBuilds()
                         .merge(buildId, incomingBuild, (existingBuild, newBuild) -> {
                             mergeArtifacts(existingBuild, newBuild);
                             return existingBuild;
                         }));
-
-        // TODO Tomas: What if koji and pnc get the same build ID?!
-        /*
-         * foundBuilds.forEach((buildId, incomingBuild) -> {
-         *
-         * // Generate a universally unique key (e.g., "PNC-12345" or "BREW-67890") // We pull the system type from the
-         * first artifact in the build to know where it came from String systemPrefix =
-         * incomingBuild.getBuiltArtifacts().stream() .findFirst() .map(a -> a.getSystemType().name())
-         * .orElse("UNKNOWN");
-         *
-         * String globallyUniqueId = systemPrefix + "-" + buildId;
-         *
-         * pathResults.foundBuilds().merge(globallyUniqueId, incomingBuild, (existingBuild, newBuild) -> {
-         * mergeArtifacts(existingBuild, newBuild); return existingBuild; }); });
-         */
     }
 
     /**
@@ -65,7 +49,7 @@ public class ResultAggregator {
      */
     public void cleanUp(Map<String, AnalyzerResult> globalResults) {
         for (AnalyzerResult pathResult : globalResults.values()) {
-            // cleanUpNotFound(pathResult); // TODO Tomas: cleanup logic
+            cleanUpNotFound(pathResult);
         }
     }
 
@@ -106,8 +90,6 @@ public class ResultAggregator {
     }
 
     private void cleanUpNotFound(AnalyzerResult pathResult) {
-        // TODO Tomas: Only mark not found as unmatched in parent, but don't remove them from not found artifacts
-
         // Index filenames (Map of filename -> artifact)
         Map<String, AnalyzerArtifact> fileIndex = new HashMap<>();
         pathResult.foundBuilds()
@@ -120,41 +102,26 @@ public class ResultAggregator {
                         fileIndex.put(filename, artifact);
                     }
                 });
+        pathResult.notFoundArtifacts().forEach(artifact -> {
+            for (String filename : artifact.getFilenames()) {
+                fileIndex.put(filename, artifact);
+            }
+        });
 
         if (fileIndex.isEmpty()) {
             return;
         }
 
         // Iterate over not found artifacts
-        Iterator<AnalyzerArtifact> it = pathResult.notFoundArtifacts().iterator();
-        while (it.hasNext()) {
-            AnalyzerArtifact childArtifact = it.next();
-
-            // Track files moved to parent
-            List<String> filesToMove = new ArrayList<>();
-
+        for (AnalyzerArtifact childArtifact : pathResult.notFoundArtifacts()) {
             for (String filename : childArtifact.getFilenames()) {
                 // Find parent in index
                 String parentFilename = findParentInIndex(filename, fileIndex);
 
-                // If parent exists, add files to parent and mark them for removal from child
+                // If parent exists, add files to parent as unmatched
                 if (parentFilename != null) {
                     addUnmatchedFilename(fileIndex.get(parentFilename), filename);
-                    if (parentFilename.contains(BANG_SLASH)) {
-                        // If parent isn't the distribution itself, remove them from child
-                        filesToMove.add(filename);
-                    }
                 }
-            }
-
-            // Remove moved files from the child
-            if (!filesToMove.isEmpty()) {
-                childArtifact.getFilenames().removeAll(filesToMove);
-            }
-
-            // If artifact empty, delete the artifact entirely
-            if (childArtifact.getFilenames().isEmpty()) {
-                it.remove();
             }
         }
     }
@@ -162,17 +129,13 @@ public class ResultAggregator {
     private String findParentInIndex(String filename, Map<String, AnalyzerArtifact> fileIndex) {
         int index = filename.lastIndexOf(BANG_SLASH);
         if (index == -1) {
-            index = filename.length();
+            return null;
         }
 
         String parentFilename = filename.substring(0, index);
 
         if (fileIndex.containsKey(parentFilename)) {
             return parentFilename;
-        }
-
-        if (index == filename.length()) {
-            return null;
         }
 
         return findParentInIndex(parentFilename, fileIndex);

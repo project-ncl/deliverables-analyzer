@@ -22,14 +22,15 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.core.KojiBuildFinder;
-import org.jboss.pnc.deliverablesanalyzer.core.PncBuildFinder;
+import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
+import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.core.ResultAggregator;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumType;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -220,7 +221,7 @@ public class BuildLookupConsumer {
             QueueEntry queueEntry,
             Collection<String> filenames,
             Map<String, AnalyzerResult> globalResults) {
-        AnalyzerArtifact artifact = AnalyzerArtifact.fromNotFoundArtifact(
+        AnalyzerArtifact artifact = AnalyzerArtifactMapper.mapFromNotFound(
                 queueEntry.checksum(),
                 new ArrayList<>(filenames),
                 queueEntry.licenses(),
@@ -259,10 +260,10 @@ public class BuildLookupConsumer {
     }
 
     private boolean isEmptyFileDigest(Checksum checksum) {
-        return checksum.getSha256Value().equals(emptyFileDigests);
+        return checksum.getSha256Value() != null && checksum.getSha256Value().equals(emptyFileDigests);
     }
 
     private boolean isEmptyZipDigest(Checksum checksum) {
-        return checksum.getSha256Value().equals(emptyZipDigests);
+        return checksum.getSha256Value() != null && checksum.getSha256Value().equals(emptyZipDigests);
     }
 }

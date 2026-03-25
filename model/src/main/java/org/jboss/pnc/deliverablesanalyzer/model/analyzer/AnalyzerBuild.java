@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 
 import java.util.ArrayList;
 import java.util.List;

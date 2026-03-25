@@ -25,13 +25,19 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.MavenArtifact.MavenArtifactBuilder;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.NPMArtifact.NPMArtifactBuilder;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.RpmArtifact;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.RpmArtifact.RpmArtifactBuilder;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.WindowsArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.WindowsArtifact.WindowsArtifactBuilder;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.MavenAnalyzerArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.NpmAnalyzerArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.RpmAnalyzerArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.WindowsAnalyzerArtifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,30 +72,38 @@ public final class FinderResultCreator {
         }
     }
 
-    private static MavenArtifactBuilder<?, ?> createMavenArtifact(AnalyzerArtifact artifact) {
+    private static MavenArtifactBuilder<?, ?> createMavenArtifact(MavenAnalyzerArtifact artifact) {
         MavenArtifactBuilder<?, ?> builder = MavenArtifact.builder();
-        builder.groupId((String) artifact.getArtifactProps().get("groupId"));
-        builder.artifactId((String) artifact.getArtifactProps().get("artifactId"));
-        builder.type((String) artifact.getArtifactProps().get("type"));
-        builder.version((String) artifact.getArtifactProps().get("version"));
-        builder.classifier((String) artifact.getArtifactProps().get("classifier"));
+        builder.groupId(artifact.getGroupId());
+        builder.artifactId(artifact.getArtifactId());
+        builder.type(artifact.getType());
+        builder.version(artifact.getVersion());
+        builder.classifier(artifact.getClassifier());
         return builder;
     }
 
-    private static NPMArtifactBuilder<?, ?> createNpmArtifact(AnalyzerArtifact artifact) {
+    private static NPMArtifactBuilder<?, ?> createNpmArtifact(NpmAnalyzerArtifact artifact) {
         NPMArtifactBuilder<?, ?> builder = NPMArtifact.builder();
-        builder.name((String) artifact.getArtifactProps().get("name"));
-        builder.version((String) artifact.getArtifactProps().get("version")); // How to determine version for npm
-                                                                              // artifacts from PNC?
+        builder.name(artifact.getName());
+        builder.version(artifact.getVersion()); // How to determine version for npm artifacts from PNC?
         return builder;
     }
 
-    private static WindowsArtifactBuilder<?, ?> createWindowsArtifact(AnalyzerArtifact artifact) {
+    private static WindowsArtifactBuilder<?, ?> createWindowsArtifact(WindowsAnalyzerArtifact artifact) {
         WindowsArtifactBuilder<?, ?> builder = WindowsArtifact.builder();
-        builder.name((String) artifact.getArtifactProps().get("name"));
-        builder.version((String) artifact.getArtifactProps().get("version"));
-        builder.platforms((List<String>) artifact.getArtifactProps().get("platforms"));
-        builder.flags((List<String>) artifact.getArtifactProps().get("flags"));
+        builder.name(artifact.getName());
+        builder.version(artifact.getVersion());
+        builder.platforms(artifact.getPlatforms());
+        builder.flags(artifact.getFlags());
+        return builder;
+    }
+
+    private static RpmArtifactBuilder<?, ?> createRpmArtifact(RpmAnalyzerArtifact artifact) {
+        RpmArtifactBuilder<?, ?> builder = RpmArtifact.builder();
+        builder.name(artifact.getName());
+        builder.version(artifact.getVersion());
+        builder.release(artifact.getRelease());
+        builder.arch(artifact.getArch());
         return builder;
     }
 
@@ -163,7 +177,6 @@ public final class FinderResultCreator {
 
             for (AnalyzerArtifact analyzerArtifact : artifacts) {
                 Artifact artifact = createFoundArtifact(analyzerArtifact, analyzerBuild.isImport());
-                foundArtifacts.add(artifact);
 
                 if (LOGGER.isDebugEnabled()) {
                     artifactIndex++;
@@ -191,10 +204,12 @@ public final class FinderResultCreator {
     }
 
     private static Artifact createFoundArtifact(AnalyzerArtifact artifact, boolean isImport) {
-        ArtifactBuilder<?, ?> builder = switch (artifact.getArtifactType()) {
-            case MAVEN -> createMavenArtifact(artifact);
-            case NPM -> createNpmArtifact(artifact);
-            case WINDOWS -> createWindowsArtifact(artifact);
+        ArtifactBuilder<?, ?> builder = switch (artifact) {
+            case MavenAnalyzerArtifact maven -> createMavenArtifact(maven);
+            case NpmAnalyzerArtifact npm -> createNpmArtifact(npm);
+            case WindowsAnalyzerArtifact win -> createWindowsArtifact(win);
+            case RpmAnalyzerArtifact rpm -> createRpmArtifact(rpm);
+            default -> Artifact.builder();
         };
 
         builder.buildSystemType(artifact.getBuildSystemType());
@@ -204,7 +219,7 @@ public final class FinderResultCreator {
             default -> throw new IllegalArgumentException("Unknown build system type: " + artifact.getBuildSystemType());
         }
 
-        builder.builtFromSource(artifact.getUnmatchedFilenames().isEmpty() && !isImport); // todo tomas: check after cleanup logic
+        builder.builtFromSource(artifact.getUnmatchedFilenames().isEmpty() && !isImport);
 
         builder.sha256(artifact.getChecksum().getSha256Value());
         builder.md5(artifact.getChecksum().getMd5Value());
