@@ -26,9 +26,11 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.ArtifactType;
+import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.koji.KojiMultiCallClient;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.MavenAnalyzerArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.KojiArchiveInfoWrapper;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.KojiBuild;
@@ -41,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -129,7 +132,8 @@ public class KojiBuildFinderTest {
         var artifact = resultBuild.getBuiltArtifacts().iterator().next();
         assertEquals(sha256, artifact.getChecksum().getSha256Value());
         assertEquals(ArtifactType.MAVEN, artifact.getArtifactType());
-        assertEquals("org.test", artifact.getArtifactProps().get("groupId"));
+        MavenAnalyzerArtifact mavenArtifact = assertInstanceOf(MavenAnalyzerArtifact.class, artifact);
+        assertEquals("org.test", mavenArtifact.getGroupId());
     }
 
     @Test

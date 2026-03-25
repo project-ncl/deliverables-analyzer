@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.core;
+package org.jboss.pnc.deliverablesanalyzer.pnc;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.eclipse.microprofile.context.ThreadContext;
+import org.jboss.pnc.deliverablesanalyzer.core.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.pnc.PncClient;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 import org.jboss.pnc.dto.Artifact;
-import org.jboss.pnc.dto.Build;
 import org.jboss.pnc.enums.ArtifactQuality;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.slf4j.Logger;
@@ -116,7 +117,7 @@ public class PncBuildFinder {
         }
 
         try {
-            return AnalyzerArtifact.fromPncArtifact(
+            return AnalyzerArtifactMapper.mapFromPnc(
                     findArtifactInPnc(checksum).orElse(null),
                     checksum,
                     filenames,
@@ -155,6 +156,9 @@ public class PncBuildFinder {
     }
 
     private Collection<Artifact> lookupPncArtifactsByChecksum(Checksum checksum) throws ClientWebApplicationException {
+        if (checksum.getSha256Value() == null) {
+            return null;
+        }
         return pncClient.getArtifactsBySha256(checksum.getSha256Value());
     }
 
@@ -163,9 +167,8 @@ public class PncBuildFinder {
             return Optional.of(artifacts.iterator().next());
         }
         return artifacts.stream()
-                .sorted(Comparator.comparing(PncBuildFinder::getArtifactQuality).reversed())
                 .filter(a -> a.getBuild() != null)
-                .findFirst()
+                .max(Comparator.comparingInt(PncBuildFinder::getArtifactQuality))
                 .or(() -> Optional.of(artifacts.iterator().next()));
     }
 

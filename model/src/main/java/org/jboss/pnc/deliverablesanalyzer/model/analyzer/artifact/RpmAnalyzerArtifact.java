@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.app;
+package org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact;
 
-/**
- * The values in here are auto-generated from Maven plugin maven-replacer-plugin and the template is found in the
- * template folder
- */
-public final class BuildInformationConstants {
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.ArtifactType;
 
-    public static final String VERSION = "1.2.10-SNAPSHOT";
-    public static final String COMMIT_HASH = "2414acf";
-    public static final String BUILD_TIME = "2026-03-25T13:56:25Z";
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class RpmAnalyzerArtifact extends AnalyzerArtifact {
+    private String name;
+    private String version;
+    private String release;
+    private String arch;
 
-    private BuildInformationConstants() {
-        // Prevent instantiation
+    public RpmAnalyzerArtifact() {
+        setArtifactType(ArtifactType.RPM);
     }
 }

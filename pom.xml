@@ -73,7 +73,7 @@
     <!-- Maven -->
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
     <maven.compiler.parameters>true</maven.compiler.parameters>
-    <maven.compiler.release>17</maven.compiler.release>
+    <maven.compiler.release>21</maven.compiler.release>
 
     <!-- Project -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -106,8 +106,8 @@
     <maven.surefire-plugin.version>3.5.4</maven.surefire-plugin.version>
 
     <!-- Versions PNC -->
-    <version.pnc>3.3.1</version.pnc>
-    <version.pnc-api>3.4.0</version.pnc-api>
+    <version.pnc>3.5.0-SNAPSHOT</version.pnc>
+    <version.pnc-api>3.5.0-SNAPSHOT</version.pnc-api>
     <version.pnc-common>3.3.4</version.pnc-common>
     <version.pnc-logging-kafka>3.0.3</version.pnc-logging-kafka>
 

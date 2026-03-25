@@ -20,6 +20,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.pnc.PncClient;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.dto.Artifact;
@@ -65,17 +66,17 @@ class PncBuildFinderTest {
         // Mock PNC Artifact Response
         ProductMilestone milestone = ProductMilestone.builder().id("50").build();
         Build build = Build.builder()
-            .id(buildId)
-            .productMilestone(milestone)
-            .buildConfigRevision(BuildConfigurationRevision.builder().buildType(BuildType.MVN).build())
-            .build();
+                .id(buildId)
+                .productMilestone(milestone)
+                .buildConfigRevision(BuildConfigurationRevision.builder().buildType(BuildType.MVN).build())
+                .build();
         Artifact artifact = Artifact.builder()
-            .id("1")
-            .identifier("")
-            .sha256(sha256)
-            .build(build)
-            .artifactQuality(ArtifactQuality.VERIFIED)
-            .build();
+                .id("1")
+                .identifier("")
+                .sha256(sha256)
+                .build(build)
+                .artifactQuality(ArtifactQuality.VERIFIED)
+                .build();
 
         when(pncClient.getArtifactsBySha256(sha256)).thenReturn(List.of(artifact));
 

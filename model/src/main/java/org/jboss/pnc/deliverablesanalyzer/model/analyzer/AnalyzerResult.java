@@ -15,6 +15,8 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.analyzer;
 
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;

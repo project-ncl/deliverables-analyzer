@@ -56,6 +56,15 @@ public class AnalyzerOrchestrator {
     @Inject
     ManagedExecutor executor;
 
+    /*
+     * TODO Tomas: * .jws handling - find one and see what happens currently * other natives - mac/linux (.arm) * any
+     * other types
+     */
+
+    /*
+     * TODO Tomas: What types of artifacts are built and therefore need to be checked during analysis?
+     */
+
     /**
      * Analyses the given input paths to find their corresponding builds in PNC.
      *

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.core;
+package org.jboss.pnc.deliverablesanalyzer.koji;
 
 import com.redhat.red.build.koji.KojiClient;
 import com.redhat.red.build.koji.KojiClientException;
@@ -25,6 +25,7 @@ import jakarta.enterprise.inject.Disposes;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Produces;
 import org.commonjava.util.jhttpc.auth.MemoryPasswordManager;
+import org.jboss.pnc.deliverablesanalyzer.core.BuildConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

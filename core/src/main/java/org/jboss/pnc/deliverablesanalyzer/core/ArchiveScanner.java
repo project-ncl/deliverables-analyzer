@@ -275,7 +275,7 @@ public class ArchiveScanner {
             return true;
         }
         // RPMs are always allowed if checking archives
-        if ("rpm".equals(extension)) {
+        if ("rpm".equals(extension)) { // TODO Tomas: Move this to config?
             return true;
         }
         return allowedExtensions.contains(extension);

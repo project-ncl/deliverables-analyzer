@@ -106,7 +106,10 @@ public class ChecksumService {
         Object hash = in.getSignatureHeader().getTag(tag);
         if (!(hash instanceof byte[])) {
             LOGGER.warn("Missing {} for {}", algorithm, fo);
-            throw new IOException("Missing " + algorithm + " for " + fo);
+            if (tag.equals(RpmSignatureTag.MD5)) {
+                throw new IOException("Missing " + algorithm + " for " + fo);
+            }
+            return null;
         }
         return Hex.encodeHexString((byte[]) hash);
     }

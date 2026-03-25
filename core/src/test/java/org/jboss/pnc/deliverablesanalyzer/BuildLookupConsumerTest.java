@@ -18,7 +18,7 @@ package org.jboss.pnc.deliverablesanalyzer;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.jboss.pnc.deliverablesanalyzer.core.PncBuildFinder;
+import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.core.ResultAggregator;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
