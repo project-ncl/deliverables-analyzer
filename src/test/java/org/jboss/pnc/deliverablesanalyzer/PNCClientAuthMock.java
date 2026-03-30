@@ -26,6 +26,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class PNCClientAuthMock implements PNCClientAuth {
     @Override
+    public ClientAuthType getConfiguredType() {
+        return ClientAuthType.OIDC;
+    }
+
+    @Override
     public String getAuthToken() {
         return "1234";
     }
