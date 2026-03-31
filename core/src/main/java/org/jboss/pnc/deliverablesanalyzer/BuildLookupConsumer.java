@@ -86,18 +86,14 @@ public class BuildLookupConsumer {
             LOGGER.warn("Consumer interrupted", e);
             Thread.currentThread().interrupt();
             throw new CancellationException("Consumer interrupted");
-        } catch (Exception e) {
-            LOGGER.error("Consumer failed", e);
-            throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "Error during build lookup", e);
         }
 
         LOGGER.info("Consumer finished.");
     }
 
     private void processBatch(List<QueueEntry> batch, Map<String, AnalyzerResult> globalResults) {
-        if (batch.isEmpty()) {
+        if (batch.isEmpty())
             return;
-        }
 
         LOGGER.debug("Processing batch of {} checksums", batch.size());
 
@@ -112,13 +108,25 @@ public class BuildLookupConsumer {
                 continue;
             }
 
-            // TODO Tomas: catch exceptions here so its clear if pnc or koji lookup failed
             // Query PNC
-            Map<QueueEntry, Collection<String>> kojiBatch = processPncAndGetMissed(path, pncBatch, globalResults);
+            Map<QueueEntry, Collection<String>> kojiBatch;
+            try {
+                kojiBatch = processPncAndGetMissed(path, pncBatch, globalResults);
+            } catch (Exception e) {
+                if (e instanceof CancellationException || e instanceof ReasonedException)
+                    throw e;
+                throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "PNC Lookup failed for path: " + path, e);
+            }
 
             // Query Koji
             if (!kojiBatch.isEmpty()) {
-                processKojiAndHandleNotFound(path, kojiBatch, globalResults);
+                try {
+                    processKojiAndHandleNotFound(path, kojiBatch, globalResults);
+                } catch (Exception e) {
+                    if (e instanceof CancellationException || e instanceof ReasonedException)
+                        throw e;
+                    throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "Koji Lookup failed for path: " + path, e);
+                }
             }
         }
     }

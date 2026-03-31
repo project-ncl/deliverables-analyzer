@@ -30,6 +30,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.jboss.pnc.api.dto.exception.ReasonedException;
+import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
@@ -54,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -191,8 +194,17 @@ public class KojiBuildFinder {
         try {
             CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
         } catch (CompletionException e) {
+            Throwable cause = e.getCause();
+
+            if (cause instanceof CancellationException ce) {
+                throw ce;
+            }
+
             LOGGER.error("Error occurred during parallel Koji lookups", e.getCause());
-            throw e;
+            throw new ReasonedException(
+                    ResultStatus.SYSTEM_ERROR,
+                    "Koji XML-RPC API call failed",
+                    cause != null ? cause : e);
         }
 
         return artifacts;
@@ -227,8 +239,17 @@ public class KojiBuildFinder {
         try {
             CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
         } catch (CompletionException e) {
+            Throwable cause = e.getCause();
+
+            if (cause instanceof CancellationException ce) {
+                throw ce;
+            }
+
             LOGGER.error("Error occurred during parallel Koji lookups", e.getCause());
-            throw e;
+            throw new ReasonedException(
+                    ResultStatus.SYSTEM_ERROR,
+                    "Koji XML-RPC API call failed",
+                    cause != null ? cause : e);
         }
 
         return artifacts;

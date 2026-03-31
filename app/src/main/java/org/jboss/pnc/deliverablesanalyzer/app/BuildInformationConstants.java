@@ -22,8 +22,8 @@ package org.jboss.pnc.deliverablesanalyzer.app;
 public final class BuildInformationConstants {
 
     public static final String VERSION = "1.2.10-SNAPSHOT";
-    public static final String COMMIT_HASH = "ab67e0b";
-    public static final String BUILD_TIME = "2026-03-31T09:16:41Z";
+    public static final String COMMIT_HASH = "cc9f686";
+    public static final String BUILD_TIME = "2026-03-31T11:24:01Z";
 
     private BuildInformationConstants() {
         // Prevent instantiation

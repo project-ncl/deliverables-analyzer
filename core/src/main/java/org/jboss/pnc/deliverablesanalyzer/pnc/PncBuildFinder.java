@@ -19,6 +19,8 @@ import io.quarkus.virtual.threads.VirtualThreads;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.jboss.pnc.api.dto.exception.ReasonedException;
+import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
@@ -38,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,8 +72,7 @@ public class PncBuildFinder {
      * Main Entry Point: Finds builds for a batch of checksums. Returns a map of BuildID -> PncBuild (containing the
      * identified artifacts).
      */
-    public AnalyzerResult findBuilds(Map<QueueEntry, Collection<String>> checksumTable)
-            throws ClientWebApplicationException {
+    public AnalyzerResult findBuilds(Map<QueueEntry, Collection<String>> checksumTable) {
         if (checksumTable == null || checksumTable.isEmpty()) {
             return AnalyzerResult.empty();
         }
@@ -82,8 +84,7 @@ public class PncBuildFinder {
         return groupArtifactsAsBuilds(artifacts);
     }
 
-    private Set<AnalyzerArtifact> lookupArtifactsInPnc(Map<QueueEntry, Collection<String>> checksumTable)
-            throws ClientWebApplicationException {
+    private Set<AnalyzerArtifact> lookupArtifactsInPnc(Map<QueueEntry, Collection<String>> checksumTable) {
         Set<AnalyzerArtifact> artifacts = ConcurrentHashMap.newKeySet();
 
         List<CompletableFuture<Void>> tasks = checksumTable.entrySet()
@@ -104,10 +105,20 @@ public class PncBuildFinder {
         try {
             CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
         } catch (CompletionException e) {
-            if (e.getCause() instanceof ClientWebApplicationException clientException) {
-                throw clientException;
+            Throwable cause = e.getCause();
+
+            if (cause instanceof CancellationException ce) {
+                throw ce;
             }
-            throw e;
+
+            if (cause instanceof ClientWebApplicationException cwae) {
+                throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "PNC REST API call failed", cwae);
+            }
+
+            throw new ReasonedException(
+                    ResultStatus.SYSTEM_ERROR,
+                    "Unexpected error during PNC lookup",
+                    cause != null ? cause : e);
         }
 
         return artifacts;
