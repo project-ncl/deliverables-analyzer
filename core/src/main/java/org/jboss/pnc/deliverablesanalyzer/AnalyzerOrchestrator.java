@@ -15,14 +15,14 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
+import io.quarkus.virtual.threads.VirtualThreads;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.core.BuildSpecificConfig;
-import org.jboss.pnc.deliverablesanalyzer.core.ConfigParser;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.ConfigParser;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.utils.FinderResultCreator;
@@ -38,6 +38,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @ApplicationScoped
@@ -54,16 +55,8 @@ public class AnalyzerOrchestrator {
     ConfigParser configParser;
 
     @Inject
-    ManagedExecutor executor;
-
-    /*
-     * TODO Tomas: * .jws handling - find one and see what happens currently * other natives - mac/linux (.arm) * any
-     * other types
-     */
-
-    /*
-     * TODO Tomas: What types of artifacts are built and therefore need to be checked during analysis?
-     */
+    @VirtualThreads
+    ExecutorService executorService;
 
     /**
      * Analyses the given input paths to find their corresponding builds in PNC.
@@ -83,28 +76,31 @@ public class AnalyzerOrchestrator {
         LOGGER.info("Starting analysis for {} inputs", inputPaths.size());
         long startTime = System.currentTimeMillis();
 
-        // Start Consumer (Async)
-        CompletableFuture<Void> consumerTask = CompletableFuture.runAsync(() -> {
-            buildLookupConsumer.consume(queue, results);
-        }, executor);
+        // Create Virtual Thread Executor
+        // Start Consumer
+        CompletableFuture<Void> consumerTask = CompletableFuture
+                .runAsync(() -> buildLookupConsumer.consume(queue, results), executorService);
 
         // Run Producers in Parallel (One task per input path)
         List<CompletableFuture<Void>> producerTasks = inputPaths.stream()
                 .map(
                         path -> CompletableFuture.runAsync(
                                 () -> fileChecksumProducer.produce(path, queue, buildSpecificConfig),
-                                executor))
+                                executorService))
                 .toList();
 
         try {
             // Block until all files are downloaded, scanned, and queued
-            CompletableFuture.allOf(producerTasks.toArray(new CompletableFuture[0])).get();
+            CompletableFuture.allOf(producerTasks.toArray(new CompletableFuture[0])).join();
         } catch (Exception e) {
             LOGGER.error("Analysis failed or got cancelled during production phase", e);
 
             // Kill the tasks
             producerTasks.forEach(f -> f.cancel(true));
             consumerTask.cancel(true);
+
+            // Wipe queue to stop processing checksums when error happens
+            queue.clear();
 
             throw unwrapAndPropagate(e);
         } finally {
@@ -125,7 +121,7 @@ public class AnalyzerOrchestrator {
 
         // Wait for Consumer to Finish
         try {
-            consumerTask.get();
+            consumerTask.join();
         } catch (Exception e) {
             if (!consumerTask.isCancelled()) {
                 LOGGER.error("Error waiting for consumer to finish", e);
@@ -147,16 +143,15 @@ public class AnalyzerOrchestrator {
         while (cause instanceof ExecutionException || cause instanceof CompletionException) {
             cause = cause.getCause() != null ? cause.getCause() : cause;
         }
-        if (cause instanceof InterruptedException) {
-            Thread.currentThread().interrupt();
-            throw new CancellationException("Analysis cancelled");
-        }
-        if (cause instanceof ReasonedException re) {
-            return re;
-        }
-        if (cause instanceof CancellationException ce) {
-            return ce;
-        }
-        return new ReasonedException(ResultStatus.SYSTEM_ERROR, "Analysis failed", cause);
+
+        return switch (cause) {
+            case ReasonedException re -> re;
+            case CancellationException ce -> ce;
+            case InterruptedException ie -> {
+                Thread.currentThread().interrupt();
+                yield new CancellationException("Analysis cancelled");
+            }
+            case null, default -> new ReasonedException(ResultStatus.SYSTEM_ERROR, "Analysis failed", cause);
+        };
     }
 }

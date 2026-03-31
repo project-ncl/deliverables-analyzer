@@ -15,17 +15,15 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.app;
 
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.container.ContainerRequestContext;
-import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ContainerResponseContext;
-import jakarta.ws.rs.container.ContainerResponseFilter;
-import jakarta.ws.rs.core.Request;
-import jakarta.ws.rs.core.UriInfo;
-import jakarta.ws.rs.ext.Provider;
 import org.jboss.pnc.api.constants.MDCHeaderKeys;
 import org.jboss.pnc.api.constants.MDCKeys;
 import org.jboss.pnc.common.Strings;
 import org.jboss.pnc.common.concurrent.Sequence;
+import org.jboss.resteasy.reactive.server.ServerRequestFilter;
+import org.jboss.resteasy.reactive.server.ServerResponseFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -34,17 +32,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * @author <a href="mailto:matejonnet@gmail.com">Matej Lazar</a>
- */
-@Provider
-public class LoggingFilter implements ContainerRequestFilter, ContainerResponseFilter {
+@Singleton
+public class LoggingFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoggingFilter.class);
     private static final String REQUEST_EXECUTION_START = "request-execution-start";
 
-    @Override
-    public void filter(ContainerRequestContext requestContext) {
+    @ServerRequestFilter
+    public void filterRequest(ContainerRequestContext requestContext) {
         MDC.clear();
         Map<String, String> mdcContext = getContextMap();
         headerToMap(mdcContext, MDCHeaderKeys.REQUEST_CONTEXT, requestContext, () -> Sequence.nextId().toString());
@@ -57,21 +52,17 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
 
         requestContext.setProperty(REQUEST_EXECUTION_START, System.currentTimeMillis());
 
-        UriInfo uriInfo = requestContext.getUriInfo();
-        Request request = requestContext.getRequest();
-        LOGGER.info("Requested {} {}.", request.getMethod(), uriInfo.getRequestUri());
+        LOGGER.info(
+                "Requested {} {}.",
+                requestContext.getRequest().getMethod(),
+                requestContext.getUriInfo().getRequestUri());
     }
 
-    @Override
-    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
+    @ServerResponseFilter
+    public void filterResponse(ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
         Long startTime = (Long) requestContext.getProperty(REQUEST_EXECUTION_START);
 
-        String took;
-        if (startTime == null) {
-            took = "-1";
-        } else {
-            took = Long.toString(System.currentTimeMillis() - startTime);
-        }
+        String took = startTime == null ? "-1" : Long.toString(System.currentTimeMillis() - startTime);
 
         try (MDC.MDCCloseable mdcTook = MDC.putCloseable(MDCKeys.REQUEST_TOOK, took);
                 MDC.MDCCloseable mdcStatus = MDC

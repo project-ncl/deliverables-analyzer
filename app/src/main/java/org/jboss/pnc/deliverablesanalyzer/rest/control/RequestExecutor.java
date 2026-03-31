@@ -17,63 +17,60 @@ package org.jboss.pnc.deliverablesanalyzer.rest.control;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.ProcessingException;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.Invocation;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
+import jakarta.inject.Inject;
 import org.jboss.pnc.api.dto.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 
 @ApplicationScoped
 public class RequestExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestExecutor.class);
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Inject
+    ObjectMapper objectMapper;
+
+    private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
     public void executeRequest(Request request, Object entity) throws IOException {
-        try (Client client = ClientBuilder.newClient()) {
-            WebTarget target = client.target(request.getUri().toString());
-            Invocation.Builder requestBuilder = target.request();
+        try {
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(request.getUri().toString()))
+                    .timeout(Duration.ofSeconds(30));
+
             if (request.getHeaders() != null) {
                 request.getHeaders().forEach(header -> requestBuilder.header(header.getName(), header.getValue()));
             }
 
-            Entity<String> entityPayload = null;
             if (entity != null) {
-                entityPayload = Entity.json(objectMapper.writeValueAsString(entity));
+                requestBuilder.header("Content-Type", "application/json");
+                requestBuilder.method(
+                        request.getMethod().toString(),
+                        HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(entity)));
+            } else {
+                requestBuilder.method(request.getMethod().toString(), HttpRequest.BodyPublishers.noBody());
             }
 
-            try (Response response = requestBuilder.method(request.getMethod().toString(), entityPayload)) {
-                String responseEntity = response.readEntity(String.class);
-
-                if (response.getStatus() == Response.Status.BAD_REQUEST.getStatusCode()) {
-                    LOGGER.warn(
-                            "Http request failed. ResponseCode: {}, Entity: {}",
-                            response.getStatus(),
-                            responseEntity != null ? responseEntity : "");
-                    throw new IOException("Http request failed. ResponseCode: " + response.getStatus());
-                } else if (response.getStatus() != Response.Status.OK.getStatusCode()
-                        && response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
-                    LOGGER.warn(
-                            "Http request failed. ResponseCode: {}, Entity: {}",
-                            response.getStatus(),
-                            responseEntity != null ? responseEntity : "");
-                    throw new IOException("Http request failed. ResponseCode: " + response.getStatus());
-                } else {
-                    LOGGER.debug(
-                            "Http request sent successfully. ResponseCode: {}, Entity: {}",
-                            response.getStatus(),
-                            responseEntity);
-                }
-            } catch (ProcessingException e) {
-                throw new IOException(e);
+            HttpResponse<String> response = httpClient
+                    .send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() >= 400) {
+                LOGGER.warn(
+                        "Http request failed. ResponseCode: {}, Entity: {}",
+                        response.statusCode(),
+                        response.body());
+                throw new IOException("Http request failed. ResponseCode: " + response.statusCode());
             }
+
+            LOGGER.debug("Http request sent successfully. ResponseCode: {}", response.statusCode());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Request was interrupted", e);
         }
     }
 }

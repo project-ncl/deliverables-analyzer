@@ -24,10 +24,10 @@ import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
 import org.jboss.pnc.api.dto.Request;
-import org.jboss.pnc.deliverablesanalyzer.core.BuildSpecificConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
-import org.jboss.pnc.deliverablesanalyzer.core.ConfigParser;
-import org.jboss.pnc.deliverablesanalyzer.core.LicenseService;
+import org.jboss.pnc.deliverablesanalyzer.config.ConfigParser;
+import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.rest.WireMockTestResource;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,7 +77,7 @@ public class AnalyzeCallbackIT {
     ConfigParser configParser;
 
     @InjectMock
-    LicenseService licenseService;
+    LicenseExtractor licenseExtractor;
 
     @InjectMock
     ChecksumService checksumService;
@@ -100,8 +100,8 @@ public class AnalyzeCallbackIT {
         // Mock internal services
         when(configParser.parseConfig(any()))
                 .thenReturn(new BuildSpecificConfig(Collections.emptyList(), Collections.emptyList()));
-        when(licenseService.extractLicensesFromJar(any(), any(), any())).thenReturn(Collections.emptyList());
-        when(licenseService.getPomLicenses(any(), any())).thenReturn(Collections.emptyList());
+        when(licenseExtractor.extractLicensesFromJar(any(), any(), any())).thenReturn(Collections.emptyList());
+        when(licenseExtractor.getPomLicenses(any(), any())).thenReturn(Collections.emptyList());
 
         // Ensure we return a checksum so the analysis has "results" to report
         when(checksumService.checksum(any(), any()))

@@ -17,19 +17,16 @@ package org.jboss.pnc.deliverablesanalyzer.model.finder;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.infinispan.protostream.annotations.ProtoField;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.util.Comparator;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LicenseInfo implements Comparable<LicenseInfo>, Serializable {
-    @Serial
-    private static final long serialVersionUID = 7803402773598522044L;
+public class LicenseInfo implements Comparable<LicenseInfo> {
 
     @ProtoField(number = 1)
     String comments;
@@ -41,6 +38,7 @@ public class LicenseInfo implements Comparable<LicenseInfo>, Serializable {
     String name;
 
     @ProtoField(number = 4)
+    @EqualsAndHashCode.Exclude
     String url;
 
     @ProtoField(number = 5)

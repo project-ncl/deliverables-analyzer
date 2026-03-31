@@ -20,6 +20,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.deliverablesanalyzer.utils.MdcUtils;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,28 +47,21 @@ public class CallbackService {
     @ConfigProperty(name = "callback.auth.enabled", defaultValue = "true")
     boolean authEnabled;
 
+    @Retry(maxRetries = 2, delay = 1000, delayUnit = ChronoUnit.MILLIS)
     public boolean performCallback(Request callback, AnalysisReport analysisReport) {
-        if (callback == null) {
+        if (callback == null)
             return false;
-        }
 
         mergeHttpHeaders(callback, MdcUtils.mdcToMapWithHeaderKeys());
         if (authEnabled) {
             addAuthenticationHeaderToCallback(callback);
         }
 
-        int retryAttempts = 2;
-        for (int attempt = 1; attempt <= retryAttempts; attempt++) {
-            try {
-                requestExecutor.executeRequest(callback, analysisReport);
-                return true;
-            } catch (IOException e) {
-                if (attempt < retryAttempts) {
-                    LOGGER.warn("Exception when performing callback: {}. Retrying...", e.toString());
-                } else {
-                    LOGGER.warn("Unable to send results using callback!", e);
-                }
-            }
+        try {
+            requestExecutor.executeRequest(callback, analysisReport);
+            return true;
+        } catch (IOException e) {
+            LOGGER.warn("Exception when performing callback: {}", e.toString());
         }
         return false;
     }
@@ -83,9 +78,8 @@ public class CallbackService {
      * @param httpHeaders the HTTP headers
      */
     private static void mergeHttpHeaders(Request request, Map<String, String> httpHeaders) {
-        if (httpHeaders == null || httpHeaders.isEmpty()) {
+        if (httpHeaders == null || httpHeaders.isEmpty())
             return;
-        }
 
         Set<String> existingHeaderKeys = request.getHeaders()
                 .stream()

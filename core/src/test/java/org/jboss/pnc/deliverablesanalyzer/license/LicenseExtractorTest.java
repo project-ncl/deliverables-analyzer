@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.core;
+package org.jboss.pnc.deliverablesanalyzer.license;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -37,10 +37,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
-class LicenseServiceTest {
+class LicenseExtractorTest {
 
     @Inject
-    LicenseService licenseService;
+    LicenseExtractor licenseExtractor;
 
     private FileSystemManager fsManager;
     private FileObject root;
@@ -67,7 +67,7 @@ class LicenseServiceTest {
         }
 
         // When
-        List<LicenseInfo> licenses = licenseService.getPomLicenses(pom, root.getName().getPath());
+        List<LicenseInfo> licenses = licenseExtractor.getPomLicenses(pom, root.getName().getPath());
 
         // Then
         assertFalse(licenses.isEmpty(), "Should find at least one license");
@@ -90,7 +90,7 @@ class LicenseServiceTest {
 
         // When: We act as if 'root' is the JAR and pass 'LICENSE.txt' as a child found inside it
         List<FileObject> children = List.of(licenseFile);
-        List<LicenseInfo> results = licenseService.extractLicensesFromJar(root, children, root.getName().getPath());
+        List<LicenseInfo> results = licenseExtractor.extractLicensesFromJar(root, children, root.getName().getPath());
 
         // Then
         assertFalse(results.isEmpty());
@@ -109,7 +109,7 @@ class LicenseServiceTest {
 
         // When & Then
         assertThrows(IOException.class, () -> {
-            licenseService.getPomLicenses(pom, root.getName().getPath());
+            licenseExtractor.getPomLicenses(pom, root.getName().getPath());
         });
     }
 }

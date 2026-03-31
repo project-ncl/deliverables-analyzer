@@ -18,8 +18,8 @@ package org.jboss.pnc.deliverablesanalyzer.model.cache;
 import org.infinispan.protostream.annotations.ProtoField;
 
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 
-public record ArchiveInfo(@ProtoField(number=1)Set<ArchiveEntry>entries){
+public record ArchiveInfo(@ProtoField(number=1)List<ArchiveEntry>entries){
 
-public ArchiveInfo{entries=entries!=null?entries:Collections.emptySet();}}
+public ArchiveInfo{entries=entries!=null?entries:Collections.emptyList();}}

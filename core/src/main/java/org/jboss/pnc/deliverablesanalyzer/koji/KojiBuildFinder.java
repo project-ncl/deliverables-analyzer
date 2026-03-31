@@ -25,13 +25,12 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiNVRA;
 import com.redhat.red.build.koji.model.xmlrpc.KojiRpmInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import io.quarkus.infinispan.client.Remote;
+import io.quarkus.virtual.threads.VirtualThreads;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.context.ManagedExecutor;
-import org.eclipse.microprofile.context.ThreadContext;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.jboss.pnc.deliverablesanalyzer.core.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
@@ -58,14 +57,14 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class KojiBuildFinder {
     private static final Logger LOGGER = LoggerFactory.getLogger(KojiBuildFinder.class);
-
-    private ManagedExecutor executor;
 
     @Inject
     BuildConfig buildConfig;
@@ -74,34 +73,43 @@ public class KojiBuildFinder {
     KojiMultiCallClient kojiClient;
 
     @Inject
-    @Remote("koji-archive-cache")
+    @Remote("koji-archives")
     RemoteCache<String, KojiArchiveInfoWrapper> archiveCache;
 
     @Inject
-    @Remote("koji-rpm-cache")
+    @Remote("koji-rpms")
     RemoteCache<String, KojiRpmInfo> rpmCache;
 
     @Inject
-    @Remote("koji-build-cache")
+    @Remote("koji-builds")
     RemoteCache<Integer, KojiBuild> buildCache;
+
+    @Inject
+    @VirtualThreads
+    ExecutorService executorService;
+
+    private Semaphore kojiThrottle;
 
     @PostConstruct
     void init() {
-        this.executor = ManagedExecutor.builder()
-                .maxAsync(buildConfig.kojiNumThreads())
-                .propagated(ThreadContext.CDI)
-                .cleared(ThreadContext.ALL_REMAINING)
-                .build();
+        if (buildConfig.disableCache()) {
+            LOGGER.info("Koji Caches disabled via configuration");
+            this.archiveCache = null;
+            this.rpmCache = null;
+            this.buildCache = null;
+        }
+
+        this.kojiThrottle = new Semaphore(buildConfig.kojiNumThreads());
     }
 
-    public AnalyzerResult findBuilds(ConcurrentHashMap<QueueEntry, Collection<String>> checksumTable) {
+    public AnalyzerResult findBuilds(Map<QueueEntry, Collection<String>> checksumTable) {
         if (checksumTable == null || checksumTable.isEmpty()) {
             return AnalyzerResult.empty();
         }
 
         // Split Standard Archives from RPMs
-        ConcurrentHashMap<QueueEntry, Collection<String>> rpmTable = new ConcurrentHashMap<>();
-        ConcurrentHashMap<QueueEntry, Collection<String>> archiveTable = new ConcurrentHashMap<>();
+        Map<QueueEntry, Collection<String>> rpmTable = new HashMap<>();
+        Map<QueueEntry, Collection<String>> archiveTable = new HashMap<>();
         checksumTable.forEach((entry, filenames) -> {
             if (filenames.stream().anyMatch(f -> f.endsWith(".rpm"))) {
                 rpmTable.put(entry, filenames);
@@ -157,19 +165,27 @@ public class KojiBuildFinder {
         return groupArtifactsAsBuilds(kojiArtifacts);
     }
 
-    private Set<AnalyzerArtifact> lookupRpmsInKoji(ConcurrentHashMap<QueueEntry, Collection<String>> rpmTable) {
+    private Set<AnalyzerArtifact> lookupRpmsInKoji(Map<QueueEntry, Collection<String>> rpmTable) {
         Set<AnalyzerArtifact> artifacts = ConcurrentHashMap.newKeySet();
 
         List<QueueEntry> entries = new ArrayList<>(rpmTable.keySet());
-        List<CompletableFuture<Void>> tasks = new ArrayList<>();
-
-        // Split rpms to chunks for Koji processing
         int chunkSize = buildConfig.kojiMultiCallSize();
+        int capacity = (entries.size() / chunkSize) + 1;
+        List<CompletableFuture<Void>> tasks = new ArrayList<>(capacity);
+
         for (int i = 0; i < entries.size(); i += chunkSize) {
             List<QueueEntry> chunk = entries.subList(i, Math.min(i + chunkSize, entries.size()));
-            tasks.add(
-                    CompletableFuture.supplyAsync(() -> processRpmChunk(chunk, rpmTable), executor)
-                            .thenAccept(artifacts::addAll));
+            tasks.add(CompletableFuture.supplyAsync(() -> {
+                try {
+                    kojiThrottle.acquire();
+                    return processRpmChunk(chunk, rpmTable);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new CompletionException(e);
+                } finally {
+                    kojiThrottle.release();
+                }
+            }, executorService).thenAccept(artifacts::addAll));
         }
 
         try {
@@ -183,7 +199,7 @@ public class KojiBuildFinder {
     }
 
     private Set<AnalyzerArtifact> lookupArtifactsInKoji(
-            ConcurrentHashMap<QueueEntry, Collection<String>> checksumTable,
+            Map<QueueEntry, Collection<String>> checksumTable,
             Function<Checksum, String> hashExtractor) {
         Set<AnalyzerArtifact> artifacts = ConcurrentHashMap.newKeySet();
 
@@ -195,10 +211,17 @@ public class KojiBuildFinder {
 
         for (int i = 0; i < entries.size(); i += chunkSize) {
             List<QueueEntry> chunk = entries.subList(i, Math.min(i + chunkSize, entries.size()));
-            tasks.add(
-                    CompletableFuture
-                            .supplyAsync(() -> processChecksumChunk(chunk, checksumTable, hashExtractor), executor)
-                            .thenAccept(artifacts::addAll));
+            tasks.add(CompletableFuture.supplyAsync(() -> {
+                try {
+                    kojiThrottle.acquire();
+                    return processChecksumChunk(chunk, checksumTable, hashExtractor);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new CompletionException(e);
+                } finally {
+                    kojiThrottle.release();
+                }
+            }, executorService).thenAccept(artifacts::addAll));
         }
 
         try {
@@ -550,8 +573,8 @@ public class KojiBuildFinder {
     }
 
     private AnalyzerResult groupArtifactsAsBuilds(Iterable<AnalyzerArtifact> artifacts) {
-        ConcurrentHashMap<String, AnalyzerBuild> kojiBuilds = new ConcurrentHashMap<>();
-        Set<AnalyzerArtifact> notFoundArtifacts = ConcurrentHashMap.newKeySet();
+        Map<String, AnalyzerBuild> kojiBuilds = new HashMap<>();
+        Set<AnalyzerArtifact> notFoundArtifacts = new HashSet<>();
 
         artifacts.forEach(artifact -> {
             if (artifact.getBuildId() != null) {

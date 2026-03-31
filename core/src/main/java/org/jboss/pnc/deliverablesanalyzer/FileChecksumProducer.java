@@ -15,23 +15,19 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
+import io.quarkus.infinispan.client.Remote;
 import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.impl.StandardFileSystemManager;
-import org.apache.commons.vfs2.provider.http5.Http5FileProvider;
-import org.infinispan.commons.api.BasicCache;
-import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.deliverablesanalyzer.core.ArchiveScanner;
-import org.jboss.pnc.deliverablesanalyzer.core.BuildConfig;
-import org.jboss.pnc.deliverablesanalyzer.core.BuildSpecificConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveEntry;
@@ -42,7 +38,6 @@ import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumType;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
 import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
-import org.jboss.pnc.deliverablesanalyzer.utils.SpdxLicenseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,9 +45,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -65,16 +60,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FileChecksumProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileChecksumProducer.class);
 
-    private static final String CACHE_FILE = "file-SHA256";
-    private BasicCache<String, ArchiveInfo> fileCache;
-
-    private FileSystemManager fileSystemManager;
+    @Inject
+    BuildConfig buildConfig;
 
     @Inject
-    BuildConfig config;
+    FileSystemManager fileSystemManager;
 
     @Inject
-    Provider<BasicCacheContainer> cacheProvider;
+    @Remote("sha256-checksums")
+    RemoteCache<String, ArchiveInfo> checksumCache;
 
     @Inject
     ChecksumService checksumService;
@@ -84,43 +78,10 @@ public class FileChecksumProducer {
 
     @PostConstruct
     public void init() {
-        Map<String, List<String>> mapping = SpdxLicenseUtils.getSpdxLicenseMapping();
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(
-                    "Loaded URL mappings for {} SPDX licenses: {}",
-                    mapping.size(),
-                    String.join(", ", mapping.keySet()));
-        }
-
-        String licenseListVersion = SpdxLicenseUtils.getSPDXLicenseListVersion();
-        int licenseListSize = SpdxLicenseUtils.getNumberOfSPDXLicenses();
-        LOGGER.info("Using SPDX License List {} containing {} licenses", licenseListVersion, licenseListSize);
-
-        // TODO Tomas: Replace with REMOTE cache only
-        if (!config.disableCache()) {
-            try {
-                BasicCacheContainer cacheManager = cacheProvider.get();
-                fileCache = cacheManager.getCache(CACHE_FILE);
-                LOGGER.info("Initialized cache {} with {}", cacheManager, CACHE_FILE);
-            } catch (Exception e) {
-                LOGGER.warn("Failed to initialize cache, proceeding without it: {}", e.getMessage());
-                fileCache = null;
-            }
-        } else {
+        if (buildConfig.disableCache()) {
             LOGGER.info("Cache disabled via configuration");
-            fileCache = null;
+            this.checksumCache = null;
         }
-
-        try {
-            fileSystemManager = createManager();
-        } catch (FileSystemException e) {
-            throw new RuntimeException("Failed to initialize file system manager", e);
-        }
-    }
-
-    @PreDestroy
-    public void destroy() {
-        closeManager();
     }
 
     /**
@@ -153,7 +114,7 @@ public class FileChecksumProducer {
                 String rootPath = AnalyzerUtils.calculateRootPath(fileObject);
 
                 // Compute root checksum
-                Checksum rootChecksum = fileCache != null ? checksumService.checksum(fileObject, rootPath) : null;
+                Checksum rootChecksum = checksumCache != null ? checksumService.checksum(fileObject, rootPath) : null;
 
                 // Try to load from cache
                 boolean checksumInCache = false;
@@ -188,11 +149,10 @@ public class FileChecksumProducer {
             String inputPath,
             BlockingQueue<QueueEntry> queue) throws IOException {
         String rootChecksumValue = rootChecksum.getSha256Value();
-        if (rootChecksumValue == null || fileCache == null) {
+        if (rootChecksumValue == null || checksumCache == null)
             return false;
-        }
 
-        ArchiveInfo archiveInfo = fileCache.get(rootChecksumValue);
+        ArchiveInfo archiveInfo = checksumCache.get(rootChecksumValue);
         if (archiveInfo != null) {
             for (ArchiveEntry entry : archiveInfo.entries()) {
                 Checksum checksum = Checksum.create(entry.sha256Checksum(), entry.md5Checksum(), entry.file());
@@ -234,7 +194,7 @@ public class FileChecksumProducer {
         archiveScanner.scan(fileObject, rootPath, jobMap, licensesMap, inputPath, queue, buildSpecificConfig);
 
         // Save the newly found structure to the cache
-        if (fileCache != null && rootChecksum != null) {
+        if (checksumCache != null && rootChecksum != null) {
             updateCacheWithNewScan(rootChecksum, jobMap, licensesMap);
         }
     }
@@ -243,12 +203,12 @@ public class FileChecksumProducer {
             Checksum rootChecksum,
             Map<ChecksumHashPair, Set<LocalFile>> jobMap,
             Map<String, List<LicenseInfo>> licensesMap) throws IOException {
-        String value = rootChecksum.getSha256Value();
-        if (value == null) {
+        // TODO Tomas: SHA256 can be null for md5 rpm lookups
+        if (rootChecksum.getSha256Value() == null) {
             throw new IOException("Checksum type " + ChecksumType.SHA256 + " not found after scan");
         }
 
-        Set<ArchiveEntry> entries = new HashSet<>();
+        List<ArchiveEntry> entries = new ArrayList<>();
 
         for (Map.Entry<ChecksumHashPair, Set<LocalFile>> entry : jobMap.entrySet()) {
             String sha256Checksum = entry.getKey().sha256();
@@ -259,7 +219,7 @@ public class FileChecksumProducer {
             }
         }
 
-        fileCache.put(rootChecksum.getSha256Value(), new ArchiveInfo(entries));
+        checksumCache.putAsync(rootChecksum.getSha256Value(), new ArchiveInfo(entries));
     }
 
     private FileObject resolveFile(String inputPath) throws IOException {
@@ -295,33 +255,6 @@ public class FileChecksumProducer {
         return fileObject;
     }
 
-    private FileSystemManager createManager() throws FileSystemException {
-        StandardFileSystemManager fileSystemManager = new StandardFileSystemManager();
-        fileSystemManager.init();
-
-        if (!fileSystemManager.hasProvider("http")) {
-            fileSystemManager.addProvider("http", new Http5FileProvider());
-        }
-
-        if (!fileSystemManager.hasProvider("https")) {
-            fileSystemManager.addProvider("https", new Http5FileProvider());
-        }
-
-        LOGGER.info(
-                "Initialized file system manager {} with schemes: {}",
-                fileSystemManager.getClass().getSimpleName(),
-                String.join(", ", fileSystemManager.getSchemes()));
-
-        return fileSystemManager;
-    }
-
-    private void closeManager() {
-        if (fileSystemManager != null) {
-            fileSystemManager.close();
-            LOGGER.info("Closing file system manager");
-        }
-    }
-
     public void cleanupVfsCache() {
         try {
             Optional<Path> cleanedPath = AnalyzerUtils.cleanupVfsCache();
@@ -344,30 +277,16 @@ public class FileChecksumProducer {
     }
 
     private RuntimeException mapToReasonedException(Exception e, String inputPath) {
-        if (e instanceof ReasonedException) {
-            return (ReasonedException) e;
-        }
-        if (e instanceof CancellationException) {
-            return (CancellationException) e;
-        }
-        if (e instanceof InterruptedException || e.getCause() instanceof InterruptedException) {
-            return new CancellationException("Producer interrupted");
-        }
-
-        String errorMessage = e.getMessage();
-        if (errorMessage != null && errorMessage.contains("does not exist")) {
-            return new ReasonedException(ResultStatus.FAILED, errorMessage, "Please check the URL.", e);
-        }
-        if (e instanceof IllegalArgumentException) {
-            return new ReasonedException(
-                    ResultStatus.FAILED,
-                    "Invalid input URI: " + inputPath,
-                    "Please check the URL.",
-                    e);
-        }
-
-        // Default to System Error for everything else (VFS crash, Network, Disk full)
-        return new ReasonedException(ResultStatus.SYSTEM_ERROR, "System failed to process input: " + inputPath, e);
+        return switch (e) {
+            case ReasonedException re -> re;
+            case CancellationException ce -> ce;
+            case InterruptedException ie -> new CancellationException("Producer interrupted");
+            case Exception ex when ex.getCause() instanceof InterruptedException -> new CancellationException("Producer interrupted");
+            case Exception ex when ex.getMessage() != null && ex.getMessage().contains("does not exist") -> new ReasonedException(ResultStatus.FAILED, ex.getMessage(), "Please check the URL.", ex);
+            case IllegalArgumentException iae -> new ReasonedException(ResultStatus.FAILED, "Invalid input URI: " + inputPath, "Please check the URL.", iae);
+            // Default to System Error for everything else (VFS crash, Network, Disk full
+            case null, default -> new ReasonedException(ResultStatus.SYSTEM_ERROR, "System failed to process input: " + inputPath, e);
+        };
     }
 
     // -------------------------------------------------------------------------

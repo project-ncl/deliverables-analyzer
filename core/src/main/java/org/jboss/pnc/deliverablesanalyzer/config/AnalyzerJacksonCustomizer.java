@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.app;
+package org.jboss.pnc.deliverablesanalyzer.config;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import io.quarkus.jackson.ObjectMapperCustomizer;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class RegisterCustomModuleCustomizer implements ObjectMapperCustomizer {
+public class AnalyzerJacksonCustomizer implements ObjectMapperCustomizer {
+
     @Override
     public void customize(ObjectMapper objectMapper) {
         objectMapper.setDefaultPropertyInclusion(
                 JsonInclude.Value.construct(JsonInclude.Include.NON_EMPTY, JsonInclude.Include.NON_EMPTY));
+
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        objectMapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
     }
 }

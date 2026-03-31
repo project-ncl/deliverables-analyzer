@@ -25,7 +25,7 @@ import jakarta.enterprise.inject.Disposes;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Produces;
 import org.commonjava.util.jhttpc.auth.MemoryPasswordManager;
-import org.jboss.pnc.deliverablesanalyzer.core.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

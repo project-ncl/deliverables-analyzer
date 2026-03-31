@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.utils;
+package org.jboss.pnc.deliverablesanalyzer.license;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public final class LicenseStringUtils {
 
     // --- URL Logic ---
 
-    static String normalizeLicenseUrl(String licenseUrl) {
+    public static String normalizeLicenseUrl(String licenseUrl) {
         // Normalize URI
         URI uri = URI.create(licenseUrl).normalize();
 

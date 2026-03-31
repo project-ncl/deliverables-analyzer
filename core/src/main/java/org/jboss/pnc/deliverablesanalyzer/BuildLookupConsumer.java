@@ -15,11 +15,8 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
@@ -29,13 +26,10 @@ import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.core.ResultAggregator;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumType;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -46,7 +40,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.zip.ZipOutputStream;
 
 @ApplicationScoped
 public class BuildLookupConsumer {
@@ -54,8 +47,8 @@ public class BuildLookupConsumer {
 
     private static final int BATCH_SIZE = 500;
 
-    private String emptyFileDigests;
-    private String emptyZipDigests;
+    private static final String EMPTY_FILE_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    private static final String EMPTY_ZIP_SHA256 = "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85";
 
     @Inject
     PncBuildFinder pncBuildFinder;
@@ -65,11 +58,6 @@ public class BuildLookupConsumer {
 
     @Inject
     ResultAggregator resultAggregator;
-
-    @PostConstruct
-    void init() {
-        initializeEmptyDigests();
-    }
 
     public void consume(BlockingQueue<QueueEntry> queue, Map<String, AnalyzerResult> results) {
         LOGGER.info("Consumer started. Waiting for checksums...");
@@ -100,7 +88,7 @@ public class BuildLookupConsumer {
             throw new CancellationException("Consumer interrupted");
         } catch (Exception e) {
             LOGGER.error("Consumer failed", e);
-            throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "Error during PNC build lookup", e);
+            throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "Error during build lookup", e);
         }
 
         LOGGER.info("Consumer finished.");
@@ -116,22 +104,17 @@ public class BuildLookupConsumer {
         var batchByPath = batch.stream().collect(Collectors.groupingBy(QueueEntry::sourceUrl));
         for (var entry : batchByPath.entrySet()) {
             String path = entry.getKey();
-            ConcurrentHashMap<QueueEntry, Collection<String>> batchForPath = createBatch(entry.getValue());
+            Map<QueueEntry, Collection<String>> batchForPath = createBatch(entry.getValue());
 
             // Filter out empty files
-            ConcurrentHashMap<QueueEntry, Collection<String>> pncBatch = filterEmptyFiles(
-                    path,
-                    batchForPath,
-                    globalResults);
+            Map<QueueEntry, Collection<String>> pncBatch = filterEmptyFiles(path, batchForPath, globalResults);
             if (pncBatch.isEmpty()) {
                 continue;
             }
 
+            // TODO Tomas: catch exceptions here so its clear if pnc or koji lookup failed
             // Query PNC
-            ConcurrentHashMap<QueueEntry, Collection<String>> kojiBatch = processPncAndGetMissed(
-                    path,
-                    pncBatch,
-                    globalResults);
+            Map<QueueEntry, Collection<String>> kojiBatch = processPncAndGetMissed(path, pncBatch, globalResults);
 
             // Query Koji
             if (!kojiBatch.isEmpty()) {
@@ -140,11 +123,11 @@ public class BuildLookupConsumer {
         }
     }
 
-    private ConcurrentHashMap<QueueEntry, Collection<String>> filterEmptyFiles(
+    private Map<QueueEntry, Collection<String>> filterEmptyFiles(
             String path,
-            ConcurrentHashMap<QueueEntry, Collection<String>> batchForPath,
+            Map<QueueEntry, Collection<String>> batchForPath,
             Map<String, AnalyzerResult> globalResults) {
-        ConcurrentHashMap<QueueEntry, Collection<String>> validBatch = new ConcurrentHashMap<>();
+        Map<QueueEntry, Collection<String>> validBatch = new HashMap<>();
 
         for (Map.Entry<QueueEntry, Collection<String>> batchEntry : batchForPath.entrySet()) {
             QueueEntry queueEntry = batchEntry.getKey();
@@ -161,13 +144,13 @@ public class BuildLookupConsumer {
         return validBatch;
     }
 
-    private ConcurrentHashMap<QueueEntry, Collection<String>> processPncAndGetMissed(
+    private Map<QueueEntry, Collection<String>> processPncAndGetMissed(
             String path,
-            ConcurrentHashMap<QueueEntry, Collection<String>> pncBatch,
+            Map<QueueEntry, Collection<String>> pncBatch,
             Map<String, AnalyzerResult> globalResults) {
         AnalyzerResult pncResults = pncBuildFinder.findBuilds(pncBatch);
 
-        ConcurrentHashMap<QueueEntry, Collection<String>> missedBatch = new ConcurrentHashMap<>();
+        Map<QueueEntry, Collection<String>> missedBatch = new HashMap<>();
 
         Set<AnalyzerArtifact> missingArtifacts = pncResults.notFoundArtifacts();
         if (!missingArtifacts.isEmpty()) {
@@ -191,7 +174,7 @@ public class BuildLookupConsumer {
 
     private void processKojiAndHandleNotFound(
             String path,
-            ConcurrentHashMap<QueueEntry, Collection<String>> kojiBatch,
+            Map<QueueEntry, Collection<String>> kojiBatch,
             Map<String, AnalyzerResult> globalResults) {
         AnalyzerResult kojiResults = kojiBuildFinder.findBuilds(kojiBatch);
 
@@ -201,8 +184,8 @@ public class BuildLookupConsumer {
         resultAggregator.mergeBatchResults(pathResult, kojiResults.foundBuilds());
     }
 
-    private ConcurrentHashMap<QueueEntry, Collection<String>> createBatch(List<QueueEntry> queueEntries) {
-        ConcurrentHashMap<QueueEntry, Collection<String>> batchMap = new ConcurrentHashMap<>();
+    private Map<QueueEntry, Collection<String>> createBatch(List<QueueEntry> queueEntries) {
+        Map<QueueEntry, Collection<String>> batchMap = new HashMap<>();
 
         Map<String, QueueEntry> checksumEntries = new HashMap<>();
         for (QueueEntry queueEntry : queueEntries) {
@@ -229,41 +212,11 @@ public class BuildLookupConsumer {
         globalResults.get(path).notFoundArtifacts().add(artifact);
     }
 
-    private void initializeEmptyDigests() {
-        // Calculate checksums for empty file (0 bytes)
-        try {
-            byte[] digest = DigestUtils.getDigest(ChecksumType.SHA256.getAlgorithm()).digest(new byte[0]);
-            emptyFileDigests = Hex.encodeHexString(digest);
-        } catch (Exception e) {
-            LOGGER.warn("Failed to calculate empty file digest for {}", ChecksumType.SHA256, e);
-        }
-
-        // Calculate checksums for empty zip
-        byte[] emptyZipBytes = createEmptyZipBytes();
-        try {
-            byte[] digest = DigestUtils.getDigest(ChecksumType.SHA256.getAlgorithm()).digest(emptyZipBytes);
-            emptyZipDigests = Hex.encodeHexString(digest);
-        } catch (Exception e) {
-            LOGGER.warn("Failed to calculate empty zip digest for {}", ChecksumType.SHA256, e);
-        }
-    }
-
-    private byte[] createEmptyZipBytes() {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ZipOutputStream zos = new ZipOutputStream(baos)) {
-            zos.finish();
-            return baos.toByteArray();
-        } catch (IOException e) {
-            LOGGER.warn("Failed to generate empty zip bytes", e);
-            return new byte[0];
-        }
-    }
-
     private boolean isEmptyFileDigest(Checksum checksum) {
-        return checksum.getSha256Value() != null && checksum.getSha256Value().equals(emptyFileDigests);
+        return checksum.getSha256Value() != null && EMPTY_FILE_SHA256.equals(checksum.getSha256Value());
     }
 
     private boolean isEmptyZipDigest(Checksum checksum) {
-        return checksum.getSha256Value() != null && checksum.getSha256Value().equals(emptyZipDigests);
+        return checksum.getSha256Value() != null && EMPTY_ZIP_SHA256.equals(checksum.getSha256Value());
     }
 }

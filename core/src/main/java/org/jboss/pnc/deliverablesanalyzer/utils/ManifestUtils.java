@@ -17,6 +17,7 @@ package org.jboss.pnc.deliverablesanalyzer.utils;
 
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
+import org.jboss.pnc.deliverablesanalyzer.license.LicenseStringUtils;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.BundleLicense;
 
 import java.io.IOException;

@@ -19,9 +19,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.pnc.dto.Artifact;
-import org.jboss.pnc.dto.BuildPushReport;
-import org.jboss.pnc.dto.ProductMilestone;
-import org.jboss.pnc.dto.ProductVersion;
 import org.jboss.pnc.dto.response.Page;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.slf4j.Logger;
@@ -51,14 +48,5 @@ public class PncClient {
             LOGGER.error("Failed to fetch artifacts by sha256", e);
             throw e;
         }
-    }
-
-    public BuildPushReport getBuildPushReport(String buildId) {
-        return restClient.getBuildPushReport(buildId);
-    }
-
-    public ProductVersion getProductVersion(String productMilestoneId) {
-        ProductMilestone milestone = restClient.getProductMilestone(productMilestoneId);
-        return restClient.getProductVersion(milestone.getProductVersion().getId());
     }
 }

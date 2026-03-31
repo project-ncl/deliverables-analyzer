@@ -15,14 +15,14 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest.control;
 
+import io.quarkus.infinispan.client.Remote;
+import io.quarkus.virtual.threads.VirtualThreads;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
-import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
@@ -40,13 +40,11 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 @ApplicationScoped
 public class AnalyzeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeService.class);
-
-    @Inject
-    ManagedExecutor executor;
 
     @Inject
     HeartbeatScheduler heartbeatScheduler;
@@ -58,9 +56,13 @@ public class AnalyzeService {
     CallbackService callbackService;
 
     @Inject
-    RemoteCacheManager remoteCacheManager;
+    @Remote("cancel-events")
+    RemoteCache<String, String> cancelEventsCache;
 
-    private RemoteCache<String, String> cancelEventsCache;
+    @Inject
+    @VirtualThreads
+    ExecutorService executorService;
+
     private DistributedCancelListener cancelListener;
 
     private final Map<String, CompletableFuture<Void>> runningJobs = new ConcurrentHashMap<>();
@@ -68,13 +70,6 @@ public class AnalyzeService {
     @PostConstruct
     void init() {
         try {
-            cancelEventsCache = remoteCacheManager.getCache("cancel-events");
-
-            if (this.cancelEventsCache == null) {
-                LOGGER.error("Cache 'cancel-events' could not be found or created!");
-                return;
-            }
-
             cancelListener = new DistributedCancelListener(this);
             cancelEventsCache.addClientListener(cancelListener);
             LOGGER.debug("Registered distributed cancellation listener.");
@@ -116,9 +111,8 @@ public class AnalyzeService {
             heartbeatScheduler.subscribeRequest(id, analyzePayload.getHeartbeat());
         }
 
-        CompletableFuture<Void> future = executor.runAsync(() -> {
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
             LOGGER.info("Analysis with ID {} initiated. Starting analysis of these URLs: {}", id, urls);
-
             try {
                 AnalysisReport analysisReport = performAnalysis(id, urls, specificConfig);
                 handleCallback(id, analyzePayload, analysisReport);
@@ -127,7 +121,7 @@ public class AnalyzeService {
                     heartbeatScheduler.unsubscribeRequest(id);
                 }
             }
-        });
+        }, executorService);
 
         runningJobs.put(id, future);
         future.whenComplete((u, ex) -> runningJobs.remove(id));

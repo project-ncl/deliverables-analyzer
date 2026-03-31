@@ -21,4 +21,4 @@ import org.infinispan.protostream.annotations.ProtoField;
 import java.io.Serial;
 import java.io.Serializable;
 
-@JsonDeserialize public record LocalFile(@ProtoField(number=1)String filename,@ProtoField(number=2,defaultValue="0")long size)implements Serializable{@Serial private static final long serialVersionUID=1L;}
+@JsonDeserialize public record LocalFile(String filename,@ProtoField(defaultValue="0")long size)implements Serializable{@Serial private static final long serialVersionUID=1L;}

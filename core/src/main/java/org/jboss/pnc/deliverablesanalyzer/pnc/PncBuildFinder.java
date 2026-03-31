@@ -15,12 +15,11 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.pnc;
 
+import io.quarkus.virtual.threads.VirtualThreads;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.context.ManagedExecutor;
-import org.eclipse.microprofile.context.ThreadContext;
-import org.jboss.pnc.deliverablesanalyzer.core.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
@@ -42,12 +41,12 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
 
 @ApplicationScoped
 public class PncBuildFinder {
     private static final Logger LOGGER = LoggerFactory.getLogger(PncBuildFinder.class);
-
-    private ManagedExecutor executor;
 
     @Inject
     BuildConfig buildConfig;
@@ -55,20 +54,22 @@ public class PncBuildFinder {
     @Inject
     PncClient pncClient;
 
+    @Inject
+    @VirtualThreads
+    ExecutorService executorService;
+
+    private Semaphore pncThrottle;
+
     @PostConstruct
     void init() {
-        this.executor = ManagedExecutor.builder()
-                .maxAsync(buildConfig.pncNumThreads())
-                .propagated(ThreadContext.CDI)
-                .cleared(ThreadContext.ALL_REMAINING)
-                .build();
+        this.pncThrottle = new Semaphore(buildConfig.pncNumThreads());
     }
 
     /**
      * Main Entry Point: Finds builds for a batch of checksums. Returns a map of BuildID -> PncBuild (containing the
      * identified artifacts).
      */
-    public AnalyzerResult findBuilds(ConcurrentHashMap<QueueEntry, Collection<String>> checksumTable)
+    public AnalyzerResult findBuilds(Map<QueueEntry, Collection<String>> checksumTable)
             throws ClientWebApplicationException {
         if (checksumTable == null || checksumTable.isEmpty()) {
             return AnalyzerResult.empty();
@@ -81,22 +82,30 @@ public class PncBuildFinder {
         return groupArtifactsAsBuilds(artifacts);
     }
 
-    private Set<AnalyzerArtifact> lookupArtifactsInPnc(ConcurrentHashMap<QueueEntry, Collection<String>> checksumTable)
+    private Set<AnalyzerArtifact> lookupArtifactsInPnc(Map<QueueEntry, Collection<String>> checksumTable)
             throws ClientWebApplicationException {
         Set<AnalyzerArtifact> artifacts = ConcurrentHashMap.newKeySet();
 
         List<CompletableFuture<Void>> tasks = checksumTable.entrySet()
                 .stream()
-                .map(
-                        entry -> CompletableFuture.supplyAsync(() -> processChecksum(entry), executor)
-                                .thenAccept(artifacts::add))
+                .map(entry -> CompletableFuture.supplyAsync(() -> {
+                    try {
+                        pncThrottle.acquire();
+                        return processChecksum(entry);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new CompletionException(e);
+                    } finally {
+                        pncThrottle.release();
+                    }
+                }, executorService).thenAccept(artifacts::add))
                 .toList();
 
         try {
             CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
         } catch (CompletionException e) {
-            if (e.getCause() instanceof ClientWebApplicationException) {
-                throw (ClientWebApplicationException) e.getCause();
+            if (e.getCause() instanceof ClientWebApplicationException clientException) {
+                throw clientException;
             }
             throw e;
         }
@@ -110,10 +119,7 @@ public class PncBuildFinder {
         Collection<String> filenames = entry.getValue();
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(
-                    "Parallel execution lookup using thread {} for checksum {}",
-                    Thread.currentThread().getName(),
-                    checksum);
+            LOGGER.debug("Parallel execution lookup for checksum {}", checksum);
         }
 
         try {
