@@ -81,6 +81,8 @@ public final class AnalyzerArtifactMapper {
                     RpmAnalyzerArtifact rpm = new RpmAnalyzerArtifact();
                     rpm.setName(pncArtifact.getIdentifier());
                     // TODO Tomas: Split identifier of rpm -> name, version, release, arch?
+                    //  - parsing? split("-") can cause problems bc name can have "-"
+                    //  - typically name-version-release.architecture.rpm
                     yield rpm;
                 }
             };
