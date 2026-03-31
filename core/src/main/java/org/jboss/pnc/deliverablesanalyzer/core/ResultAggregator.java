@@ -64,14 +64,13 @@ public class ResultAggregator {
             existingBuild.setBuiltArtifacts(new ArrayList<>());
         }
 
-        // TODO Tomas: Assuming sha256 present - not the case for rpm koji
         Map<String, AnalyzerArtifact> existingArtifactsByHash = existingBuild.getBuiltArtifacts()
                 .stream()
-                .collect(Collectors.toMap(a -> a.getChecksum().getSha256Value(), a -> a, (a1, a2) -> a1));
+                .collect(Collectors.toMap(this::getArtifactHashKey, a -> a, (a1, a2) -> a1));
 
         for (AnalyzerArtifact incomingArtifact : incomingBuild.getBuiltArtifacts()) {
-            AnalyzerArtifact existingArtifact = existingArtifactsByHash
-                    .get(incomingArtifact.getChecksum().getSha256Value());
+            String incomingHashKey = getArtifactHashKey(incomingArtifact);
+            AnalyzerArtifact existingArtifact = existingArtifactsByHash.get(incomingHashKey);
 
             if (existingArtifact != null) {
                 // Merge filenames and unmatched filenames
@@ -85,7 +84,7 @@ public class ResultAggregator {
                 }
             } else {
                 existingBuild.getBuiltArtifacts().add(incomingArtifact);
-                existingArtifactsByHash.put(incomingArtifact.getChecksum().getSha256Value(), incomingArtifact);
+                existingArtifactsByHash.put(incomingHashKey, incomingArtifact);
             }
         }
     }
@@ -148,5 +147,13 @@ public class ResultAggregator {
             analyzerArtifact.setUnmatchedFilenames(new HashSet<>());
         }
         analyzerArtifact.getUnmatchedFilenames().add(filename);
+    }
+
+    /**
+     * Extracts a unique hash key for the artifact. Prefers SHA-256, but safely falls back to MD5 for legacy RPMs.
+     */
+    private String getArtifactHashKey(AnalyzerArtifact artifact) {
+        return artifact.getChecksum().getSha256Value() != null ? artifact.getChecksum().getSha256Value()
+                : artifact.getChecksum().getMd5Value();
     }
 }

@@ -34,7 +34,6 @@ import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumHashPair;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumType;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
 import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
@@ -148,11 +147,13 @@ public class FileChecksumProducer {
             Checksum rootChecksum,
             String inputPath,
             BlockingQueue<QueueEntry> queue) throws IOException {
-        String rootChecksumValue = rootChecksum.getSha256Value();
-        if (rootChecksumValue == null || checksumCache == null)
+        String cacheKey = rootChecksum.getSha256Value() != null ? rootChecksum.getSha256Value()
+                : rootChecksum.getMd5Value();
+
+        if (cacheKey == null || checksumCache == null)
             return false;
 
-        ArchiveInfo archiveInfo = checksumCache.get(rootChecksumValue);
+        ArchiveInfo archiveInfo = checksumCache.get(cacheKey);
         if (archiveInfo != null) {
             for (ArchiveEntry entry : archiveInfo.entries()) {
                 Checksum checksum = Checksum.create(entry.sha256Checksum(), entry.md5Checksum(), entry.file());
@@ -165,10 +166,10 @@ public class FileChecksumProducer {
                     throw new CancellationException("Producer interrupted while loading from cache");
                 }
             }
-            logCacheHit(fo, rootPath, rootChecksumValue, archiveInfo.entries().size());
+            logCacheHit(fo, rootPath, cacheKey, archiveInfo.entries().size());
             return true;
         } else {
-            logCacheMiss(fo, rootPath, rootChecksumValue);
+            logCacheMiss(fo, rootPath, cacheKey);
             return false;
         }
     }
@@ -203,9 +204,11 @@ public class FileChecksumProducer {
             Checksum rootChecksum,
             Map<ChecksumHashPair, Set<LocalFile>> jobMap,
             Map<String, List<LicenseInfo>> licensesMap) throws IOException {
-        // TODO Tomas: SHA256 can be null for md5 rpm lookups
-        if (rootChecksum.getSha256Value() == null) {
-            throw new IOException("Checksum type " + ChecksumType.SHA256 + " not found after scan");
+        String cacheKey = rootChecksum.getSha256Value() != null ? rootChecksum.getSha256Value()
+                : rootChecksum.getMd5Value();
+
+        if (cacheKey == null) {
+            throw new IOException("Neither SHA256 nor MD5 checksum found after scan");
         }
 
         List<ArchiveEntry> entries = new ArrayList<>();
@@ -219,7 +222,7 @@ public class FileChecksumProducer {
             }
         }
 
-        checksumCache.putAsync(rootChecksum.getSha256Value(), new ArchiveInfo(entries));
+        checksumCache.putAsync(cacheKey, new ArchiveInfo(entries));
     }
 
     private FileObject resolveFile(String inputPath) throws IOException {
