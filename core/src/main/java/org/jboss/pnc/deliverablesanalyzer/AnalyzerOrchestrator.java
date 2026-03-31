@@ -41,7 +41,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 
-// TODO Tomas: Global Exception Handling
 // TODO Tomas: Test Cancellation
 
 @ApplicationScoped
