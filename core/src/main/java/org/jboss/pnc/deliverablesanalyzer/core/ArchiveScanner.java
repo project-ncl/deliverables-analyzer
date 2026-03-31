@@ -23,6 +23,9 @@ import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.InvertIncludeFileSelector;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
+import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumHashPair;
 import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
 import org.jboss.pnc.deliverablesanalyzer.utils.MavenUtils;
@@ -63,7 +66,7 @@ public class ArchiveScanner {
     ChecksumService checksumService;
 
     @Inject
-    LicenseService licenseService;
+    LicenseExtractor licenseExtractor;
 
     /**
      * Recursively scans a file/directory, calculating checksums and handling archives.
@@ -97,7 +100,7 @@ public class ArchiveScanner {
 
             // 2. License Handling (Main JAR)
             if (isMainJar(fileObject)) {
-                List<LicenseInfo> licenses = licenseService.extractLicensesFromJar(fileObject, allFiles, rootPath);
+                List<LicenseInfo> licenses = licenseExtractor.extractLicensesFromJar(fileObject, allFiles, rootPath);
                 if (!licenses.isEmpty()) {
                     // Normalize the path as the key
                     String key = AnalyzerUtils.licensePath(fileObject, rootPath);
@@ -110,7 +113,7 @@ public class ArchiveScanner {
                     // A. POM Processing
                     if (MavenUtils.isPom(file) || MavenUtils.isPomXml(file)) {
                         try {
-                            List<LicenseInfo> licenses = licenseService.getPomLicenses(file, rootPath);
+                            List<LicenseInfo> licenses = licenseExtractor.getPomLicenses(file, rootPath);
                             String key = AnalyzerUtils.licensePath(file, rootPath);
                             licensesMap.computeIfAbsent(key, k -> new ArrayList<>()).addAll(licenses);
                         } catch (IOException e) {

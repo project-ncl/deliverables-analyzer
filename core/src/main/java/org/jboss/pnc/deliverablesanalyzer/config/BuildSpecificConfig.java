@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.core;
+package org.jboss.pnc.deliverablesanalyzer.config;
 
-import java.nio.file.Path;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import static org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils.getUserHome;
+import java.util.List;
+import java.util.regex.Pattern;
 
-public final class ConfigDefaults {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class BuildSpecificConfig {
 
-    private static final Path USER_HOME = getUserHome();
-    public static final Path CONFIG_PATH = USER_HOME.resolve(".build-finder");
-    public static final Path CACHE_LOCATION = CONFIG_PATH.resolve("cache");
+    List<String> archiveExtensions;
+    List<Pattern> excludes;
 
-    private ConfigDefaults() {
-        // Prevent instantiation
-    }
 }

@@ -15,34 +15,31 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
+import io.quarkus.infinispan.client.Remote;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.apache.commons.vfs2.FileObject;
-import org.infinispan.commons.api.BasicCache;
-import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.deliverablesanalyzer.core.ArchiveScanner;
-import org.jboss.pnc.deliverablesanalyzer.core.BuildConfig;
-import org.jboss.pnc.deliverablesanalyzer.core.BuildSpecificConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
-import org.jboss.pnc.deliverablesanalyzer.utils.SpdxLicenseUtils;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.MockedStatic;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -52,8 +49,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -62,8 +57,6 @@ import static org.mockito.Mockito.when;
 @QuarkusTest
 class FileChecksumProducerTest {
 
-    private BasicCache<String, ArchiveInfo> fileCache;
-
     @Inject
     FileChecksumProducer producer;
 
@@ -71,30 +64,14 @@ class FileChecksumProducerTest {
     BuildConfig config; // Use real config
 
     @InjectMock
-    BasicCacheContainer cacheContainer;
+    @Remote("sha256-checksums")
+    RemoteCache<String, ArchiveInfo> checksumCache;
 
     @InjectMock
     ChecksumService checksumService;
 
     @InjectMock
     ArchiveScanner archiveScanner;
-
-    @BeforeEach
-    void setup() {
-        fileCache = mock(BasicCache.class);
-        when(cacheContainer.<String, ArchiveInfo> getCache(anyString())).thenReturn(fileCache);
-
-        // Re-init producer to pick up the mocked cache
-        try (MockedStatic<SpdxLicenseUtils> mockedUtils = mockStatic(SpdxLicenseUtils.class)) {
-            // Stub the heavy methods to return simple/empty values instantly
-            mockedUtils.when(SpdxLicenseUtils::getSpdxLicenseMapping).thenReturn(Collections.emptyMap());
-            mockedUtils.when(SpdxLicenseUtils::getSPDXLicenseListVersion).thenReturn("Mock-Version");
-            mockedUtils.when(SpdxLicenseUtils::getNumberOfSPDXLicenses).thenReturn(0);
-
-            // Run init (which calls the mocked static methods)
-            producer.init();
-        }
-    }
 
     @Test
     void testProduceWithCacheHit(@TempDir Path tempDir) throws IOException, InterruptedException {
@@ -109,13 +86,13 @@ class FileChecksumProducerTest {
                 "inner-hash",
                 new LocalFile("inner.txt", 50L),
                 Collections.emptyList());
-        ArchiveInfo archiveInfo = new ArchiveInfo(Set.of(cachedEntry));
+        ArchiveInfo archiveInfo = new ArchiveInfo(List.of(cachedEntry));
 
         // Mock ChecksumService to return a root hash
         when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksum);
 
         // Mock Cache to return a HIT
-        when(fileCache.get("root-hash")).thenReturn(archiveInfo);
+        when(checksumCache.get("root-hash")).thenReturn(archiveInfo);
 
         BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
         BuildSpecificConfig buildConfig = new BuildSpecificConfig(Collections.emptyList(), Collections.emptyList());
@@ -144,7 +121,7 @@ class FileChecksumProducerTest {
 
         when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksum);
         // Mock Cache MISS
-        when(fileCache.get("new-hash")).thenReturn(null);
+        when(checksumCache.get("new-hash")).thenReturn(null);
 
         BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
         BuildSpecificConfig buildConfig = new BuildSpecificConfig(Collections.emptyList(), Collections.emptyList());
@@ -157,7 +134,7 @@ class FileChecksumProducerTest {
         verify(archiveScanner, times(1)).scan(any(), anyString(), any(), any(), anyString(), any(), any());
 
         // 2. Should update cache after scan
-        verify(fileCache, times(1)).put(eq("new-hash"), any(ArchiveInfo.class));
+        verify(checksumCache, times(1)).put(eq("new-hash"), any(ArchiveInfo.class));
     }
 
     @Test

@@ -16,6 +16,9 @@
     limitations under the License.
 
 -->
-<distributed-cache name="file-SHA256" mode="SYNC" statistics="true">
-  <encoding media-type="application/x-protostream"/>
+<distributed-cache name="sha256-cache" mode="SYNC" statistics="true">
+  <encoding>
+    <key media-type="text/plain"/>
+    <value media-type="application/x-protostream"/>
+  </encoding>
 </distributed-cache>

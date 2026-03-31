@@ -25,7 +25,7 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
-import org.jboss.pnc.deliverablesanalyzer.core.LicenseService;
+import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
 import org.jboss.pnc.deliverablesanalyzer.pnc.PncClient;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.rest.control.CallbackService;
@@ -70,7 +70,7 @@ public class AnalyzeResourceIT {
     CallbackService callbackService;
 
     @InjectMock
-    LicenseService licenseService;
+    LicenseExtractor licenseExtractor;
 
     @InjectMock
     ChecksumService checksumService;
@@ -84,8 +84,8 @@ public class AnalyzeResourceIT {
 
     @Test
     void testEndToEndAnalysis(@TempDir Path tempDir) throws IOException {
-        when(licenseService.extractLicensesFromJar(any(), any(), any())).thenReturn(Collections.emptyList());
-        when(licenseService.getPomLicenses(any(), any())).thenReturn(Collections.emptyList());
+        when(licenseExtractor.extractLicensesFromJar(any(), any(), any())).thenReturn(Collections.emptyList());
+        when(licenseExtractor.getPomLicenses(any(), any())).thenReturn(Collections.emptyList());
 
         String mockedSha256 = "sha256-111111";
         String mockedMd5 = "md5-111111";

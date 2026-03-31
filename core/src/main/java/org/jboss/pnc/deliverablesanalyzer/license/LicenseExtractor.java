@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.core;
+package org.jboss.pnc.deliverablesanalyzer.license;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.interpolation.InterpolationException;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
-import org.jboss.pnc.deliverablesanalyzer.utils.LicenseStringUtils;
 import org.jboss.pnc.deliverablesanalyzer.utils.ManifestUtils;
 import org.jboss.pnc.deliverablesanalyzer.utils.MavenUtils;
-import org.jboss.pnc.deliverablesanalyzer.utils.SpdxLicenseUtils;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.BundleLicense;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.slf4j.Logger;
@@ -36,11 +35,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.jboss.pnc.deliverablesanalyzer.utils.SpdxLicenseUtils.NOASSERTION;
+import static org.jboss.pnc.deliverablesanalyzer.license.LicenseRegistry.NOASSERTION;
 
 @ApplicationScoped
-public class LicenseService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LicenseService.class);
+public class LicenseExtractor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LicenseExtractor.class);
+
+    @Inject
+    LicenseRegistry licenseRegistry;
 
     /**
      * Aggregates licenses from a Main Jar by looking at its children (POMs, Manifests, License files).
@@ -70,7 +72,7 @@ public class LicenseService {
 
     private boolean isRelevantFile(FileObject child) {
         return MavenUtils.isPomXml(child) || ManifestUtils.isManifestMfFileName(child)
-                || SpdxLicenseUtils.isLicenseFile(child);
+                || licenseRegistry.isLicenseFile(child);
     }
 
     private List<LicenseInfo> findLicensesInChild(FileObject jar, FileObject child, String rootPath) {
@@ -79,7 +81,7 @@ public class LicenseService {
                 return getPomLicenses(child, rootPath);
             } else if (ManifestUtils.isManifestMfFileName(child)) {
                 return getBundleLicenses(child);
-            } else if (SpdxLicenseUtils.isLicenseFile(child)) {
+            } else if (licenseRegistry.isLicenseFile(child)) {
                 return getTextFileLicenses(jar, child);
             }
         } catch (IOException e) {
@@ -123,7 +125,7 @@ public class LicenseService {
                                     l.getDistribution(),
                                     l.getName(),
                                     l.getUrl(),
-                                    SpdxLicenseUtils.getSPDXLicenseId(l.getName(), l.getUrl()),
+                                    licenseRegistry.getSPDXLicenseId(l.getName(), l.getUrl()),
                                     AnalyzerUtils.relativeLicensePath(pom)))
                     .toList();
         } catch (XmlPullParserException | InterpolationException e) {
@@ -140,18 +142,18 @@ public class LicenseService {
         return bundleLicenses.stream().map(b -> {
             String name = LicenseStringUtils.getFirstNonBlankString(b.getLicenseIdentifier(), b.getDescription());
             String url = b.getLink();
-            String spdxLicenseId = SpdxLicenseUtils.getSPDXLicenseId(name, url);
+            String spdxLicenseId = licenseRegistry.getSPDXLicenseId(name, url);
             String sourceUrl = AnalyzerUtils.relativeLicensePath(manifest);
             return new LicenseInfo(null, null, name, url, spdxLicenseId, sourceUrl);
         }).toList();
     }
 
     private List<LicenseInfo> getTextFileLicenses(FileObject jar, FileObject licenseFile) throws IOException {
-        String licenseId = SpdxLicenseUtils.getMatchingLicense(licenseFile);
+        String licenseId = licenseRegistry.getMatchingLicense(licenseFile);
         String relativeName = jar.getName().getRelativeName(licenseFile.getName());
         String spdxLicenseId = !NOASSERTION.equals(licenseId) ? licenseId
-                : SpdxLicenseUtils.getSPDXLicenseId(relativeName, null);
-        String url = SpdxLicenseUtils.findFirstSeeAlsoUrl(spdxLicenseId).orElse(null);
+                : licenseRegistry.getSPDXLicenseId(relativeName, null);
+        String url = licenseRegistry.findFirstSeeAlsoUrl(spdxLicenseId).orElse(null);
         String sourceUrl = AnalyzerUtils.relativeLicensePath(licenseFile);
         return List.of(new LicenseInfo(null, null, relativeName, url, spdxLicenseId, sourceUrl));
     }
@@ -165,7 +167,7 @@ public class LicenseService {
 
         try {
             FileObject licenseFile = jar.resolveFile(name);
-            if (!SpdxLicenseUtils.isLicenseFile(licenseFile) || licenseFile.isFolder() || !licenseFile.isReadable()) {
+            if (!licenseRegistry.isLicenseFile(licenseFile) || licenseFile.isFolder() || !licenseFile.isReadable()) {
                 LOGGER.warn(
                         "License file {} in JAR {} is missing or unreadable",
                         name,
@@ -185,7 +187,7 @@ public class LicenseService {
                 return;
             }
 
-            LicenseInfo resultLicense = licenseInfos.get(0);
+            LicenseInfo resultLicense = licenseInfos.getFirst();
             licenseInfo.setSpdxLicenseId(resultLicense.getSpdxLicenseId());
         } catch (IOException e) {
             if (LOGGER.isErrorEnabled()) {
@@ -203,8 +205,8 @@ public class LicenseService {
         String url = licenseInfo.getUrl();
 
         // Skip if no info is present, or if the info points to a license file (e.g. LICENSE.txt)
-        if ((name == null && url == null) || SpdxLicenseUtils.isLicenseFileName(name)
-                || SpdxLicenseUtils.isLicenseFileName(url)) {
+        if ((name == null && url == null) || licenseRegistry.isLicenseFileName(name)
+                || licenseRegistry.isLicenseFileName(url)) {
             return;
         }
 

@@ -64,6 +64,7 @@ public class ResultAggregator {
             existingBuild.setBuiltArtifacts(new ArrayList<>());
         }
 
+        // TODO Tomas: Assuming sha256 present - not the case for rpm koji
         Map<String, AnalyzerArtifact> existingArtifactsByHash = existingBuild.getBuiltArtifacts()
                 .stream()
                 .collect(Collectors.toMap(a -> a.getChecksum().getSha256Value(), a -> a, (a1, a2) -> a1));
@@ -127,18 +128,19 @@ public class ResultAggregator {
     }
 
     private String findParentInIndex(String filename, Map<String, AnalyzerArtifact> fileIndex) {
-        int index = filename.lastIndexOf(BANG_SLASH);
-        if (index == -1) {
-            return null;
+        String currentPath = filename;
+
+        while (true) {
+            int index = currentPath.lastIndexOf(BANG_SLASH);
+            if (index == -1) {
+                return null;
+            }
+
+            currentPath = currentPath.substring(0, index);
+            if (fileIndex.containsKey(currentPath)) {
+                return currentPath;
+            }
         }
-
-        String parentFilename = filename.substring(0, index);
-
-        if (fileIndex.containsKey(parentFilename)) {
-            return parentFilename;
-        }
-
-        return findParentInIndex(parentFilename, fileIndex);
     }
 
     private void addUnmatchedFilename(AnalyzerArtifact analyzerArtifact, String filename) {

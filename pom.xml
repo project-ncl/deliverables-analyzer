@@ -119,7 +119,6 @@
     <version.commons-vfs2>2.10.0</version.commons-vfs2>
     <version.dkanejs-compose>4.0.0</version.dkanejs-compose>
     <version.formatter>2.26.0</version.formatter>
-    <version.infinispan-embedded>1.3.0</version.infinispan-embedded>
     <version.jandex>3.1.6</version.jandex>
     <version.git-commit-id>9.0.2</version.git-commit-id>
     <version.httpclient5>5.6</version.httpclient5>
@@ -317,10 +316,10 @@
 
   <dependencies>
     <!-- Cache -->
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-core</artifactId>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.infinispan</groupId>-->
+<!--      <artifactId>infinispan-core</artifactId>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>org.infinispan.protostream</groupId>
       <artifactId>protostream-processor</artifactId>

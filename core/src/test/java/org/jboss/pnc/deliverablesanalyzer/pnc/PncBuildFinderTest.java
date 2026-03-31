@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.core;
+package org.jboss.pnc.deliverablesanalyzer.pnc;
 
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
-import org.jboss.pnc.deliverablesanalyzer.pnc.PncClient;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.dto.Build;
 import org.jboss.pnc.dto.BuildConfigurationRevision;
 import org.jboss.pnc.dto.ProductMilestone;
-import org.jboss.pnc.dto.ProductVersion;
 import org.jboss.pnc.enums.ArtifactQuality;
 import org.jboss.pnc.enums.BuildType;
 import org.junit.jupiter.api.Test;
@@ -79,11 +77,6 @@ class PncBuildFinderTest {
                 .build();
 
         when(pncClient.getArtifactsBySha256(sha256)).thenReturn(List.of(artifact));
-
-        // Mock Metadata Response
-        ProductVersion version = ProductVersion.builder().id("200").version("1.0").build();
-        when(pncClient.getProductVersion("50")).thenReturn(version);
-        // getBuildPushReport returns null/void in mock by default, which is fine
 
         // When
         AnalyzerResult results = pncBuildFinder.findBuilds(table);

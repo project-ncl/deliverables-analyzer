@@ -21,6 +21,9 @@ import jakarta.inject.Inject;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
+import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumHashPair;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
@@ -63,7 +66,7 @@ class ArchiveScannerTest {
     ChecksumService checksumService;
 
     @InjectMock
-    LicenseService licenseService;
+    LicenseExtractor licenseExtractor;
 
     private FileSystemManager fsManager;
 
@@ -94,8 +97,8 @@ class ArchiveScannerTest {
         });
 
         // Mock LicenseService
-        when(licenseService.extractLicensesFromJar(any(), any(), anyString())).thenReturn(Collections.emptyList());
-        when(licenseService.getPomLicenses(any(), anyString())).thenReturn(Collections.emptyList());
+        when(licenseExtractor.extractLicensesFromJar(any(), any(), anyString())).thenReturn(Collections.emptyList());
+        when(licenseExtractor.getPomLicenses(any(), anyString())).thenReturn(Collections.emptyList());
 
         // Prepare inputs
         BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();

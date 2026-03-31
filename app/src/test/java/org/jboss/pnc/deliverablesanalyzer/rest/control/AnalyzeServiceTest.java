@@ -15,6 +15,7 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest.control;
 
+import io.quarkus.infinispan.client.Remote;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -68,17 +69,11 @@ class AnalyzeServiceTest {
     CallbackService callbackService;
 
     @InjectMock
-    RemoteCacheManager remoteCacheManager;
-
+    @Remote("cancel-events")
     RemoteCache<String, String> cancelEventsCacheMock;
 
     @BeforeEach
     void setup() {
-        // Setup cache mock
-        cancelEventsCacheMock = mock(RemoteCache.class);
-        when(remoteCacheManager.<String, String> getCache("cancel-events")).thenReturn(cancelEventsCacheMock);
-        analyzeService.init();
-
         // Run async tasks immediately on the same thread
         when(executor.runAsync(any(Runnable.class))).thenAnswer(invocation -> {
             Runnable r = invocation.getArgument(0);

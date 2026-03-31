@@ -177,6 +177,7 @@ public final class FinderResultCreator {
 
             for (AnalyzerArtifact analyzerArtifact : artifacts) {
                 Artifact artifact = createFoundArtifact(analyzerArtifact, analyzerBuild.isImport());
+                foundArtifacts.add(artifact);
 
                 if (LOGGER.isDebugEnabled()) {
                     artifactIndex++;

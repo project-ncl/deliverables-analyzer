@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.core;
+package org.jboss.pnc.deliverablesanalyzer.koji;
 
 import com.redhat.red.build.koji.KojiClientException;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
@@ -26,8 +26,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.ArtifactType;
-import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
-import org.jboss.pnc.deliverablesanalyzer.koji.KojiMultiCallClient;
+import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.MavenAnalyzerArtifact;
@@ -61,11 +60,11 @@ public class KojiBuildFinderTest {
     KojiMultiCallClient kojiClient;
 
     @InjectMock
-    @Remote("koji-archive-cache")
+    @Remote("koji-archives")
     RemoteCache<String, KojiArchiveInfoWrapper> archiveCache;
 
     @InjectMock
-    @Remote("koji-build-cache")
+    @Remote("koji-builds")
     RemoteCache<Integer, KojiBuild> buildCache;
 
     @Test

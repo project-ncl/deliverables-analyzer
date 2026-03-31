@@ -28,7 +28,7 @@ import org.eclipse.microprofile.openapi.annotations.info.License;
 @OpenAPIDefinition(
         info = @Info(
                 title = "Deliverables Analyzer",
-                version = "1.2.10-SNAPSHOT",
+                version = "<version>",
                 description = "Analyzes deliverables.",
                 contact = @Contact(name = "Red Hat, Inc.", url = "https://www.redhat.com/"),
                 license = @License(name = "ASL 2.0", url = "https://www.apache.org/licenses/LICENSE-2.0.txt")))
