@@ -39,8 +39,8 @@ public interface BuildConfig {
     boolean disableRecursion();
 
     @WithName("archive-extensions")
-    @WithDefault("dll,dylib,ear,jar,jdocbook,jdocbook-style,kar,plugin,pom,rar,sar,so,war,xml,exe,msi,zip")
-    List<String> archiveExtensions(); // TODO Tomas: Add rpm here?!
+    @WithDefault("dll,dylib,ear,jar,jdocbook,jdocbook-style,kar,plugin,pom,rar,sar,so,war,xml,exe,msi,zip,rpm")
+    List<String> archiveExtensions();
 
     @WithName("excludes")
     @WithDefault("^(?!.*/pom\\.xml$).*/.*\\.xml$")

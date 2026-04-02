@@ -60,7 +60,7 @@ public class ArchiveScanner {
             .of("jar", "war", "rar", "ear", "sar", "kar", "jdocbook", "jdocbook-style", "plugin");
 
     @Inject
-    BuildConfig config;
+    BuildConfig buildConfig;
 
     @Inject
     ChecksumService checksumService;
@@ -230,7 +230,7 @@ public class ArchiveScanner {
         // Allow recursion if recursion is enabled globally
         // || it matches specific heuristics (Level 1 "Distribution" or Level 2 "Tarball")
         try {
-            return !config.disableRecursion() || isDistributionArchive(fo, level) || isTarArchive(fo, level);
+            return !buildConfig.disableRecursion() || isDistributionArchive(fo, level) || isTarArchive(fo, level);
         } catch (FileSystemException e) {
             LOGGER.warn("Error checking archive type: {}", fo.getName(), e);
             return false;
@@ -275,10 +275,6 @@ public class ArchiveScanner {
         List<String> allowedExtensions = buildSpecificConfig.getArchiveExtensions();
         // If list is empty, ALL extensions are allowed
         if (allowedExtensions.isEmpty()) {
-            return true;
-        }
-        // RPMs are always allowed if checking archives
-        if ("rpm".equals(extension)) { // TODO Tomas: Move this to config?
             return true;
         }
         return allowedExtensions.contains(extension);

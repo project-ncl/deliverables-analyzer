@@ -41,8 +41,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 
-// TODO Tomas: Test Cancellation
-
 @ApplicationScoped
 public class AnalyzerOrchestrator {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzerOrchestrator.class);

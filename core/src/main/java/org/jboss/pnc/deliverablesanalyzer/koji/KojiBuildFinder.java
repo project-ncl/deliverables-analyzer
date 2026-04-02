@@ -125,7 +125,6 @@ public class KojiBuildFinder {
 
         // Process RPMs
         if (!rpmTable.isEmpty()) {
-            // TODO Tomas: Test RPMs -> also, how to map them into result?!
             kojiArtifacts.addAll(lookupRpmsInKoji(rpmTable));
         }
 

@@ -34,12 +34,12 @@ public class ConfigParser {
             .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 
     @Inject
-    BuildConfig config;
+    BuildConfig buildConfig;
 
     public BuildSpecificConfig parseConfig(String configJson) {
         BuildSpecificConfig buildSpecificConfig = new BuildSpecificConfig(
-                config.archiveExtensions(),
-                config.excludes());
+                buildConfig.archiveExtensions(),
+                buildConfig.excludes());
         if (configJson == null) {
             return buildSpecificConfig;
         }

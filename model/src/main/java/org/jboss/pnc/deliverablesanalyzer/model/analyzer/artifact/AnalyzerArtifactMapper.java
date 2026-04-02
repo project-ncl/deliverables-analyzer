@@ -28,8 +28,12 @@ import org.jboss.pnc.enums.BuildType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class AnalyzerArtifactMapper {
+
+    private static final Pattern RPM_PATTERN = Pattern.compile("^(.*?)-([^-]+)-(.*?)\\.([^.]+)(?:\\.rpm)?$");
 
     private AnalyzerArtifactMapper() {
         // Prevent instantiation
@@ -79,10 +83,17 @@ public final class AnalyzerArtifactMapper {
                 }
                 case RPM -> {
                     RpmAnalyzerArtifact rpm = new RpmAnalyzerArtifact();
-                    rpm.setName(pncArtifact.getIdentifier());
-                    // TODO Tomas: Split identifier of rpm -> name, version, release, arch?
-                    //  - parsing? split("-") can cause problems bc name can have "-"
-                    //  - typically name-version-release.architecture.rpm
+                    String identifier = pncArtifact.getIdentifier();
+                    Matcher matcher = RPM_PATTERN.matcher(identifier);
+                    if (matcher.matches()) {
+                        rpm.setName(matcher.group(1));
+                        rpm.setVersion(matcher.group(2));
+                        rpm.setRelease(matcher.group(3));
+                        rpm.setArch(matcher.group(4));
+                    } else {
+                        rpm.setName(identifier);
+                        rpm.setVersion("unknown");
+                    }
                     yield rpm;
                 }
             };

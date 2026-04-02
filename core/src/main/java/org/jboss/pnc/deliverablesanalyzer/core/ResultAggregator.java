@@ -35,7 +35,7 @@ public class ResultAggregator {
      * Merges a batch of found builds into the accumulated results for a specific path
      */
     public void mergeBatchResults(AnalyzerResult pathResults, Map<String, AnalyzerBuild> foundBuilds) {
-        // TODO Tomas: Problem if koji and pnc artifacts get the same build ID
+        // What if koji and pnc artifacts get the same build ID
         foundBuilds.forEach(
                 (buildId, incomingBuild) -> pathResults.foundBuilds()
                         .merge(buildId, incomingBuild, (existingBuild, newBuild) -> {
