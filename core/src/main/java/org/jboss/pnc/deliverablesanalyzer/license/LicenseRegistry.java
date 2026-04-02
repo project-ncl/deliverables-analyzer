@@ -193,7 +193,16 @@ public class LicenseRegistry {
     public String getSPDXLicenseId(String name, String url) {
         return findLicenseMapping(mappingsMap, url).or(() -> findMatchingLicense(name, url))
                 .or(() -> findLicenseMapping(mappingsMap, name))
-                .orElse(NOASSERTION);
+                .orElseGet(() -> {
+                    if (name != null || url != null) {
+                        LOGGER.warn(
+                                "[UNMAPPED_LICENSE] Unrecognized license strings found. Name: '{}', URL: '{}'. Defaulting to {}",
+                                name,
+                                url,
+                                NOASSERTION);
+                    }
+                    return NOASSERTION;
+                });
     }
 
     // --- MATCHING LOGIC ---
@@ -303,7 +312,13 @@ public class LicenseRegistry {
     // --- FILE CONTENT MATCHING ---
 
     public String getMatchingLicense(FileObject licenseFileObject) {
-        return findMatchingLicense(licenseFileObject).orElse(NOASSERTION);
+        return findMatchingLicense(licenseFileObject).orElseGet(() -> {
+            LOGGER.warn(
+                    "[UNMAPPED_LICENSE] Unrecognized license file content found in: {}. Defaulting to {}",
+                    licenseFileObject.getName().getFriendlyURI(),
+                    NOASSERTION);
+            return NOASSERTION;
+        });
     }
 
     private Optional<String> findMatchingLicense(FileObject licenseFileObject) {
