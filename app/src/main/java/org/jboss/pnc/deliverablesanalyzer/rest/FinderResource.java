@@ -21,12 +21,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 // TODO Tomas: Only for local tests, delete after
 
@@ -37,15 +35,11 @@ public class FinderResource {
     @Path("/callback")
     @Produces(MediaType.TEXT_PLAIN)
     public String callback(AnalysisReport report) throws IOException {
-        if (report.isSuccess()) {
 
-            UUID id = UUID.randomUUID();
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.writerWithDefaultPrettyPrinter().writeValue(new File("builds-" + id + ".json"), report.getResults());
+        UUID id = UUID.randomUUID();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writerWithDefaultPrettyPrinter().writeValue(new File("report-" + id + ".json"), report);
 
-            return "CALLBACK for "
-                    + report.getResults().stream().map(FinderResult::getId).collect(Collectors.joining(", "));
-        }
         return report.getResultStatus().name();
     }
 }

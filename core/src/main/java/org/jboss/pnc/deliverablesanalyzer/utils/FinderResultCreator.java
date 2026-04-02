@@ -163,7 +163,7 @@ public final class FinderResultCreator {
             return Collections.emptySet();
         }
 
-        int numberOfBuilds = builds.size() - 1;
+        int numberOfBuilds = builds.size();
         Set<Build> foundBuilds = new LinkedHashSet<>(numberOfBuilds);
         int buildIndex = 0;
 

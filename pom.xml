@@ -186,16 +186,11 @@
       </dependency>
 
       <!-- Koji -->
-      <!-- TODO Tomas: Other deps for kojiji? -->
       <dependency>
         <groupId>com.redhat.red.build</groupId>
         <artifactId>kojiji</artifactId>
         <version>${version.kojiji}</version>
         <exclusions>
-<!--          <exclusion>-->
-<!--            <groupId>org.commonjava.rwx</groupId>-->
-<!--            <artifactId>rwx</artifactId>-->
-<!--          </exclusion>-->
           <exclusion>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-templates</artifactId>
@@ -316,10 +311,6 @@
 
   <dependencies>
     <!-- Cache -->
-<!--    <dependency>-->
-<!--      <groupId>org.infinispan</groupId>-->
-<!--      <artifactId>infinispan-core</artifactId>-->
-<!--    </dependency>-->
     <dependency>
       <groupId>org.infinispan.protostream</groupId>
       <artifactId>protostream-processor</artifactId>

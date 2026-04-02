@@ -30,6 +30,7 @@ import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.common.concurrent.HeartbeatScheduler;
 import org.jboss.pnc.deliverablesanalyzer.AnalyzerOrchestrator;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +46,9 @@ import java.util.concurrent.ExecutorService;
 @ApplicationScoped
 public class AnalyzeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeService.class);
+
+    @Inject
+    BuildConfig buildConfig;
 
     @Inject
     HeartbeatScheduler heartbeatScheduler;
@@ -69,12 +73,17 @@ public class AnalyzeService {
 
     @PostConstruct
     void init() {
-        try {
-            cancelListener = new DistributedCancelListener(this);
-            cancelEventsCache.addClientListener(cancelListener);
-            LOGGER.debug("Registered distributed cancellation listener.");
-        } catch (Exception e) {
-            LOGGER.error("Failed to register distributed cancellation", e);
+        if (!buildConfig.disableCache()) {
+            try {
+                cancelListener = new DistributedCancelListener(this);
+                cancelEventsCache.addClientListener(cancelListener);
+                LOGGER.debug("Registered distributed cancellation listener.");
+            } catch (Exception e) {
+                LOGGER.error("Failed to register distributed cancellation", e);
+            }
+        } else {
+            cancelEventsCache = null;
+            cancelListener = null;
         }
     }
 
@@ -130,17 +139,27 @@ public class AnalyzeService {
     }
 
     public boolean cancel(String id) {
+        boolean locallyCancelled = false;
+
+        if (runningJobs.containsKey(id)) {
+            locallyCancelled = tryCancelLocalJob(id);
+            ;
+        }
+
         try {
-            cancelEventsCache.put(id, "CANCEL_REQUESTED");
-            LOGGER.info("Broadcasted cancellation request for analysis ID {}", id);
-            return true;
+            if (cancelEventsCache != null) {
+                cancelEventsCache.put(id, "CANCEL_REQUESTED");
+                LOGGER.info("Broadcasted cancellation request for analysis ID {}", id);
+                return true;
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to broadcast cancellation for ID {}", id, e);
-            return false;
         }
+
+        return locallyCancelled;
     }
 
-    public void tryCancelLocalJob(String idToCancel) {
+    public boolean tryCancelLocalJob(String idToCancel) {
         CompletableFuture<Void> future = runningJobs.get(idToCancel);
 
         // If future is null, this pod ignores the event (it's running on another pod)
@@ -152,10 +171,13 @@ public class AnalyzeService {
 
             if (cancelled) {
                 LOGGER.info("Successfully cancelled local analysis ID {}", idToCancel);
+                return true;
             } else {
                 LOGGER.warn("Local analysis ID {} could not be cancelled (maybe already finished).", idToCancel);
             }
         }
+
+        return false;
     }
 
     private AnalysisReport performAnalysis(String id, Set<String> urls, String specificConfig) {
@@ -165,7 +187,7 @@ public class AnalyzeService {
             List<FinderResult> finderResults = analyzerOrchestrator.analyze(id, urls, specificConfig);
             analysisReport = new AnalysisReport(finderResults);
             LOGGER.info("Analysis with ID {} finished successfully.", id);
-            LOGGER.warn("Analysis ID {} - Analysis Result: {}", id, analysisReport);
+            // LOGGER.warn("Analysis ID {} - Analysis Result: {}", id, analysisReport);
         } catch (CancellationException e) {
             LOGGER.info(
                     "Analysis with ID {} cancelled. No callback will be performed. Exception: {}",
@@ -195,6 +217,11 @@ public class AnalyzeService {
     private void handleCallback(String id, AnalyzePayload payload, AnalysisReport report) {
         if (report == null) {
             return; // Analysis cancelled
+        }
+
+        if (!runningJobs.containsKey(id)) {
+            LOGGER.info("Analysis with ID {} was cancelled. Dropping the callback.", id);
+            return;
         }
 
         if (payload.getCallback() != null) {

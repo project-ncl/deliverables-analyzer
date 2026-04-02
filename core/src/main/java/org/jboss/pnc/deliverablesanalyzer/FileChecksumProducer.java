@@ -287,7 +287,8 @@ public class FileChecksumProducer {
             case Exception ex when ex.getCause() instanceof InterruptedException -> new CancellationException("Producer interrupted");
             case Exception ex when ex.getMessage() != null && ex.getMessage().contains("does not exist") -> new ReasonedException(ResultStatus.FAILED, ex.getMessage(), "Please check the URL.", ex);
             case IllegalArgumentException iae -> new ReasonedException(ResultStatus.FAILED, "Invalid input URI: " + inputPath, "Please check the URL.", iae);
-            // Default to System Error for everything else (VFS crash, Network, Disk full
+            case FileSystemException fse -> new ReasonedException(ResultStatus.FAILED, "Invalid input URI: " + inputPath, "Please check the URL.", fse);
+            // Default to System Error for everything else
             case null, default -> new ReasonedException(ResultStatus.SYSTEM_ERROR, "System failed to process input: " + inputPath, e);
         };
     }
