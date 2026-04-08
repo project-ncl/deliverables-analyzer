@@ -88,10 +88,11 @@ public class AnalyzeResourceIT {
         when(licenseExtractor.getPomLicenses(any(), any())).thenReturn(Collections.emptyList());
 
         String mockedSha256 = "sha256-111111";
+        String mockedSha1 = "sha1-111111";
         String mockedMd5 = "md5-111111";
         when(checksumService.checksum(any(), any())).thenAnswer(invocation -> {
             // Return a dummy checksum for any file scanned (like README.txt)
-            return new Checksum(mockedSha256, mockedMd5, "README.txt", 100L);
+            return new Checksum(mockedSha256, mockedSha1, mockedMd5, "README.txt", 100L);
         });
 
         // Create a real dummy file to analyze

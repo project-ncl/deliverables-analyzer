@@ -15,4 +15,4 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.finder;
 
-public record ChecksumHashPair(String sha256,String md5){}
+public record ChecksumGroup(String sha256,String sha1,String md5){}

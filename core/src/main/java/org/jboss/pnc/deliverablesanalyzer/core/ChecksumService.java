@@ -57,6 +57,7 @@ public class ChecksumService {
 
     private Checksum checksumStandard(FileObject fo, String root) throws IOException {
         MessageDigest sha256Digest = DigestUtils.getSha256Digest();
+        MessageDigest sha1Digest = DigestUtils.getSha1Digest();
         MessageDigest md5Digest = DigestUtils.getMd5Digest();
 
         try (FileContent fc = fo.getContent(); InputStream is = fc.getInputStream()) {
@@ -66,13 +67,15 @@ public class ChecksumService {
 
             while ((read = is.read(buffer)) > 0) {
                 sha256Digest.update(buffer, 0, read);
+                sha1Digest.update(buffer, 0, read);
                 md5Digest.update(buffer, 0, read);
             }
 
             String sha256 = Hex.encodeHexString(sha256Digest.digest());
+            String sha1 = Hex.encodeHexString(sha1Digest.digest());
             String md5 = Hex.encodeHexString(md5Digest.digest());
 
-            return Checksum.create(sha256, md5, normalizePath(fo, root), fileSize);
+            return Checksum.create(sha256, sha1, md5, normalizePath(fo, root), fileSize);
         }
     }
 
@@ -95,8 +98,9 @@ public class ChecksumService {
                     RpmSignatureTag.SHA256HEADER,
                     ChecksumType.SHA256.getAlgorithm(),
                     fo);
+            String sha1 = extractRpmSignature(in, RpmSignatureTag.SHA1HEADER, ChecksumType.SHA1.getAlgorithm(), fo);
             String md5 = extractRpmSignature(in, RpmSignatureTag.MD5, ChecksumType.MD5.getAlgorithm(), fo);
-            checksum = Checksum.create(sha256, md5, normalizePath(fo, root), fileSize);
+            checksum = Checksum.create(sha256, sha1, md5, normalizePath(fo, root), fileSize);
         }
         return checksum;
     }

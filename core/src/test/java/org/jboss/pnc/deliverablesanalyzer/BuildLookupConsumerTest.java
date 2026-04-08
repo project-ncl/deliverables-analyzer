@@ -53,7 +53,7 @@ class BuildLookupConsumerTest {
         // Given
         BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
         String path = "http://test";
-        Checksum checksum = new Checksum("123", "123", "file.jar", 100L);
+        Checksum checksum = new Checksum("123", "123", "123", "file.jar", 100L);
 
         queue.put(new QueueEntry(path, checksum, Collections.emptyList()));
         queue.put(QueueEntry.POISON_PILL); // Signal to stop

@@ -117,7 +117,7 @@ public class AnalyzeCallbackIT {
 
         // Ensure we return a checksum so the analysis has "results" to report
         when(checksumService.checksum(any(), any()))
-                .thenAnswer(inv -> new Checksum("sha256-111111", "md5-111111", "test.txt", 100L));
+                .thenAnswer(inv -> new Checksum("sha256-111111", "sha1-111111", "md5-111111", "test.txt", 100L));
 
         // Prepare Wiremock
         // Serve the JAR file (Download phase)

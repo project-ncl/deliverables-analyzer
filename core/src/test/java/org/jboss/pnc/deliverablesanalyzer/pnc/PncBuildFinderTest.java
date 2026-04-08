@@ -53,9 +53,10 @@ class PncBuildFinderTest {
     void testFindBuilds() {
         // Given
         String sha256 = "testSha256";
+        String sha1 = "testSha1";
         String md5 = "testMd5";
         String buildId = "100";
-        Checksum checksum = new Checksum(sha256, md5, "test.jar", 100L);
+        Checksum checksum = new Checksum(sha256, sha1, md5, "test.jar", 100L);
 
         QueueEntry entry = new QueueEntry("http://source", checksum, Collections.emptyList());
         ConcurrentHashMap<QueueEntry, Collection<String>> table = new ConcurrentHashMap<>();

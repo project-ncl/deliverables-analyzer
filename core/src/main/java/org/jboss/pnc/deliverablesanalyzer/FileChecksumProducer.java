@@ -33,7 +33,7 @@ import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumHashPair;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumGroup;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
 import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
@@ -159,7 +159,8 @@ public class FileChecksumProducer {
         ArchiveInfo archiveInfo = checksumCache.get(cacheKey);
         if (archiveInfo != null) {
             for (ArchiveEntry entry : archiveInfo.entries()) {
-                Checksum checksum = Checksum.create(entry.sha256Checksum(), entry.md5Checksum(), entry.file());
+                Checksum checksum = Checksum
+                        .create(entry.sha256Checksum(), entry.sha1Checksum(), entry.md5Checksum(), entry.file());
 
                 try {
                     LOGGER.debug("Adding checksum {} for file {} to queue", checksum, entry.file());
@@ -189,7 +190,7 @@ public class FileChecksumProducer {
             BlockingQueue<QueueEntry> queue,
             BuildSpecificConfig buildSpecificConfig) throws IOException {
 
-        Map<ChecksumHashPair, Set<LocalFile>> jobMap = new HashMap<>();
+        Map<ChecksumGroup, Set<LocalFile>> jobMap = new HashMap<>();
         Map<String, List<LicenseInfo>> licensesMap = new ConcurrentHashMap<>();
 
         logFindingChecksums(fileObject, rootPath);
@@ -205,7 +206,7 @@ public class FileChecksumProducer {
 
     private void updateCacheWithNewScan(
             Checksum rootChecksum,
-            Map<ChecksumHashPair, Set<LocalFile>> jobMap,
+            Map<ChecksumGroup, Set<LocalFile>> jobMap,
             Map<String, List<LicenseInfo>> licensesMap) throws IOException {
         String cacheKey = rootChecksum.getSha256Value() != null ? rootChecksum.getSha256Value()
                 : rootChecksum.getMd5Value();
@@ -216,12 +217,13 @@ public class FileChecksumProducer {
 
         List<ArchiveEntry> entries = new ArrayList<>();
 
-        for (Map.Entry<ChecksumHashPair, Set<LocalFile>> entry : jobMap.entrySet()) {
+        for (Map.Entry<ChecksumGroup, Set<LocalFile>> entry : jobMap.entrySet()) {
             String sha256Checksum = entry.getKey().sha256();
+            String sha1Checksum = entry.getKey().sha1();
             String md5Checksum = entry.getKey().md5();
             for (LocalFile file : entry.getValue()) {
                 List<LicenseInfo> licenseInfos = licensesMap.getOrDefault(file.filename(), Collections.emptyList());
-                entries.add(new ArchiveEntry(sha256Checksum, md5Checksum, file, licenseInfos));
+                entries.add(new ArchiveEntry(sha256Checksum, sha1Checksum, md5Checksum, file, licenseInfos));
             }
         }
 

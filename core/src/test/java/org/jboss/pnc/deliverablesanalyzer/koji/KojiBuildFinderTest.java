@@ -71,10 +71,11 @@ public class KojiBuildFinderTest {
     void testFindBuilds() throws KojiClientException {
         // Given
         String sha256 = "testSha256";
+        String sha1 = "testSha1";
         String md5 = "testMd5";
         Integer buildId = 100;
         String nvr = "org.test:test-1.0-1";
-        Checksum checksum = new Checksum(sha256, md5, "test.jar", 100L);
+        Checksum checksum = new Checksum(sha256, sha1, md5, "test.jar", 100L);
 
         QueueEntry entry = new QueueEntry("http://source", checksum, Collections.emptyList());
         ConcurrentHashMap<QueueEntry, Collection<String>> table = new ConcurrentHashMap<>();

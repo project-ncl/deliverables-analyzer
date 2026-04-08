@@ -144,6 +144,7 @@ public final class FinderResultCreator {
             builder.builtFromSource(false);
             builder.filename(filename);
             builder.sha256(artifact.getChecksum().getSha256Value());
+            builder.sha1(artifact.getChecksum().getSha1Value());
             builder.md5(artifact.getChecksum().getMd5Value());
             builder.size(artifact.getChecksum().getFileSize());
 
@@ -223,6 +224,7 @@ public final class FinderResultCreator {
         builder.builtFromSource(artifact.getUnmatchedFilenames().isEmpty() && !isImport);
 
         builder.sha256(artifact.getChecksum().getSha256Value());
+        builder.sha1(artifact.getChecksum().getSha1Value());
         builder.md5(artifact.getChecksum().getMd5Value());
         builder.filename(artifact.getArtifactFilename());
         builder.size(artifact.getArtifactSize());
