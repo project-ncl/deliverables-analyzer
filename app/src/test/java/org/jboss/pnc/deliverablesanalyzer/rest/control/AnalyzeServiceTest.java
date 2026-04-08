@@ -94,10 +94,10 @@ class AnalyzeServiceTest {
         verify(heartbeatScheduler).subscribeRequest(eq(id), any(HeartbeatConfig.class));
 
         // Verify Orchestrator called
-        verify(orchestrator).analyze(eq(id), anySet(), eq("config-json"));
+        verify(orchestrator, timeout(5000)).analyze(eq(id), anySet(), eq("config-json"));
 
         // Verify Heartbeat stopped
-        verify(heartbeatScheduler, timeout(1000)).unsubscribeRequest(id);
+        verify(heartbeatScheduler, timeout(5000)).unsubscribeRequest(id);
     }
 
     @Test

@@ -87,8 +87,8 @@ class AnalyzerOrchestratorTest {
         // Then
         assertNotNull(results);
         assertEquals(1, results.size());
-        assertEquals("test-id", results.get(0).getId());
-        assertFalse(results.get(0).getBuilds().isEmpty(), "Should contain the build added by the mock consumer");
+        assertEquals("test-id", results.getFirst().getId());
+        assertFalse(results.getFirst().getBuilds().isEmpty(), "Should contain the build added by the mock consumer");
 
         // Verify flow
         verify(producer, times(1)).produce(anyString(), any(), any());
