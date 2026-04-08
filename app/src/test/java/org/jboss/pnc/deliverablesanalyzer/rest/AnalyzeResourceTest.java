@@ -72,10 +72,8 @@ class AnalyzeResourceTest {
                 .thenThrow(new BadRequestException("No URL was specified"));
 
         // When & Then
-        given().contentType(ContentType.JSON).body(payload).when().post("/api/analyze").then().statusCode(400); // Expecting
-                                                                                                                // 400
-                                                                                                                // Bad
-                                                                                                                // Request
+        // Expecting 400 Bad Request
+        given().contentType(ContentType.JSON).body(payload).when().post("/api/analyze").then().statusCode(400);
     }
 
     @Test

@@ -15,7 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest.control;
 
-import io.quarkus.oidc.client.OidcClient;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -24,11 +23,11 @@ import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.deliverablesanalyzer.utils.MdcUtils;
+import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +41,7 @@ public class CallbackService {
     RequestExecutor requestExecutor;
 
     @Inject
-    OidcClient oidcClient;
+    PNCClientAuth pncClientAuth;
 
     @ConfigProperty(name = "callback.auth.enabled", defaultValue = "true")
     boolean authEnabled;
@@ -67,8 +66,8 @@ public class CallbackService {
     }
 
     private void addAuthenticationHeaderToCallback(Request callback) {
-        String accessToken = oidcClient.getTokens().await().atMost(Duration.ofMinutes(1)).getAccessToken();
-        callback.getHeaders().add(new Request.Header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken));
+        callback.getHeaders()
+                .add(new Request.Header(HttpHeaders.AUTHORIZATION, pncClientAuth.getHttpAuthorizationHeaderValue()));
     }
 
     /**

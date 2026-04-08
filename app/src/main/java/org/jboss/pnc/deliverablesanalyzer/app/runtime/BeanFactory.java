@@ -16,13 +16,13 @@
 package org.jboss.pnc.deliverablesanalyzer.app.runtime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.quarkus.oidc.client.OidcClient;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import org.jboss.pnc.common.concurrent.HeartbeatScheduler;
 import org.jboss.pnc.common.concurrent.mdc.MDCScheduledThreadPoolExecutor;
 import org.jboss.pnc.common.http.PNCHttpClient;
 import org.jboss.pnc.deliverablesanalyzer.app.DeliverablesAnalyzerConfig;
+import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
 
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -34,9 +34,9 @@ public class BeanFactory {
     public PNCHttpClient pncHttpClient(
             ObjectMapper objectMapper,
             DeliverablesAnalyzerConfig config,
-            OidcClient oidcClient) {
+            PNCClientAuth pncClientAuth) {
         PNCHttpClient client = new PNCHttpClient(objectMapper, config.pncHttpClientConfig());
-        client.setTokenSupplier(() -> oidcClient.getTokens().await().indefinitely().getAccessToken());
+        client.setAuthValueSupplier(pncClientAuth::getHttpAuthorizationHeaderValue);
         return client;
     }
 

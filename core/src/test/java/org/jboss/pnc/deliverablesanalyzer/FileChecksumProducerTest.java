@@ -64,7 +64,7 @@ class FileChecksumProducerTest {
     BuildConfig config; // Use real config
 
     @InjectMock
-    @Remote("sha256-checksums")
+    @Remote("pnc-archives")
     RemoteCache<String, ArchiveInfo> checksumCache;
 
     @InjectMock
@@ -134,7 +134,7 @@ class FileChecksumProducerTest {
         verify(archiveScanner, times(1)).scan(any(), anyString(), any(), any(), anyString(), any(), any());
 
         // 2. Should update cache after scan
-        verify(checksumCache, times(1)).put(eq("new-hash"), any(ArchiveInfo.class));
+        verify(checksumCache, times(1)).putAsync(eq("new-hash"), any(ArchiveInfo.class));
     }
 
     @Test

@@ -66,7 +66,7 @@ public class FileChecksumProducer {
     FileSystemManager fileSystemManager;
 
     @Inject
-    @Remote("sha256-checksums")
+    @Remote("pnc-archives")
     RemoteCache<String, ArchiveInfo> checksumCache;
 
     @Inject
@@ -117,7 +117,7 @@ public class FileChecksumProducer {
 
                 // Try to load from cache
                 boolean checksumInCache = false;
-                if (rootChecksum != null) {
+                if (!buildConfig.disableCache() && rootChecksum != null) {
                     checksumInCache = loadFromCache(fileObject, rootPath, rootChecksum, inputPath, queue);
                 }
 
@@ -147,6 +147,9 @@ public class FileChecksumProducer {
             Checksum rootChecksum,
             String inputPath,
             BlockingQueue<QueueEntry> queue) throws IOException {
+        if (buildConfig.disableCache())
+            return false;
+
         String cacheKey = rootChecksum.getSha256Value() != null ? rootChecksum.getSha256Value()
                 : rootChecksum.getMd5Value();
 
@@ -195,7 +198,7 @@ public class FileChecksumProducer {
         archiveScanner.scan(fileObject, rootPath, jobMap, licensesMap, inputPath, queue, buildSpecificConfig);
 
         // Save the newly found structure to the cache
-        if (checksumCache != null && rootChecksum != null) {
+        if (!buildConfig.disableCache() && checksumCache != null && rootChecksum != null) {
             updateCacheWithNewScan(rootChecksum, jobMap, licensesMap);
         }
     }

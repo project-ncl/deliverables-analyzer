@@ -20,9 +20,7 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
-import org.eclipse.microprofile.context.ManagedExecutor;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
@@ -30,13 +28,11 @@ import org.jboss.pnc.api.dto.HeartbeatConfig;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.common.concurrent.HeartbeatScheduler;
 import org.jboss.pnc.deliverablesanalyzer.AnalyzerOrchestrator;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -47,6 +43,7 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -55,9 +52,6 @@ class AnalyzeServiceTest {
 
     @Inject
     AnalyzeService analyzeService;
-
-    @InjectMock
-    ManagedExecutor executor;
 
     @InjectMock
     HeartbeatScheduler heartbeatScheduler;
@@ -71,16 +65,6 @@ class AnalyzeServiceTest {
     @InjectMock
     @Remote("cancel-events")
     RemoteCache<String, String> cancelEventsCacheMock;
-
-    @BeforeEach
-    void setup() {
-        // Run async tasks immediately on the same thread
-        when(executor.runAsync(any(Runnable.class))).thenAnswer(invocation -> {
-            Runnable r = invocation.getArgument(0);
-            r.run();
-            return CompletableFuture.completedFuture(null);
-        });
-    }
 
     @Test
     void testAnalyzeStartsJobAndHeartbeat() {
@@ -113,7 +97,7 @@ class AnalyzeServiceTest {
         verify(orchestrator).analyze(eq(id), anySet(), eq("config-json"));
 
         // Verify Heartbeat stopped
-        verify(heartbeatScheduler).unsubscribeRequest(id);
+        verify(heartbeatScheduler, timeout(1000)).unsubscribeRequest(id);
     }
 
     @Test
@@ -139,7 +123,7 @@ class AnalyzeServiceTest {
 
         // Then
         // Verify we pass the Request object to the callback service
-        verify(callbackService).performCallback(eq(payload.getCallback()), any(AnalysisReport.class));
+        verify(callbackService, timeout(1000)).performCallback(eq(payload.getCallback()), any(AnalysisReport.class));
     }
 
     @Test
@@ -167,9 +151,6 @@ class AnalyzeServiceTest {
     @Test
     void testTryCancelLocalJobSuccess() {
         // Given
-        CompletableFuture<Void> runningFuture = new CompletableFuture<>();
-        when(executor.runAsync(any(Runnable.class))).thenReturn(runningFuture);
-
         AnalyzePayload payload = AnalyzePayload.builder()
                 .operationId("local-cancel-id")
                 .urls(List.of("http://url"))
@@ -178,10 +159,10 @@ class AnalyzeServiceTest {
         analyzeService.analyze(payload);
 
         // When - simulate receiving the event from Infinispan listener
-        analyzeService.tryCancelLocalJob("local-cancel-id");
+        boolean cancelled = analyzeService.tryCancelLocalJob("local-cancel-id");
 
         // Then
-        assertTrue(runningFuture.isCancelled(), "The future should be cancelled");
+        assertTrue(cancelled, "The local job should have been successfully cancelled");
         verify(heartbeatScheduler).unsubscribeRequest("local-cancel-id");
     }
 

@@ -26,6 +26,10 @@ import java.util.regex.Pattern;
 @ConfigMapping(prefix = "analyzer")
 public interface BuildConfig {
 
+    @WithName("disable-spdx-init")
+    @WithDefault("false")
+    boolean disableSpdxInit();
+
     @WithName("disable-cache")
     @WithDefault("false")
     boolean disableCache();

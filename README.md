@@ -1,103 +1,100 @@
 # Deliverables Analyzer
 
-Deliverables Analyzer is a RESTful Web Service that uses the
-[Build Finder](https://github.com/project-ncl/build-finder) library to
-scan a given URL containing a software distribution and return the list
-of builds.
+Deliverables Analyzer is a highly scalable RESTful Web Service designed to scan given URLs containing software distributions (like `.zip` or `.jar` files) and return the list of associated builds from PNC and Koji.
+
+## Architecture overview
+
+Because analyzing large deliverables (which may contain thousands of internal artifacts) can be a time-consuming process, the Deliverables Analyzer uses an **asynchronous callback architecture** powered by Java 21 Virtual Threads.
+
+Instead of forcing clients to poll for readiness, the client submits a request with a `callback` definition. The service immediately returns an Operation ID and processes the heavy file downloading, archiving scanning, and HTTP fan-out lookups in the background. Once finished, it automatically pushes the final `AnalysisReport` to the client's callback URL.
+
+---
 
 ## Endpoints
 
 ### Analyze
+Initiates a new background analysis job.
 
-The main way to use the service is as follows:
+- **Request:** `POST /api/analyze`
+- **Payload:** Accepts an `AnalyzePayload` JSON object.
+  - `urls` (Required): A list of `http` or `https` URLs pointing to the deliverables.
+  - `operationId` (Optional): A custom ID for tracing. If omitted, one is generated.
+  - `callback` (Required for results): A JSON object defining the `method` (e.g., `POST`), `uri`, and headers where the final `AnalysisReport` should be sent.
+  - `heartbeat` (Optional): A request definition to receive periodic pings while the job is actively running.
+  - `config` (Optional): A JSON string to override default `BuildSpecificConfig` settings.
+- **Response:** Returns `200 OK` (or `202 Accepted`) immediately with the `operationId` as a string.
 
-- Perform an HTTP POST passing the `url` of a *deliverable* to
-  `/api/analyze`. A *deliverable* should be an archive, such as a `.zip`
-  or `.jar` file, which contains a product version. For example, if your
-  product is `jbossfoo` and your version is `1.0`, then you might have a
-  file called `jbossfoo-1.0.zip` to analyze. The `url` must be using
-  protocol `http` or `https`. You may also optionally set `config` to
-  override some of the default configuration settings. The `config` is
-  the JSON representation of
-  `org.jboss.pnc.build.finder.core.BuildConfig`.
-- The `/api/analyze` endpoint will return the status code `201 Created`
-  with a `Location` header. The location will be set to
-  `/api/analyze/results/<id>` where `<id>` is an identifier
-  corresponding to the `url`. The results will be cached, but will
-  eventually expire. You may fetch the configuration used by accessing
-  the `/api/analyze/configs/<id>` endpoint.
-- The `/api/analyze/results/<id>` endpoint will return status code `404
-  Not Found` if `<id>` doesn't exist. It will return `503 Service
-  Unavailable` if the results exist, but are not yet ready. It will
-  return `200 OK` if the results exist and are ready. In case there is
-  an error getting the results, it will return `500 Server Error`.
-- The `/api/analyze/statuses/<id>` endpoint will return the current
-  status (percent done) of the analysis and may be polled once the
-  analysis has started.
+### Cancel
+Aborts a currently running analysis job across the entire cluster.
 
-### Health
-
-The service supports the MicroProfile `/q/health` endpoint (and also
-`/q/health/live` and `/q/health/ready`).
+- **Request:** (e.g., `DELETE /api/analyze/{id}/cancel`)
+- **Behavior:** This endpoint utilizes a "Local-First + Distributed Broadcast" approach. It attempts to instantly interrupt the Virtual Thread running the job locally. If the job is executing on a different Kubernetes pod, it broadcasts a cancellation signal via the Infinispan `cancel-events` cache, ensuring the owning pod receives the event and physically interrupts its own execution threads.
 
 ### Version
+Returns the current build and deployment information for the service.
 
-The service will reply to `/api/version` with a version string in
-plaintext containing information about the service as well as the
-version of [Build Finder](https://github.com/project-ncl/build-finder)
-being used.
+- **Request:** `GET /api/version`
+- **Response:** Returns `200 OK` with a JSON representation of `ComponentVersion`. This includes the application `name`, `version`, `commit` hash, and `builtOn` timestamp.
 
-## Building with Maven
+### Health
+The service supports the standard MicroProfile `/q/health` endpoint (including `/q/health/live` and `/q/health/ready` for Kubernetes probes).
 
-To build with Maven and run the tests:
-
-```
-$ mvn -Ddistribution.url=<url> clean install
-```
+---
 
 ## Configuration
 
-Deliverables Analyzer can be configured by setting the various configuration
-keys listed below. They can be defined by setting the configuration key in:
+Deliverables Analyzer is a Quarkus application and can be configured via standard Quarkus configuration mechanisms: system properties (`-Dkey=value`), environment variables, or the `application.properties` file.
 
-- system property (`-Dkey=value`)
-- environment variable
-- `.env` file in the working directory
-- `application.properties` file
+### Core Application Properties (`analyzer.*`)
 
-| Configuration Key | Description                                                          | Example                          |
-|-------------------|----------------------------------------------------------------------|----------------------------------|
-| koji.hub.url      | The Koji Hub URL to find builds                                      | http://brewhub.localhost/brewhub |
-| koji.web.url      | The Koji Web URL                                                     | http://brewweb.localhost/brew    |
-| pnc.url           | The PNC URL to find builds                                           | http://pnc.localhost             |
-| infinispan.mode   | Define whether to use Infinispan in `EMBEDDED` (default) or `REMOTE` | `EMBEDDED`                       |
+The following properties configure the core scanning and networking behavior of the application.
 
-### Remote Infinispan
+| Configuration Key | Description                                                                        | Default / Example |
+|-------------------|------------------------------------------------------------------------------------|---------|
+| `analyzer.pnc-url` | **(Required)** The Red Hat PNC REST API URL                                        | `http://pnc.localhost` |
+| `analyzer.koji-url` | **(Required)** The Red Hat Koji Hub XML-RPC URL                                    | `http://brewhub.localhost` |
+| `analyzer.disable-spdx-init` | Disables the SPDX license mapping initialization (useful for faster test startups) | `false` |
+| `analyzer.disable-cache` | Disables the persistent Infinispan caches                                          | `false` |
+| `analyzer.cache-lifespan` | The lifespan of the cache entries in milliseconds                                  | `3600000` (1 hour) |
+| `analyzer.disable-recursion` | Disables recursive scanning of nested archives                                     | `false` |
+| `analyzer.archive-extensions`| Comma-separated list of file extensions to process                                 | `dll,dylib,ear,jar,jdocbook,jdocbook-style,kar,plugin,pom,rar,sar,so,war,xml,exe,msi,zip,rpm` |
+| `analyzer.excludes` | Regex pattern for files to exclude from analysis                                   | `^(?!.*/pom\.xml$).*/.*\.xml$` |
+| `analyzer.pnc-num-threads` | Number of concurrent virtual threads for PNC lookups                               | `10` |
+| `analyzer.koji-num-threads` | Number of concurrent virtual threads for Koji lookups                              | `12` |
+| `analyzer.koji-multicall-size`| Batch size for Koji XML-RPC multicall requests                                     | `8` |
 
-If the `infinispan.mode` is set to `REMOTE`, the following configuration keys need to be defined:
+### Security Properties
+| Configuration Key | Description | Default |
+|-------------------|-------------|---------|
+| `callback.auth.enabled` | Whether to inject Bearer authorization tokens into the headers when firing completed callbacks | `true` |
 
-| Configuration Key                  | Description                                                    | Example         |
-|------------------------------------|----------------------------------------------------------------|-----------------|
-| quarkus.infinispan-client.hosts    | Comma-delimited Infinispan server list (\<hostname>[:\<port>]) | localhost:11222 |
-| quarkus.infinispan-client.username | Username for the Infinispan server                             | admin           |
-| quarkus.infinispan-client.password | Password for the Infinispan server                             | password        |
+### Infinispan Cache Configuration
+The application relies on Infinispan (`REMOTE` mode) to maintain a highly available cache for checksum deduplication and distributed cancellation events.
 
-The following caches also need to be present in the Infinispan server:
+| Configuration Key | Description | Example |
+|-------------------|-------------|---------|
+| `quarkus.infinispan-client.hosts` | Comma-delimited Infinispan server list | `localhost:11222` |
+| `quarkus.infinispan-client.username` | Infinispan username | `admin` |
+| `quarkus.infinispan-client.password` | Infinispan password | `password` |
 
-- builds
-- builds-pnc
-- checksums-md5
-- checksums-pnc-md5
-- checksums-pnc-sha1
-- checksums-pnc-sha256
-- checksums-sha1
-- checksums-sha256
-- files-md5
-- files-sha1
-- files-sha256
-- rpms-md5
-- rpms-sha1
-- rpms-sha256
+The following caches must be provisioned on the Infinispan server:
+- `cancel-events` (Used for cluster-wide job termination)
+- `sha256-checksums` (Used for deduplicating repeated scans of identical archives)
+- `koji-archives`
+- `koji-builds`
+- `koji-rpms`
+
+---
+
+## Building and Running
+
+To build the project and run the test suite via Maven:
+
+```bash
+$ mvn clean install
+```
+
+---
 
 ### OpenTelemetry
 
@@ -106,19 +103,9 @@ The following caches also need to be present in the Infinispan server:
 | quarkus.otel.exporter.otlp.endpoint | OTLP endpoint to send telemetry data to | http://localhost:4317                                                  |
 | quarkus.otel.resource.attributes    | Attributes to add to the exported trace | "service.name=pnc-deliverable-analyzer,deployment.environment=staging" |
 
-## Creating Docker Images with Docker Compose
+---
 
-To also build the Docker image, add `-Pdocker` to the `mvn` arguments.
-
-This is the equivalent of manually running:
-
-```
-$ docker-compose pull
-$ docker-compose up --build
-$ docker-compose down --rmi --remove-orphans -v
-```
-
-## Related Guides
+### Related Guides
 
 - Infinispan Client ([guide](https://quarkus.io/guides/infinispan-client)): Connect to the Infinispan data grid for distributed caching
 - OpenID Connect ([guide](https://quarkus.io/guides/security-openid-connect)): Verify Bearer access tokens and authenticate users with Authorization Code Flow
