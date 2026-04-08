@@ -29,7 +29,7 @@
 
   <groupId>org.jboss.pnc.deliverablesanalyzer</groupId>
   <artifactId>parent</artifactId>
-  <version>1.2.10-SNAPSHOT</version>
+  <version>2.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Deliverables Analyzer</name>
@@ -83,7 +83,7 @@
     <!-- Quarkus -->
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
-    <quarkus.platform.version>3.30.8</quarkus.platform.version>
+    <quarkus.platform.version>3.31.4</quarkus.platform.version>
 
     <!-- Maven Plugin Versions -->
     <maven.antrun-plugin.version>3.2.0</maven.antrun-plugin.version>
@@ -108,8 +108,9 @@
     <!-- Versions PNC -->
     <version.pnc>3.5.0-SNAPSHOT</version.pnc>
     <version.pnc-api>3.5.0-SNAPSHOT</version.pnc-api>
-    <version.pnc-common>3.3.4</version.pnc-common>
-    <version.pnc-logging-kafka>3.0.3</version.pnc-logging-kafka>
+    <version.pnc-common>3.4.1-SNAPSHOT</version.pnc-common>
+    <version.pnc-client-auth>1.0.0-SNAPSHOT</version.pnc-client-auth>
+    <version.pnc-logging-kafka>3.0.4-SNAPSHOT</version.pnc-logging-kafka>
 
     <!-- Versions Koji -->
     <version.kojiji>2.25</version.kojiji>
@@ -130,6 +131,31 @@
     <version.spotbugs>4.9.8.2</version.spotbugs>
     <version.wiremock>3.13.2</version.wiremock>
   </properties>
+
+  <repositories>
+    <repository>
+      <name>JBoss Public Maven Repository</name>
+      <id>jboss-public-repository</id>
+      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <name>Central Portal Snapshots</name>
+      <id>central-portal-snapshots</id>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 
   <dependencyManagement>
     <dependencies>
@@ -183,6 +209,11 @@
             <artifactId>pnc-api</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.pnc</groupId>
+        <artifactId>quarkus-pnc-client-auth</artifactId>
+        <version>${version.pnc-client-auth}</version>
       </dependency>
 
       <!-- Koji -->
@@ -761,58 +792,6 @@
                   <doclint>none</doclint>
                   <failOnWarnings>false</failOnWarnings>
                   <failOnError>false</failOnError>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>docker</id>
-      <activation>
-        <property>
-          <name>docker</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.dkanejs.maven.plugins</groupId>
-            <artifactId>docker-compose-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>pull</id>
-                <goals>
-                  <goal>pull</goal>
-                </goals>
-                <phase>verify</phase>
-                <configuration>
-                  <composeFile>${project.basedir}/docker-compose.yml</composeFile>
-                </configuration>
-              </execution>
-              <execution>
-                <id>up</id>
-                <goals>
-                  <goal>up</goal>
-                </goals>
-                <phase>verify</phase>
-                <configuration>
-                  <composeFile>${project.basedir}/docker-compose.yml</composeFile>
-                  <build>true</build>
-                </configuration>
-              </execution>
-              <execution>
-                <id>down</id>
-                <goals>
-                  <goal>down</goal>
-                </goals>
-                <phase>verify</phase>
-                <configuration>
-                  <composeFile>${project.basedir}/docker-compose.yml</composeFile>
-                  <removeImages>true</removeImages>
-                  <removeOrphans>true</removeOrphans>
-                  <removeVolumes>true</removeVolumes>
                 </configuration>
               </execution>
             </executions>

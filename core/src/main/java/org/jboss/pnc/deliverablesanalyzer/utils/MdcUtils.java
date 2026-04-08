@@ -41,9 +41,6 @@ public final class MdcUtils {
             Map<String, String> result,
             Map<String, String> mdcMap,
             MDCHeaderKeys mdcHeaderKeys) {
-        if (mdcMap == null) {
-            throw new RuntimeException("Missing MDC map.");
-        }
         if (mdcMap.get(mdcHeaderKeys.getMdcKey()) != null) {
             result.put(mdcHeaderKeys.getHeaderName(), mdcMap.get(mdcHeaderKeys.getMdcKey()));
         } else {
@@ -54,6 +51,12 @@ public final class MdcUtils {
     public static Map<String, String> mdcToMapWithHeaderKeys() {
         Map<String, String> result = new HashMap<>();
         Map<String, String> mdcMap = MDC.getCopyOfContextMap();
+
+        if (mdcMap == null) {
+            LOGGER.debug("MDC map is completely empty. Skipping header propagation.");
+            return result;
+        }
+
         putMdcToResultMap(result, mdcMap, MDCHeaderKeys.PROCESS_CONTEXT);
         putMdcToResultMap(result, mdcMap, MDCHeaderKeys.TMP);
         putMdcToResultMap(result, mdcMap, MDCHeaderKeys.EXP);

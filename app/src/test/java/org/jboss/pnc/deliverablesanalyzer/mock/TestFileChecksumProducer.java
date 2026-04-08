@@ -31,8 +31,6 @@ public class TestFileChecksumProducer extends FileChecksumProducer {
     @Override
     @PostConstruct
     public void init() {
-        // Skip the slow SpdxLicenseUtils loading
-        // Skip the Cache loading
 
         // Initialize the VFS
         try {

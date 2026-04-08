@@ -25,6 +25,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spdx.core.DefaultStoreNotInitializedException;
@@ -84,6 +85,9 @@ public class LicenseRegistry {
     private Map<String, List<String>> mappingsMap;
 
     @Inject
+    BuildConfig buildConfig;
+
+    @Inject
     ObjectMapper objectMapper;
 
     @Inject
@@ -91,6 +95,17 @@ public class LicenseRegistry {
 
     @PostConstruct
     void init() {
+        if (buildConfig.disableSpdxInit()) {
+            LOGGER.info("Skipping heavy SPDX License initialization via config (Test Mode).");
+            this.idsList = Collections.emptyList();
+            this.namesList = Collections.emptyList();
+            this.idsMap = Collections.emptyMap();
+            this.namesMap = Collections.emptyMap();
+            this.deprecatedMap = Collections.emptyMap();
+            this.mappingsMap = Collections.emptyMap();
+            return;
+        }
+
         LOGGER.info("Initializing SPDX License Manager...");
         try {
             loadSpdxData();

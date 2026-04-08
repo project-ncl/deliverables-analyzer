@@ -16,7 +16,7 @@
     limitations under the License.
 
 -->
-<distributed-cache name="sha256-cache" mode="SYNC" statistics="true">
+<distributed-cache name="pnc-archives" mode="SYNC" statistics="true">
   <encoding>
     <key media-type="text/plain"/>
     <value media-type="application/x-protostream"/>

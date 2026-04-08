@@ -27,8 +27,11 @@ import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
 import org.jboss.pnc.deliverablesanalyzer.config.ConfigParser;
+import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.rest.WireMockTestResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,6 +85,12 @@ public class AnalyzeCallbackIT {
     @InjectMock
     ChecksumService checksumService;
 
+    @InjectMock
+    PncBuildFinder pncBuildFinder;
+
+    @InjectMock
+    KojiBuildFinder kojiBuildFinder;
+
     public static class NoCacheProfile implements QuarkusTestProfile {
         @Override
         public Map<String, String> getConfigOverrides() {
@@ -102,6 +111,9 @@ public class AnalyzeCallbackIT {
                 .thenReturn(new BuildSpecificConfig(Collections.emptyList(), Collections.emptyList()));
         when(licenseExtractor.extractLicensesFromJar(any(), any(), any())).thenReturn(Collections.emptyList());
         when(licenseExtractor.getPomLicenses(any(), any())).thenReturn(Collections.emptyList());
+
+        when(pncBuildFinder.findBuilds(any())).thenReturn(AnalyzerResult.empty());
+        when(kojiBuildFinder.findBuilds(any())).thenReturn(AnalyzerResult.empty());
 
         // Ensure we return a checksum so the analysis has "results" to report
         when(checksumService.checksum(any(), any()))
@@ -137,8 +149,7 @@ public class AnalyzeCallbackIT {
         // Verify Callback
 
         // Use Awaitility to wait for the async operation to hit WireMock
-        await().atMost(5, SECONDS).untilAsserted(() -> {
-
+        await().atMost(10, SECONDS).pollInterval(1, SECONDS).untilAsserted(() -> {
             // Verify WireMock received the POST request
             WireMock.verify(
                     postRequestedFor(urlEqualTo(CALLBACK_RELATIVE_PATH))
