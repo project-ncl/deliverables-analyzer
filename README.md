@@ -79,7 +79,7 @@ The application relies on Infinispan (`REMOTE` mode) to maintain a highly availa
 
 The following caches must be provisioned on the Infinispan server:
 - `cancel-events` (Used for cluster-wide job termination)
-- `sha256-checksums` (Used for deduplicating repeated scans of identical archives)
+- `pnc-archives` (Used for deduplicating repeated scans of identical archives)
 - `koji-archives`
 - `koji-builds`
 - `koji-rpms`
