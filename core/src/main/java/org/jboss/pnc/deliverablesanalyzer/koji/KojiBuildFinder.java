@@ -21,8 +21,6 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveQuery;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildState;
 import com.redhat.red.build.koji.model.xmlrpc.KojiIdOrName;
-import com.redhat.red.build.koji.model.xmlrpc.KojiNVRA;
-import com.redhat.red.build.koji.model.xmlrpc.KojiRpmInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import io.quarkus.infinispan.client.Remote;
 import io.quarkus.virtual.threads.VirtualThreads;
@@ -44,14 +42,12 @@ import org.jboss.pnc.deliverablesanalyzer.model.finder.KojiBuild;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -80,10 +76,6 @@ public class KojiBuildFinder {
     RemoteCache<String, KojiArchiveInfoWrapper> archiveCache;
 
     @Inject
-    @Remote("koji-rpms")
-    RemoteCache<String, KojiRpmInfo> rpmCache;
-
-    @Inject
     @Remote("koji-builds")
     RemoteCache<Integer, KojiBuild> buildCache;
 
@@ -98,7 +90,6 @@ public class KojiBuildFinder {
         if (buildConfig.disableCache()) {
             LOGGER.info("Koji Caches disabled via configuration");
             this.archiveCache = null;
-            this.rpmCache = null;
             this.buildCache = null;
         }
 
@@ -110,122 +101,87 @@ public class KojiBuildFinder {
             return AnalyzerResult.empty();
         }
 
-        // Split Standard Archives from RPMs
-        Map<QueueEntry, Collection<String>> rpmTable = new HashMap<>();
-        Map<QueueEntry, Collection<String>> archiveTable = new HashMap<>();
-        checksumTable.forEach((entry, filenames) -> {
-            if (filenames.stream().anyMatch(f -> f.endsWith(".rpm"))) {
-                rpmTable.put(entry, filenames);
-            } else {
-                archiveTable.put(entry, filenames);
-            }
-        });
-
-        Set<AnalyzerArtifact> kojiArtifacts = new HashSet<>();
-
-        // Process RPMs
-        if (!rpmTable.isEmpty()) {
-            kojiArtifacts.addAll(lookupRpmsInKoji(rpmTable));
-        }
-
-        // Process Standard Archives
-        if (!archiveTable.isEmpty()) {
-            // Lookup Artifacts in Koji (with SHA256)
-            Set<AnalyzerArtifact> kojiArtifactsSha256 = lookupArtifactsInKoji(checksumTable, Checksum::getSha256Value);
-
-            // Get Not Found Artifacts and Remove Them from Found Artifacts
-            Set<AnalyzerArtifact> missingSha256 = new HashSet<>();
-            Iterator<AnalyzerArtifact> iterator = kojiArtifactsSha256.iterator();
-            while (iterator.hasNext()) {
-                AnalyzerArtifact analyzerArtifact = iterator.next();
-                if (analyzerArtifact.getBuildId() == null) {
-                    missingSha256.add(analyzerArtifact);
-                    iterator.remove();
-                }
-            }
-
-            // Prepare for MD5 Lookup
-            ConcurrentHashMap<QueueEntry, Collection<String>> md5ChecksumTable = new ConcurrentHashMap<>(
-                    missingSha256.size());
-            for (AnalyzerArtifact missingArtifact : missingSha256) {
-                md5ChecksumTable.put(
-                        new QueueEntry(
-                                missingArtifact.getInputPath(),
-                                missingArtifact.getChecksum(),
-                                missingArtifact.getLicenses()),
-                        missingArtifact.getFilenames());
-            }
-
-            // Lookup Artifacts in Koji (with MD5)
-            Set<AnalyzerArtifact> kojiArtifactsMd5 = lookupArtifactsInKoji(md5ChecksumTable, Checksum::getMd5Value);
-
-            kojiArtifacts.addAll(kojiArtifactsSha256);
-            kojiArtifacts.addAll(kojiArtifactsMd5);
-        }
+        // Lookup Artifacts in Koji (SHA256 with MD5 fallback)
+        Set<AnalyzerArtifact> kojiArtifacts = lookupArtifactsInKoji(checksumTable);
 
         // Group Artifacts into Builds
         return groupArtifactsAsBuilds(kojiArtifacts);
     }
 
-    private Set<AnalyzerArtifact> lookupRpmsInKoji(Map<QueueEntry, Collection<String>> rpmTable) {
+    private Set<AnalyzerArtifact> lookupArtifactsInKoji(Map<QueueEntry, Collection<String>> checksumTable) {
         Set<AnalyzerArtifact> artifacts = ConcurrentHashMap.newKeySet();
+        Map<QueueEntry, Collection<String>> unresolvedBatch = new ConcurrentHashMap<>(checksumTable);
 
-        List<QueueEntry> entries = new ArrayList<>(rpmTable.keySet());
-        int chunkSize = buildConfig.kojiMultiCallSize();
-        int capacity = (entries.size() / chunkSize) + 1;
-        List<CompletableFuture<Void>> tasks = new ArrayList<>(capacity);
+        // SHA256 Lookup
+        Map<QueueEntry, Collection<String>> sha256Batch = unresolvedBatch.entrySet()
+                .stream()
+                .filter(e -> e.getKey().checksum().getSha256Value() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        if (!sha256Batch.isEmpty()) {
+            Set<AnalyzerArtifact> sha256Found = executeParallelLookup(
+                    sha256Batch,
+                    checksumTable,
+                    Checksum::getSha256Value);
+            artifacts.addAll(sha256Found);
 
-        for (int i = 0; i < entries.size(); i += chunkSize) {
-            List<QueueEntry> chunk = entries.subList(i, Math.min(i + chunkSize, entries.size()));
-            tasks.add(CompletableFuture.supplyAsync(() -> {
-                try {
-                    kojiThrottle.acquire();
-                    return processRpmChunk(chunk, rpmTable);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new CompletionException(e);
-                } finally {
-                    kojiThrottle.release();
-                }
-            }, executorService).thenAccept(artifacts::addAll));
+            if (!sha256Found.isEmpty()) {
+                Set<String> foundHashes = sha256Found.stream()
+                        .map(a -> a.getChecksum().getSha256Value())
+                        .collect(Collectors.toSet());
+
+                unresolvedBatch.keySet().removeIf(entry -> foundHashes.contains(entry.checksum().getSha256Value()));
+            }
         }
 
-        try {
-            CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
-        } catch (CompletionException e) {
-            Throwable cause = e.getCause();
+        // MD5 Lookup
+        Map<QueueEntry, Collection<String>> md5Batch = unresolvedBatch.entrySet()
+                .stream()
+                .filter(e -> e.getKey().checksum().getMd5Value() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        if (!md5Batch.isEmpty()) {
+            Set<AnalyzerArtifact> md5Found = executeParallelLookup(md5Batch, checksumTable, Checksum::getMd5Value);
+            artifacts.addAll(md5Found);
 
-            if (cause instanceof CancellationException ce) {
-                throw ce;
+            if (!md5Found.isEmpty()) {
+                Set<String> foundHashes = md5Found.stream()
+                        .map(a -> a.getChecksum().getMd5Value())
+                        .collect(Collectors.toSet());
+
+                unresolvedBatch.keySet().removeIf(entry -> foundHashes.contains(entry.checksum().getMd5Value()));
             }
+        }
 
-            LOGGER.error("Error occurred during parallel Koji lookups", e.getCause());
-            throw new ReasonedException(
-                    ResultStatus.SYSTEM_ERROR,
-                    "Koji XML-RPC API call failed",
-                    cause != null ? cause : e);
+        // Map remaining as not found
+        for (QueueEntry notFound : unresolvedBatch.keySet()) {
+            artifacts.add(
+                    AnalyzerArtifactMapper.mapFromNotFound(
+                            notFound.checksum(),
+                            checksumTable.get(notFound),
+                            notFound.licenses(),
+                            notFound.sourceUrl()));
         }
 
         return artifacts;
     }
 
-    private Set<AnalyzerArtifact> lookupArtifactsInKoji(
-            Map<QueueEntry, Collection<String>> checksumTable,
+    private Set<AnalyzerArtifact> executeParallelLookup(
+            Map<QueueEntry, Collection<String>> validForHash,
+            Map<QueueEntry, Collection<String>> originalChecksumTable,
             Function<Checksum, String> hashExtractor) {
         Set<AnalyzerArtifact> artifacts = ConcurrentHashMap.newKeySet();
+        List<QueueEntry> entries = new ArrayList<>(validForHash.keySet());
 
-        // Split checksums to chunks for Koji processing
-        List<QueueEntry> entries = new ArrayList<>(checksumTable.keySet());
         int chunkSize = buildConfig.kojiMultiCallSize();
         int capacity = (entries.size() / chunkSize) + 1;
         List<CompletableFuture<Void>> tasks = new ArrayList<>(capacity);
 
         for (int i = 0; i < entries.size(); i += chunkSize) {
             List<QueueEntry> chunk = entries.subList(i, Math.min(i + chunkSize, entries.size()));
+
             tasks.add(CompletableFuture.supplyAsync(() -> {
                 try {
                     kojiThrottle.acquire();
-                    return processChecksumChunk(chunk, checksumTable, hashExtractor);
+                    return processChecksumChunk(chunk, originalChecksumTable, hashExtractor);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new CompletionException(e);
@@ -239,12 +195,10 @@ public class KojiBuildFinder {
             CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
         } catch (CompletionException e) {
             Throwable cause = e.getCause();
-
             if (cause instanceof CancellationException ce) {
                 throw ce;
             }
-
-            LOGGER.error("Error occurred during parallel Koji lookups", e.getCause());
+            LOGGER.error("Error occurred during parallel Koji lookups", cause);
             throw new ReasonedException(
                     ResultStatus.SYSTEM_ERROR,
                     "Koji XML-RPC API call failed",
@@ -252,35 +206,6 @@ public class KojiBuildFinder {
         }
 
         return artifacts;
-    }
-
-    private Set<AnalyzerArtifact> processRpmChunk(
-            List<QueueEntry> chunk,
-            Map<QueueEntry, Collection<String>> rpmTable) {
-        Map<QueueEntry, KojiRpmInfo> resolvedRpmsMap = new HashMap<>();
-        List<KojiIdOrName> nvrasToQuery = new ArrayList<>();
-        Map<KojiIdOrName, QueueEntry> queryToEntryMap = new HashMap<>();
-
-        // Check Cached RPMs
-        identifyRpmCacheHitsAndMisses(chunk, rpmTable, resolvedRpmsMap, nvrasToQuery, queryToEntryMap);
-
-        try {
-            // Query Koji for Cache Misses
-            queryMissingRpmsFromKoji(nvrasToQuery, queryToEntryMap, resolvedRpmsMap);
-
-            // Extract Build IDs and Fetch Details
-            Set<Integer> uniqueBuildIds = resolvedRpmsMap.values()
-                    .stream()
-                    .map(KojiRpmInfo::getBuildId)
-                    .collect(Collectors.toSet());
-            Map<Integer, KojiBuild> buildDetailsMap = uniqueBuildIds.isEmpty() ? Collections.emptyMap()
-                    : fetchBuildDetails(uniqueBuildIds);
-
-            // Resolve and Map to DTOs
-            return mapRpmsToAnalyzerArtifacts(chunk, rpmTable, resolvedRpmsMap, buildDetailsMap);
-        } catch (KojiClientException e) {
-            throw new CompletionException("Koji XML-RPC RPM query chunk failed", e);
-        }
     }
 
     private Set<AnalyzerArtifact> processChecksumChunk(
@@ -290,57 +215,37 @@ public class KojiBuildFinder {
         Map<String, List<KojiArchiveInfo>> resolvedArchivesMap = new HashMap<>();
         List<KojiArchiveQuery> checksumsToQuery = new ArrayList<>();
 
-        // Check Cached Archives
+        // Identify Cache Hits and Misses
         identifyArchiveCacheHitsAndMisses(chunk, hashExtractor, resolvedArchivesMap, checksumsToQuery);
 
+        // Query Koji
         try {
-            // Query Koji for Cache Misses
-            queryMissingArchivesFromKoji(checksumsToQuery, resolvedArchivesMap);
-
-            // Extract Build IDs and Fetch Details (for Best Build resolution)
-            Set<Integer> uniqueBuildIds = resolvedArchivesMap.values()
-                    .stream()
-                    .flatMap(List::stream)
-                    .map(KojiArchiveInfo::getBuildId)
-                    .collect(Collectors.toSet());
-            Map<Integer, KojiBuild> buildDetailsMap = uniqueBuildIds.isEmpty() ? Collections.emptyMap()
-                    : fetchBuildDetails(uniqueBuildIds);
-
-            // Resolve Best Build and Map to DTOs
-            return mapArchivesToAnalyzerArtifacts(
-                    chunk,
-                    checksumTable,
-                    hashExtractor,
-                    resolvedArchivesMap,
-                    buildDetailsMap);
+            queryMissingArchivesFromKoji(chunk, checksumsToQuery, resolvedArchivesMap, hashExtractor);
         } catch (KojiClientException e) {
             throw new CompletionException("Koji XML-RPC archive query chunk failed", e);
         }
-    }
 
-    private void identifyRpmCacheHitsAndMisses(
-            List<QueueEntry> chunk,
-            Map<QueueEntry, Collection<String>> rpmTable,
-            Map<QueueEntry, KojiRpmInfo> resolvedRpmsMap,
-            List<KojiIdOrName> nvrasToQuery,
-            Map<KojiIdOrName, QueueEntry> queryToEntryMap) {
+        // Extract Build IDs and Fetch Details
+        Set<Integer> uniqueBuildIds = resolvedArchivesMap.values()
+                .stream()
+                .flatMap(List::stream)
+                .map(KojiArchiveInfo::getBuildId)
+                .collect(Collectors.toSet());
 
-        for (QueueEntry entry : chunk) {
-            String hash = entry.checksum().getMd5Value();
-            KojiRpmInfo cached = (rpmCache != null) ? rpmCache.get(hash) : null;
-
-            if (cached != null) {
-                // Cached
-                resolvedRpmsMap.put(entry, cached);
-            } else {
-                // Uncached: Parse NVRA from filenames
-                KojiIdOrName idOrName = parseNvrasForKojiQuery(entry, rpmTable);
-                if (idOrName != null) {
-                    nvrasToQuery.add(idOrName);
-                    queryToEntryMap.put(idOrName, entry);
-                }
-            }
+        Map<Integer, KojiBuild> buildDetailsMap;
+        try {
+            buildDetailsMap = uniqueBuildIds.isEmpty() ? Collections.emptyMap() : fetchBuildDetails(uniqueBuildIds);
+        } catch (KojiClientException e) {
+            throw new CompletionException("Failed to fetch Koji build details", e);
         }
+
+        // Map the found artifacts
+        return mapArchivesToAnalyzerArtifacts(
+                chunk,
+                checksumTable,
+                hashExtractor,
+                resolvedArchivesMap,
+                buildDetailsMap);
     }
 
     private void identifyArchiveCacheHitsAndMisses(
@@ -348,69 +253,29 @@ public class KojiBuildFinder {
             Function<Checksum, String> hashExtractor,
             Map<String, List<KojiArchiveInfo>> resolvedArchivesMap,
             List<KojiArchiveQuery> checksumsToQuery) {
+
         for (QueueEntry entry : chunk) {
-            String hash = hashExtractor.apply(entry.checksum());
-            KojiArchiveInfoWrapper cached = (archiveCache != null) ? archiveCache.get(hash) : null;
+            String queryHash = hashExtractor.apply(entry.checksum());
+            String cacheKey = entry.checksum().getSha256Value();
+
+            // Strict Null Check to prevent Infinispan crashes on MD5 fallbacks
+            KojiArchiveInfoWrapper cached = (archiveCache != null && cacheKey != null) ? archiveCache.get(cacheKey)
+                    : null;
 
             if (cached != null && cached.data() != null) {
-                resolvedArchivesMap.put(hash, cached.data());
+                resolvedArchivesMap.put(queryHash, cached.data());
             } else {
-                checksumsToQuery.add(new KojiArchiveQuery().withChecksum(hash));
-            }
-        }
-    }
-
-    private KojiIdOrName parseNvrasForKojiQuery(QueueEntry entry, Map<QueueEntry, Collection<String>> rpmTable) {
-        Collection<String> filenames = rpmTable.get(entry);
-        String rpmFilename = filenames.stream().filter(f -> f.endsWith(".rpm")).findFirst().orElse("");
-        String cleanName = Paths.get(rpmFilename).getFileName().toString();
-
-        try {
-            KojiNVRA nvra = KojiNVRA.parseNVRA(cleanName);
-            return KojiIdOrName
-                    .getFor(nvra.getName() + "-" + nvra.getVersion() + "-" + nvra.getRelease() + "." + nvra.getArch());
-        } catch (Exception e) {
-            LOGGER.warn("Failed to parse NVRA from RPM filename: {}", cleanName);
-            return null;
-        }
-    }
-
-    private void queryMissingRpmsFromKoji(
-            List<KojiIdOrName> nvrasToQuery,
-            Map<KojiIdOrName, QueueEntry> queryToEntryMap,
-            Map<QueueEntry, KojiRpmInfo> resolvedRpmsMap) throws KojiClientException {
-
-        if (nvrasToQuery.isEmpty())
-            return;
-
-        List<KojiRpmInfo> kojiResults = kojiClient.getRPMs(nvrasToQuery);
-        for (int i = 0; i < nvrasToQuery.size(); i++) {
-            KojiRpmInfo rpm = kojiResults.get(i);
-            QueueEntry entry = queryToEntryMap.get(nvrasToQuery.get(i));
-
-            // Handle missing RPM or external RPMs (no build ID)
-            if (rpm == null || rpm.getBuildId() == null) {
-                continue;
-            }
-
-            String localMd5 = entry.checksum().getMd5Value();
-            if (localMd5 != null && localMd5.equals(rpm.getPayloadhash())) {
-                resolvedRpmsMap.put(entry, rpm);
-                if (rpmCache != null) {
-                    rpmCache.putAsync(localMd5, rpm);
-                }
-            } else {
-                String errorMessage = "Mismatched payload hash for " + rpm.getName() + ": " + localMd5 + " != "
-                        + rpm.getPayloadhash();
-                LOGGER.error(errorMessage);
-                throw new KojiClientException(errorMessage);
+                checksumsToQuery.add(new KojiArchiveQuery().withChecksum(queryHash));
             }
         }
     }
 
     private void queryMissingArchivesFromKoji(
+            List<QueueEntry> chunk,
             List<KojiArchiveQuery> checksumsToQuery,
-            Map<String, List<KojiArchiveInfo>> resolvedArchivesMap) throws KojiClientException {
+            Map<String, List<KojiArchiveInfo>> resolvedArchivesMap,
+            Function<Checksum, String> hashExtractor) throws KojiClientException {
+
         if (checksumsToQuery.isEmpty())
             return;
 
@@ -422,48 +287,25 @@ public class KojiBuildFinder {
         }
 
         for (int i = 0; i < checksumsToQuery.size(); i++) {
-            String hash = checksumsToQuery.get(i).getChecksum();
+            String queryHash = checksumsToQuery.get(i).getChecksum();
             List<KojiArchiveInfo> archiveInfos = kojiResults.get(i);
 
-            resolvedArchivesMap.put(hash, archiveInfos);
+            resolvedArchivesMap.put(queryHash, archiveInfos);
+
             if (archiveCache != null) {
-                archiveCache.putAsync(hash, new KojiArchiveInfoWrapper(archiveInfos));
+                QueueEntry originalEntry = chunk.stream()
+                        .filter(e -> queryHash.equals(hashExtractor.apply(e.checksum())))
+                        .findFirst()
+                        .orElse(null);
+
+                // Write to cache using SHA256
+                if (originalEntry != null && originalEntry.checksum().getSha256Value() != null) {
+                    archiveCache.putAsync(
+                            originalEntry.checksum().getSha256Value(),
+                            new KojiArchiveInfoWrapper(archiveInfos));
+                }
             }
         }
-    }
-
-    private Set<AnalyzerArtifact> mapRpmsToAnalyzerArtifacts(
-            List<QueueEntry> chunk,
-            Map<QueueEntry, Collection<String>> rpmTable,
-            Map<QueueEntry, KojiRpmInfo> resolvedRpmsMap,
-            Map<Integer, KojiBuild> buildDetailsMap) {
-        Set<AnalyzerArtifact> artifactsInChunk = new HashSet<>();
-
-        for (QueueEntry queueEntry : chunk) {
-            KojiRpmInfo rpm = resolvedRpmsMap.get(queueEntry);
-            Collection<String> filenames = rpmTable.get(queueEntry);
-
-            if (rpm == null) {
-                artifactsInChunk.add(
-                        AnalyzerArtifactMapper.mapFromNotFound(
-                                queueEntry.checksum(),
-                                filenames,
-                                queueEntry.licenses(),
-                                queueEntry.sourceUrl()));
-            } else {
-                KojiBuild buildDetails = buildDetailsMap.get(rpm.getBuildId());
-                AnalyzerArtifact analyzerArtifact = AnalyzerArtifactMapper.mapFromKojiRpm(
-                        rpm,
-                        buildDetails,
-                        queueEntry.checksum(),
-                        filenames,
-                        queueEntry.licenses(),
-                        queueEntry.sourceUrl());
-                artifactsInChunk.add(analyzerArtifact);
-            }
-        }
-
-        return artifactsInChunk;
     }
 
     private Set<AnalyzerArtifact> mapArchivesToAnalyzerArtifacts(
@@ -472,7 +314,8 @@ public class KojiBuildFinder {
             Function<Checksum, String> hashExtractor,
             Map<String, List<KojiArchiveInfo>> resolvedArchivesMap,
             Map<Integer, KojiBuild> buildDetailsMap) {
-        Set<AnalyzerArtifact> artifactsInChunk = new HashSet<>();
+
+        Set<AnalyzerArtifact> artifactsInPass = new HashSet<>();
 
         for (QueueEntry queueEntry : chunk) {
             Checksum checksum = queueEntry.checksum();
@@ -481,11 +324,7 @@ public class KojiBuildFinder {
 
             KojiArchiveInfo bestArchive = findArtifactInKoji(archivesForChecksum, buildDetailsMap).orElse(null);
 
-            if (bestArchive == null) {
-                artifactsInChunk.add(
-                        AnalyzerArtifactMapper
-                                .mapFromNotFound(checksum, filenames, queueEntry.licenses(), queueEntry.sourceUrl()));
-            } else {
+            if (bestArchive != null) {
                 KojiBuild buildDetails = buildDetailsMap.get(bestArchive.getBuildId());
                 AnalyzerArtifact analyzerArtifact = AnalyzerArtifactMapper.mapFromKojiArchive(
                         bestArchive,
@@ -494,18 +333,17 @@ public class KojiBuildFinder {
                         filenames,
                         queueEntry.licenses(),
                         queueEntry.sourceUrl());
-                artifactsInChunk.add(analyzerArtifact);
+                artifactsInPass.add(analyzerArtifact);
             }
         }
 
-        return artifactsInChunk;
+        return artifactsInPass;
     }
 
     private Map<Integer, KojiBuild> fetchBuildDetails(Set<Integer> buildIds) throws KojiClientException {
         Map<Integer, KojiBuild> detailsMap = new HashMap<>();
         Set<Integer> missingIds = new HashSet<>();
 
-        // Check Cache
         for (Integer id : buildIds) {
             KojiBuild cached = (buildCache != null) ? buildCache.get(id) : null;
             if (cached != null) {
@@ -515,7 +353,6 @@ public class KojiBuildFinder {
             }
         }
 
-        // Fetch missing from Koji
         if (!missingIds.isEmpty()) {
             List<Integer> missingIdsList = new ArrayList<>(missingIds);
             List<KojiIdOrName> idsOrNames = missingIdsList.stream().map(KojiIdOrName::getFor).toList();
@@ -541,12 +378,12 @@ public class KojiBuildFinder {
     private Optional<KojiArchiveInfo> findArtifactInKoji(
             List<KojiArchiveInfo> archivesForChecksum,
             Map<Integer, KojiBuild> buildDetailsMap) {
+
         if (archivesForChecksum == null || archivesForChecksum.isEmpty()) {
             return Optional.empty();
         }
 
-        KojiArchiveInfo bestArchive = findBestArchive(archivesForChecksum, buildDetailsMap);
-        return Optional.of(bestArchive);
+        return Optional.of(findBestArchive(archivesForChecksum, buildDetailsMap));
     }
 
     private KojiArchiveInfo findBestArchive(List<KojiArchiveInfo> archives, Map<Integer, KojiBuild> detailsMap) {
@@ -579,15 +416,12 @@ public class KojiBuildFinder {
             }
         }
 
-        if (!completeTaggedNonImportedBuilds.isEmpty()) {
+        if (!completeTaggedNonImportedBuilds.isEmpty())
             return completeTaggedNonImportedBuilds.getLast();
-        }
-        if (!completeTaggedBuilds.isEmpty()) {
+        if (!completeTaggedBuilds.isEmpty())
             return completeTaggedBuilds.getLast();
-        }
-        if (!completeBuilds.isEmpty()) {
+        if (!completeBuilds.isEmpty())
             return completeBuilds.getLast();
-        }
 
         return sortedArchives.getLast();
     }

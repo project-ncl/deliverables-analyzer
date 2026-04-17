@@ -33,7 +33,6 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @QuarkusTest
 class ChecksumServiceTest {
@@ -86,21 +85,5 @@ class ChecksumServiceTest {
         // Then
         assertEquals(expectedSha256, result.getSha256Value());
         assertEquals(0, result.getFileSize());
-    }
-
-    @Test
-    void testRpmExtensionTriggersRpmLogic() throws IOException {
-        // Given: A file ending in .rpm (but with invalid content)
-        FileObject file = root.resolveFile("fake.rpm");
-        file.createFile();
-        try (OutputStream os = file.getContent().getOutputStream()) {
-            os.write("fake rpm content".getBytes(StandardCharsets.UTF_8));
-        }
-
-        // When & Then: We expect IOException because the service tries to parse it as an RPM stream
-        // This proves the "if (rpm)" branch was taken.
-        assertThrows(IOException.class, () -> {
-            checksumService.checksum(file, root.getName().getPath());
-        });
     }
 }

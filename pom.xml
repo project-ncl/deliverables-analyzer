@@ -126,7 +126,6 @@
     <version.lombok>1.18.42</version.lombok>
     <version.maven-core>3.9.12</version.maven-core>
     <version.mycila>5.0.0</version.mycila>
-    <version.packager>0.21.0</version.packager>
     <version.spdx>2.0.1</version.spdx>
     <version.spotbugs>4.9.8.2</version.spotbugs>
     <version.wiremock>3.13.2</version.wiremock>
@@ -305,21 +304,6 @@
         <groupId>org.spdx</groupId>
         <artifactId>java-spdx-library</artifactId>
         <version>${version.spdx}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.packager</groupId>
-        <artifactId>packager-rpm</artifactId>
-        <version>${version.packager}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.eclipse.packager</groupId>
-            <artifactId>packager-core</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <!-- Lombok -->

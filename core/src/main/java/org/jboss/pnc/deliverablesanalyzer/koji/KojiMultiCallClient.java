@@ -23,7 +23,6 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveQuery;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildTypeInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiIdOrName;
-import com.redhat.red.build.koji.model.xmlrpc.KojiRpmInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import com.redhat.red.build.koji.model.xmlrpc.messages.Constants;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -49,11 +48,6 @@ public class KojiMultiCallClient {
 
     public List<List<KojiTagInfo>> listTagsByIds(List<Integer> buildIds) throws KojiClientException {
         return kojiClientHelper.listTagsByIds(buildIds, null);
-    }
-
-    public List<KojiRpmInfo> getRPMs(List<KojiIdOrName> idsOrNames) throws KojiClientException {
-        List<Object> args = formatArgs(idsOrNames);
-        return kojiClient.multiCall(Constants.GET_RPM, args, KojiRpmInfo.class, null);
     }
 
     public List<KojiBuildInfo> getBuilds(List<KojiIdOrName> idsOrNames) throws KojiClientException {

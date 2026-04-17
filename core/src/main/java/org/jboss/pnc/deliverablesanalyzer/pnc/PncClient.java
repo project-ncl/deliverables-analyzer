@@ -45,7 +45,7 @@ public class PncClient {
             }
             return page.getContent();
         } catch (ClientWebApplicationException e) {
-            LOGGER.error("Failed to fetch artifacts by sha256", e);
+            LOGGER.error("Failed to fetch PNC artifacts by sha256", e);
             throw e;
         }
     }

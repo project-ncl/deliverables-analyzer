@@ -91,10 +91,6 @@
       <artifactId>java-spdx-library</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.packager</groupId>
-      <artifactId>packager-rpm</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.commonjava.util</groupId>
       <artifactId>jhttpc</artifactId>
     </dependency>

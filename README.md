@@ -82,7 +82,6 @@ The following caches must be provisioned on the Infinispan server:
 - `pnc-archives` (Used for deduplicating repeated scans of identical archives)
 - `koji-archives`
 - `koji-builds`
-- `koji-rpms`
 
 ---
 

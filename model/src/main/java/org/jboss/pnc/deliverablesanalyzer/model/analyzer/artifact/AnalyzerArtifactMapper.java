@@ -17,7 +17,6 @@ package org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact;
 
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBtype;
-import com.redhat.red.build.koji.model.xmlrpc.KojiRpmInfo;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.KojiBuild;
@@ -71,7 +70,7 @@ public final class AnalyzerArtifactMapper {
                 case NPM -> {
                     NpmAnalyzerArtifact npm = new NpmAnalyzerArtifact();
                     String identifier = pncArtifact.getIdentifier();
-                    int lastAtIndex = identifier.lastIndexOf('@');
+                    int lastAtIndex = identifier.lastIndexOf(':');
                     if (lastAtIndex > 0) {
                         npm.setName(identifier.substring(0, lastAtIndex));
                         npm.setVersion(identifier.substring(lastAtIndex + 1));
@@ -157,37 +156,6 @@ public final class AnalyzerArtifactMapper {
             artifact.setArtifactId(archiveInfo.getArchiveId().toString());
             artifact.setArtifactFilename(archiveInfo.getFilename());
             artifact.setArtifactSize(Long.valueOf(archiveInfo.getSize()));
-
-            if (buildDetails != null && buildDetails.getInfo() != null) {
-                artifact.setBuildNvr(buildDetails.getInfo().getNvr());
-                artifact.setImport(buildDetails.getInfo().getTaskId() == null);
-            }
-        }
-
-        return artifact;
-    }
-
-    public static RpmAnalyzerArtifact mapFromKojiRpm(
-            KojiRpmInfo rpm,
-            KojiBuild buildDetails,
-            Checksum checksum,
-            Collection<String> filenames,
-            List<LicenseInfo> licenses,
-            String inputPath) {
-        RpmAnalyzerArtifact artifact = new RpmAnalyzerArtifact();
-        populateBaseProperties(artifact, BuildSystemType.BREW, inputPath, checksum, filenames, licenses);
-
-        if (rpm != null && rpm.getBuildId() != null) {
-            artifact.setName(rpm.getName());
-            artifact.setVersion(rpm.getVersion());
-            artifact.setRelease(rpm.getRelease());
-            artifact.setArch(rpm.getArch());
-
-            artifact.setBuildId(String.valueOf(rpm.getBuildId()));
-            artifact.setArtifactId(String.valueOf(rpm.getId()));
-            artifact.setArtifactFilename(
-                    rpm.getName() + "-" + rpm.getVersion() + "-" + rpm.getRelease() + "." + rpm.getArch() + ".rpm");
-            artifact.setArtifactSize(rpm.getSize());
 
             if (buildDetails != null && buildDetails.getInfo() != null) {
                 artifact.setBuildNvr(buildDetails.getInfo().getNvr());

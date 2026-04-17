@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -100,96 +101,90 @@ public class BuildLookupConsumer {
         var batchByPath = batch.stream().collect(Collectors.groupingBy(QueueEntry::sourceUrl));
         for (var entry : batchByPath.entrySet()) {
             String path = entry.getKey();
-            Map<QueueEntry, Collection<String>> batchForPath = createBatch(entry.getValue());
 
-            // Filter out empty files
-            Map<QueueEntry, Collection<String>> pncBatch = filterEmptyFiles(path, batchForPath, globalResults);
-            if (pncBatch.isEmpty()) {
+            // Create the initial batch of everything to be identified
+            Map<QueueEntry, Collection<String>> unresolvedBatch = createBatch(entry.getValue());
+
+            // Remove empty files/zips from the batch
+            filterEmptyFiles(path, unresolvedBatch, globalResults);
+            if (unresolvedBatch.isEmpty()) {
                 continue;
             }
 
-            // Query PNC
-            Map<QueueEntry, Collection<String>> kojiBatch;
+            // PNC Lookup
             try {
-                kojiBatch = processPncAndGetMissed(path, pncBatch, globalResults);
+                processLookup(path, unresolvedBatch, globalResults, pncBuildFinder::findBuilds);
             } catch (Exception e) {
                 if (e instanceof CancellationException || e instanceof ReasonedException)
                     throw e;
                 throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "PNC Lookup failed for path: " + path, e);
             }
 
-            // Query Koji
-            if (!kojiBatch.isEmpty()) {
+            // Koji Lookup
+            if (!unresolvedBatch.isEmpty()) {
                 try {
-                    processKojiAndHandleNotFound(path, kojiBatch, globalResults);
+                    processLookup(path, unresolvedBatch, globalResults, kojiBuildFinder::findBuilds);
                 } catch (Exception e) {
                     if (e instanceof CancellationException || e instanceof ReasonedException)
                         throw e;
                     throw new ReasonedException(ResultStatus.SYSTEM_ERROR, "Koji Lookup failed for path: " + path, e);
                 }
             }
+
+            // Map unresolved items to not found artifacts
+            if (!unresolvedBatch.isEmpty()) {
+                LOGGER.debug("Marking {} unresolved artifacts as Not Found", unresolvedBatch.size());
+
+                for (Map.Entry<QueueEntry, Collection<String>> unresolvedEntry : unresolvedBatch.entrySet()) {
+                    mapToNotFound(path, unresolvedEntry.getKey(), unresolvedEntry.getValue(), globalResults);
+                }
+
+                unresolvedBatch.clear();
+            }
         }
     }
 
-    private Map<QueueEntry, Collection<String>> filterEmptyFiles(
+    private void filterEmptyFiles(
             String path,
-            Map<QueueEntry, Collection<String>> batchForPath,
+            Map<QueueEntry, Collection<String>> unresolvedBatch,
             Map<String, AnalyzerResult> globalResults) {
-        Map<QueueEntry, Collection<String>> validBatch = new HashMap<>();
-
-        for (Map.Entry<QueueEntry, Collection<String>> batchEntry : batchForPath.entrySet()) {
+        var iterator = unresolvedBatch.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var batchEntry = iterator.next();
             QueueEntry queueEntry = batchEntry.getKey();
             Collection<String> filenames = batchEntry.getValue();
 
             if (isEmptyFileDigest(queueEntry.checksum()) || isEmptyZipDigest(queueEntry.checksum())) {
                 LOGGER.debug("Short-circuiting empty file/zip to Build Zero: {}", filenames);
                 mapToNotFound(path, queueEntry, filenames, globalResults);
-            } else {
-                validBatch.put(queueEntry, filenames);
+
+                // Remote the resolved entry from the batch
+                iterator.remove();
             }
         }
-
-        return validBatch;
     }
 
-    private Map<QueueEntry, Collection<String>> processPncAndGetMissed(
+    private void processLookup(
             String path,
-            Map<QueueEntry, Collection<String>> pncBatch,
-            Map<String, AnalyzerResult> globalResults) {
-        AnalyzerResult pncResults = pncBuildFinder.findBuilds(pncBatch);
+            Map<QueueEntry, Collection<String>> unresolvedBatch,
+            Map<String, AnalyzerResult> globalResults,
+            Function<Map<QueueEntry, Collection<String>>, AnalyzerResult> findFunction) {
+        AnalyzerResult lookupResults = findFunction.apply(unresolvedBatch);
 
-        Map<QueueEntry, Collection<String>> missedBatch = new HashMap<>();
-
-        Set<AnalyzerArtifact> missingArtifacts = pncResults.notFoundArtifacts();
-        if (!missingArtifacts.isEmpty()) {
-            Set<String> missingChecksums = missingArtifacts.stream()
-                    .map(a -> a.getChecksum().getSha256Value())
-                    .collect(Collectors.toSet());
-
-            for (Map.Entry<QueueEntry, Collection<String>> entry : pncBatch.entrySet()) {
-                if (missingChecksums.contains(entry.getKey().checksum().getSha256Value())) {
-                    missedBatch.put(entry.getKey(), entry.getValue());
-                }
-            }
+        if (lookupResults == null || lookupResults.foundBuilds().isEmpty()) {
+            // Provider found nothing, batch stays unchanged
+            return;
         }
 
-        if (!pncResults.foundBuilds().isEmpty()) {
-            resultAggregator.mergeBatchResults(globalResults.get(path), pncResults.foundBuilds());
-        }
+        // Merge found builds into the final result
+        resultAggregator.mergeBatchResults(globalResults.get(path), lookupResults.foundBuilds());
 
-        return missedBatch;
-    }
-
-    private void processKojiAndHandleNotFound(
-            String path,
-            Map<QueueEntry, Collection<String>> kojiBatch,
-            Map<String, AnalyzerResult> globalResults) {
-        AnalyzerResult kojiResults = kojiBuildFinder.findBuilds(kojiBatch);
-
-        // Whatever Koji missed is permanently not found
-        AnalyzerResult pathResult = globalResults.get(path);
-        pathResult.notFoundArtifacts().addAll(kojiResults.notFoundArtifacts());
-        resultAggregator.mergeBatchResults(pathResult, kojiResults.foundBuilds());
+        // Remove found items from the unresolved batch
+        Set<String> missingChecksums = lookupResults.notFoundArtifacts()
+                .stream()
+                .map(a -> a.getChecksum().getSha256Value())
+                .collect(Collectors.toSet());
+        unresolvedBatch.keySet().removeIf(entry -> !missingChecksums.contains(entry.checksum().getSha256Value()));
     }
 
     private Map<QueueEntry, Collection<String>> createBatch(List<QueueEntry> queueEntries) {
