@@ -59,7 +59,7 @@ class BuildLookupConsumerTest {
         queue.put(QueueEntry.POISON_PILL); // Signal to stop
 
         Map<String, AnalyzerResult> globalResults = new ConcurrentHashMap<>();
-        globalResults.put(path, AnalyzerResult.empty());
+        globalResults.put(path, AnalyzerResult.init());
 
         // Mock Finder to return empty map
         when(pncBuildFinder.findBuilds(any())).thenReturn(AnalyzerResult.empty());
@@ -68,10 +68,10 @@ class BuildLookupConsumerTest {
         consumer.consume(queue, globalResults);
 
         // Then
-        // 1. Should have called PncBuildFinder once for the batch
+        // Should have called PncBuildFinder once for the batch
         verify(pncBuildFinder, times(1)).findBuilds(any());
 
-        // 2. Should have called cleanUp at the end
+        // Should have called cleanUp at the end
         verify(resultAggregator, times(1)).cleanUp(any());
     }
 }

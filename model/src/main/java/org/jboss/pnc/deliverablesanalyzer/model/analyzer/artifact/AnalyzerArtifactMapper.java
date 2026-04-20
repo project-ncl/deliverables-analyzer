@@ -128,12 +128,6 @@ public final class AnalyzerArtifactMapper {
                     maven.setClassifier(archiveInfo.getClassifier());
                     yield maven;
                 }
-                case npm -> {
-                    NpmAnalyzerArtifact npm = new NpmAnalyzerArtifact();
-                    npm.setName(archiveInfo.getArtifactId());
-                    npm.setVersion(archiveInfo.getVersion());
-                    yield npm;
-                }
                 case win -> {
                     WindowsAnalyzerArtifact win = new WindowsAnalyzerArtifact();
                     win.setName(archiveInfo.getArtifactId());

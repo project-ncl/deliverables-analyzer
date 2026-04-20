@@ -95,10 +95,10 @@ public class ArchiveScanner {
         List<FileObject> localFiles = new ArrayList<>();
 
         try {
-            // 1. Discovery: Find children, combine for iteration
+            // Discovery: Find children, combine for iteration
             List<FileObject> allFiles = findAndSortChildren(fileObject, pomFiles, localFiles);
 
-            // 2. License Handling (Main JAR)
+            // License Handling (Main JAR)
             if (isMainJar(fileObject)) {
                 List<LicenseInfo> licenses = licenseExtractor.extractLicensesFromJar(fileObject, allFiles, rootPath);
                 if (!licenses.isEmpty()) {
@@ -110,7 +110,7 @@ public class ArchiveScanner {
 
             for (FileObject file : allFiles) {
                 if (file.isFile()) {
-                    // A. POM Processing
+                    // POM Processing
                     if (MavenUtils.isPom(file) || MavenUtils.isPomXml(file)) {
                         try {
                             List<LicenseInfo> licenses = licenseExtractor.getPomLicenses(file, rootPath);
@@ -126,7 +126,7 @@ public class ArchiveScanner {
                         }
                     }
 
-                    // B. Archive Recursion
+                    // Archive Recursion
                     if (isArchive(file)) {
                         int nextLevel = currentLevel + 1;
                         if (shouldListArchive(file, nextLevel)) {
@@ -143,7 +143,7 @@ public class ArchiveScanner {
                         }
                     }
 
-                    // C. Checksum Task & Queue
+                    // Checksum Task & Queue
                     if (shouldChecksum(file, buildSpecificConfig)) {
                         Checksum checksum = checksumService.checksum(file, rootPath);
                         handleChecksum(checksum, checksumMap, licensesMap, inputPath, queue);
