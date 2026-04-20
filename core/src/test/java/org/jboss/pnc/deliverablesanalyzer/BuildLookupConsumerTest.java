@@ -18,6 +18,7 @@ package org.jboss.pnc.deliverablesanalyzer;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.core.ResultAggregator;
@@ -32,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +45,9 @@ class BuildLookupConsumerTest {
 
     @InjectMock
     PncBuildFinder pncBuildFinder;
+
+    @InjectMock
+    KojiBuildFinder kojiBuildFinder;
 
     @InjectMock
     ResultAggregator resultAggregator;
@@ -63,15 +67,17 @@ class BuildLookupConsumerTest {
 
         // Mock Finder to return empty map
         when(pncBuildFinder.findBuilds(any())).thenReturn(AnalyzerResult.empty());
+        when(kojiBuildFinder.findBuilds(any())).thenReturn(AnalyzerResult.empty());
 
         // When
         consumer.consume(queue, globalResults);
 
         // Then
         // Should have called PncBuildFinder once for the batch
-        verify(pncBuildFinder, times(1)).findBuilds(any());
+        verify(pncBuildFinder, timeout(2000).times(1)).findBuilds(any());
+        verify(kojiBuildFinder, timeout(2000).times(1)).findBuilds(any());
 
         // Should have called cleanUp at the end
-        verify(resultAggregator, times(1)).cleanUp(any());
+        verify(resultAggregator, timeout(2000).times(1)).cleanUp(any());
     }
 }
