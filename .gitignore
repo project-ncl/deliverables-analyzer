@@ -25,7 +25,6 @@ target/
 .idea
 *.iml
 
-
 # Maven Wrapper
 .mvn/
 mvnw
@@ -33,3 +32,9 @@ mvnw.cmd
 
 # formatter-maven-plugin
 .cache/
+
+# local env
+.env
+
+# build constants (auto-gen)
+app/src/main/java/org/jboss/pnc/deliverablesanalyzer/app/BuildInformationConstants.java
