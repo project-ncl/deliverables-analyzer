@@ -16,19 +16,21 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.jboss</groupId>
     <artifactId>jboss-parent</artifactId>
     <version>51</version>
-    <relativePath />
+    <relativePath/>
   </parent>
 
   <groupId>org.jboss.pnc.deliverablesanalyzer</groupId>
-  <artifactId>deliverables-analyzer</artifactId>
-  <version>1.2.11-SNAPSHOT</version>
+  <artifactId>parent</artifactId>
+  <version>2.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
   <name>Deliverables Analyzer</name>
   <description>Analyzes deliverables.</description>
@@ -38,6 +40,7 @@
     <name>Red Hat, Inc.</name>
     <url>https://www.redhat.com/</url>
   </organization>
+
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
@@ -53,253 +56,301 @@
     <url>https://github.com/project-ncl/deliverables-analyzer</url>
   </scm>
 
+  <developers>
+    <developer>
+      <organization>RedHat</organization>
+      <organizationUrl>https://www.redhat.com</organizationUrl>
+    </developer>
+  </developers>
+
+  <modules>
+    <module>app</module>
+    <module>core</module>
+    <module>model</module>
+  </modules>
+
   <properties>
+    <!-- Maven -->
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
     <maven.compiler.parameters>true</maven.compiler.parameters>
-    <maven.compiler.release>17</maven.compiler.release>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
-    <mavenVersion>3.6.3</mavenVersion>
+    <maven.compiler.release>21</maven.compiler.release>
+
+    <!-- Project -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <skipITs>true</skipITs>
-    <version.central-publishing-maven-plugin>0.10.0</version.central-publishing-maven-plugin>
-    <version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>4.0.0</version.com.dkanejs.maven.plugins.docker-compose-maven-plugin>
-    <version.com.fasterxml.jackson>2.21.2</version.com.fasterxml.jackson>
-    <version.com.github.eirslett>1.9.1</version.com.github.eirslett>
-    <version.com.github.ekryd.sortpom>4.0.0</version.com.github.ekryd.sortpom>
-    <version.com.github.spotbugs>4.9.8.3</version.com.github.spotbugs>
-    <version.com.mycila>5.0.0</version.com.mycila>
-    <version.com.puppycrawl.tools>13.4.0</version.com.puppycrawl.tools>
-    <version.git-commit-id-plugin>4.9.10</version.git-commit-id-plugin>
-    <version.io.quarkus>3.31.4</version.io.quarkus>
-    <version.net.revelc.code.formatter.formatter-maven-plugin>2.26.0</version.net.revelc.code.formatter.formatter-maven-plugin>
-    <version.net.revelc.code.impsort-maven-plugin>1.12.0</version.net.revelc.code.impsort-maven-plugin>
-    <version.net.sourceforge.pmd>7.23.0</version.net.sourceforge.pmd>
-    <version.org.apache.commons.collections4>4.5.0</version.org.apache.commons.collections4>
-    <version.org.apache.maven.plugins.maven-antrun-plugin>3.2.0</version.org.apache.maven.plugins.maven-antrun-plugin>
-    <version.org.apache.maven.plugins.maven-checkstyle-plugin>3.6.0</version.org.apache.maven.plugins.maven-checkstyle-plugin>
-    <version.org.apache.maven.plugins.maven-clean-plugin>3.5.0</version.org.apache.maven.plugins.maven-clean-plugin>
-    <version.org.apache.maven.plugins.maven-compiler-plugin>3.15.0</version.org.apache.maven.plugins.maven-compiler-plugin>
-    <version.org.apache.maven.plugins.maven-dependency-plugin>3.10.0</version.org.apache.maven.plugins.maven-dependency-plugin>
-    <version.org.apache.maven.plugins.maven-deploy-plugin>3.1.4</version.org.apache.maven.plugins.maven-deploy-plugin>
-    <version.org.apache.maven.plugins.maven-enforcer-plugin>3.6.2</version.org.apache.maven.plugins.maven-enforcer-plugin>
-    <version.org.apache.maven.plugins.maven-gpg-plugin>3.2.8</version.org.apache.maven.plugins.maven-gpg-plugin>
-    <version.org.apache.maven.plugins.maven-install-plugin>3.1.4</version.org.apache.maven.plugins.maven-install-plugin>
-    <version.org.apache.maven.plugins.maven-jar-plugin>3.5.0</version.org.apache.maven.plugins.maven-jar-plugin>
-    <version.org.apache.maven.plugins.maven-javadoc-plugin>3.12.0</version.org.apache.maven.plugins.maven-javadoc-plugin>
-    <version.org.apache.maven.plugins.maven-jxr-plugin>3.6.0</version.org.apache.maven.plugins.maven-jxr-plugin>
-    <version.org.apache.maven.plugins.maven-pmd-plugin>3.28.0</version.org.apache.maven.plugins.maven-pmd-plugin>
-    <version.org.apache.maven.plugins.maven-project-info-reports-plugin>3.9.0</version.org.apache.maven.plugins.maven-project-info-reports-plugin>
-    <version.org.apache.maven.plugins.maven-release-plugin>3.3.1</version.org.apache.maven.plugins.maven-release-plugin>
-    <version.org.apache.maven.plugins.maven-resources-plugin>3.5.0</version.org.apache.maven.plugins.maven-resources-plugin>
-    <version.org.apache.maven.plugins.maven-site-plugin>3.21.0</version.org.apache.maven.plugins.maven-site-plugin>
-    <version.org.apache.maven.plugins.maven-source-plugin>3.4.0</version.org.apache.maven.plugins.maven-source-plugin>
-    <version.org.apache.maven.plugins.maven-surefire-plugin>3.5.5</version.org.apache.maven.plugins.maven-surefire-plugin>
-    <version.org.codehaus.mojo.buildnumber-maven-plugin>3.3.0</version.org.codehaus.mojo.buildnumber-maven-plugin>
-    <version.org.codehaus.mojo.versions-maven-plugin>2.21.0</version.org.codehaus.mojo.versions-maven-plugin>
-    <version.org.ec4j.maven.editorconfig-maven-plugin>0.1.0</version.org.ec4j.maven.editorconfig-maven-plugin>
-    <version.org.jboss.pnc.build.finder>2.6.8-SNAPSHOT</version.org.jboss.pnc.build.finder>
-    <version.org.jboss.pnc.logging>3.0.4</version.org.jboss.pnc.logging>
-    <version.org.jboss.pnc.pnc>3.4.4</version.org.jboss.pnc.pnc>
-    <version.org.jboss.pnc.pnc-api>3.4.3</version.org.jboss.pnc.pnc-api>
-    <version.org.jboss.pnc.quarkus-pnc-client-auth>1.0.0</version.org.jboss.pnc.quarkus-pnc-client-auth>
-    <version.org.junit-pioneer>2.3.0</version.org.junit-pioneer>
-    <version.org.wiremock>3.13.2</version.org.wiremock>
+
+    <!-- Quarkus -->
+    <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+    <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+    <quarkus.platform.version>3.31.4</quarkus.platform.version>
+
+    <!-- Maven Plugin Versions -->
+    <maven.antrun-plugin.version>3.2.0</maven.antrun-plugin.version>
+    <maven.buildnumber-plugin.version>3.3.0</maven.buildnumber-plugin.version>
+    <maven.clean-plugin.version>3.5.0</maven.clean-plugin.version>
+    <maven.compiler-plugin.version>3.15.0</maven.compiler-plugin.version>
+    <maven.central-publishing-plugin.version>0.10.0</maven.central-publishing-plugin.version>
+    <maven.dependency-plugin.version>3.10.0</maven.dependency-plugin.version>
+    <maven.deploy-plugin.version>3.1.4</maven.deploy-plugin.version>
+    <maven.enforcer-plugin.version>3.6.2</maven.enforcer-plugin.version>
+    <maven.gpg-plugin.version>3.2.8</maven.gpg-plugin.version>
+    <maven.install-plugin.version>3.1.4</maven.install-plugin.version>
+    <maven.jar-plugin.version>3.5.0</maven.jar-plugin.version>
+    <maven.javadoc-plugin.version>3.12.0</maven.javadoc-plugin.version>
+    <maven.jxr-plugin.version>3.6.0</maven.jxr-plugin.version>
+    <maven.release-plugin.version>3.3.1</maven.release-plugin.version>
+    <maven.resources-plugin.version>3.4.0</maven.resources-plugin.version>
+    <maven.site-plugin.version>3.21.0</maven.site-plugin.version>
+    <maven.source-plugin.version>3.4.0</maven.source-plugin.version>
+    <maven.surefire-plugin.version>3.5.4</maven.surefire-plugin.version>
+
+    <!-- Versions PNC -->
+    <version.pnc>3.5.0-SNAPSHOT</version.pnc>
+    <version.pnc-api>3.5.0-SNAPSHOT</version.pnc-api>
+    <version.pnc-common>3.4.1-SNAPSHOT</version.pnc-common>
+    <version.pnc-client-auth>1.0.0</version.pnc-client-auth>
+    <version.pnc-logging-kafka>3.0.4</version.pnc-logging-kafka>
+
+    <!-- Versions Koji -->
+    <version.kojiji>2.25</version.kojiji>
+    <version.jhttpc>1.16</version.jhttpc>
+
+    <!-- Versions -->
+    <version.commons-vfs2>2.10.0</version.commons-vfs2>
+    <version.dkanejs-compose>4.0.0</version.dkanejs-compose>
+    <version.formatter>2.26.0</version.formatter>
+    <version.jandex>3.1.6</version.jandex>
+    <version.git-commit-id>9.0.2</version.git-commit-id>
+    <version.httpclient5>5.6</version.httpclient5>
+    <version.lombok>1.18.42</version.lombok>
+    <version.maven-core>3.9.12</version.maven-core>
+    <version.mycila>5.0.0</version.mycila>
+    <version.spdx>2.0.1</version.spdx>
+    <version.spotbugs>4.9.8.2</version.spotbugs>
+    <version.wiremock>3.13.2</version.wiremock>
   </properties>
+
+  <repositories>
+    <repository>
+      <name>JBoss Public Maven Repository</name>
+      <id>jboss-public-repository</id>
+      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <name>Central Portal Snapshots</name>
+      <id>central-portal-snapshots</id>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.fasterxml.jackson</groupId>
-        <artifactId>jackson-bom</artifactId>
-        <version>${version.com.fasterxml.jackson}</version>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>${quarkus.platform.artifact-id}</artifactId>
+        <version>${quarkus.platform.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+
+      <!-- Modules -->
       <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-bom</artifactId>
-        <version>${version.io.quarkus}</version>
-        <type>pom</type>
-        <scope>import</scope>
+        <groupId>org.jboss.pnc.deliverablesanalyzer</groupId>
+        <artifactId>analyzer-core</artifactId>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-collections4</artifactId>
-        <version>${version.org.apache.commons.collections4}</version>
+        <groupId>org.jboss.pnc.deliverablesanalyzer</groupId>
+        <artifactId>analyzer-model</artifactId>
+        <version>${project.version}</version>
       </dependency>
+
+      <!-- PNC -->
       <dependency>
         <groupId>org.jboss.pnc</groupId>
         <artifactId>dto</artifactId>
-        <version>${version.org.jboss.pnc.pnc}</version>
+        <version>${version.pnc}</version>
         <classifier>jakarta</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.pnc</groupId>
-        <artifactId>dto</artifactId>
-        <version>${version.org.jboss.pnc.pnc}</version>
-        <classifier>patch-builders-jakarta</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.pnc</groupId>
-        <artifactId>pnc-api</artifactId>
-        <version>${version.org.jboss.pnc.pnc-api}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.pnc</groupId>
-        <artifactId>pnc-api</artifactId>
-        <version>${version.org.jboss.pnc.pnc-api}</version>
-        <classifier>jakarta</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.pnc</groupId>
-        <artifactId>quarkus-pnc-client-auth</artifactId>
-        <version>${version.org.jboss.pnc.quarkus-pnc-client-auth}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.pnc</groupId>
-        <artifactId>rest-client-jakarta</artifactId>
-        <version>${version.org.jboss.pnc.pnc}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jboss.pnc.build.finder</groupId>
-        <artifactId>core</artifactId>
-        <version>${version.org.jboss.pnc.build.finder}</version>
         <exclusions>
           <exclusion>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-collections4</artifactId>
-          </exclusion>
-          <exclusion>
             <groupId>org.jboss.pnc</groupId>
-            <artifactId>dto</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.jboss.pnc</groupId>
-            <artifactId>rest-client</artifactId>
+            <artifactId>pnc-api</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.junit-pioneer</groupId>
-        <artifactId>junit-pioneer</artifactId>
-        <version>${version.org.junit-pioneer}</version>
-        <scope>test</scope>
+        <groupId>org.jboss.pnc</groupId>
+        <artifactId>pnc-api</artifactId>
+        <version>${version.pnc-api}</version>
+        <classifier>jakarta</classifier>
       </dependency>
+      <dependency>
+        <groupId>org.jboss.pnc</groupId>
+        <artifactId>pnc-common</artifactId>
+        <version>${version.pnc-common}</version>
+        <classifier>jakarta</classifier>
+        <exclusions>
+          <exclusion>
+            <groupId>org.jboss.pnc</groupId>
+            <artifactId>pnc-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.pnc</groupId>
+        <artifactId>quarkus-pnc-client-auth</artifactId>
+        <version>${version.pnc-client-auth}</version>
+      </dependency>
+
+      <!-- Koji -->
+      <dependency>
+        <groupId>com.redhat.red.build</groupId>
+        <artifactId>kojiji</artifactId>
+        <version>${version.kojiji}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-templates</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-xml</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.commonjava.util</groupId>
+            <artifactId>jhttpc</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.commonjava.util</groupId>
+        <artifactId>jhttpc</artifactId>
+        <version>${version.jhttpc}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <!-- Logging -->
+      <dependency>
+        <groupId>org.jboss.pnc.logging</groupId>
+        <artifactId>quarkus-logging-kafka</artifactId>
+        <version>${version.pnc-logging-kafka}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.pnc.logging</groupId>
+        <artifactId>quarkus-logging-kafka-deployment</artifactId>
+        <version>${version.pnc-logging-kafka}</version>
+      </dependency>
+
+      <!-- Others -->
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-vfs2</artifactId>
+        <version>${version.commons-vfs2}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents.client5</groupId>
+        <artifactId>httpclient5</artifactId>
+        <version>${version.httpclient5}</version>
+        <scope>compile</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-core</artifactId>
+        <version>${version.maven-core}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.spdx</groupId>
+        <artifactId>java-spdx-library</artifactId>
+        <version>${version.spdx}</version>
+      </dependency>
+
+      <!-- Lombok -->
+      <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>${version.lombok}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Test -->
       <dependency>
         <groupId>org.wiremock</groupId>
         <artifactId>wiremock</artifactId>
-        <version>${version.org.wiremock}</version>
+        <version>${version.wiremock}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
 
   <dependencies>
+    <!-- Cache -->
     <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-elytron-security-ldap</artifactId>
+      <groupId>org.infinispan.protostream</groupId>
+      <artifactId>protostream-processor</artifactId>
+      <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-hibernate-validator</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-infinispan-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-jacoco</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-logging-json</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-oidc-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-opentelemetry</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy-client-jackson</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy-jackson</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-scheduler</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-smallrye-context-propagation</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-smallrye-health</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-smallrye-openapi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-undertow</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
-      <version>8.0.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-collections4</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.pnc</groupId>
-      <artifactId>dto</artifactId>
-      <classifier>patch-builders-jakarta</classifier>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.pnc</groupId>
-      <artifactId>quarkus-pnc-client-auth</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.pnc</groupId>
-      <artifactId>rest-client-jakarta</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jboss.pnc.build.finder</groupId>
-      <artifactId>core</artifactId>
-    </dependency>
+
+    <!-- Logging -->
     <dependency>
       <groupId>org.jboss.pnc.logging</groupId>
       <artifactId>quarkus-logging-kafka</artifactId>
-      <version>${version.org.jboss.pnc.logging}</version>
     </dependency>
     <dependency>
       <groupId>org.jboss.pnc.logging</groupId>
       <artifactId>quarkus-logging-kafka-deployment</artifactId>
-      <version>${version.org.jboss.pnc.logging}</version>
     </dependency>
-    <dependency>
-      <groupId>org.jboss.slf4j</groupId>
-      <artifactId>slf4j-jboss-logmanager</artifactId>
-    </dependency>
+
+    <!-- Test -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5-mockito</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -313,239 +364,211 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.junit-pioneer</groupId>
-      <artifactId>junit-pioneer</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.wiremock</groupId>
       <artifactId>wiremock</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
 
-  <repositories>
-    <repository>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <id>jboss-public-repository</id>
-      <name>JBoss Public Maven Repository</name>
-      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-    </repository>
-    <repository>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <id>central-portal-snapshots</id>
-      <name>Central Portal Snapshots</name>
-      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
-    </repository>
-  </repositories>
-  <pluginRepositories>
-    <pluginRepository>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-      <id>jboss-public-repository</id>
-      <name>JBoss Public Maven Repository</name>
-      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-      <layout>default</layout>
-    </pluginRepository>
-  </pluginRepositories>
-
   <build>
-    <resources>
-      <resource>
-        <filtering>true</filtering>
-        <directory>${project.basedir}/src/main/resources</directory>
-      </resource>
-    </resources>
-
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>com.dkanejs.maven.plugins</groupId>
-          <artifactId>docker-compose-maven-plugin</artifactId>
-          <version>${version.com.dkanejs.maven.plugins.docker-compose-maven-plugin}</version>
+          <groupId>${quarkus.platform.group-id}</groupId>
+          <artifactId>quarkus-maven-plugin</artifactId>
+          <version>${quarkus.platform.version}</version>
+          <extensions>true</extensions>
+          <executions>
+            <execution>
+              <goals>
+                <goal>build</goal>
+                <goal>generate-code</goal>
+                <goal>generate-code-tests</goal>
+                <goal>native-image-agent</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
-          <groupId>com.github.ekryd.sortpom</groupId>
-          <artifactId>sortpom-maven-plugin</artifactId>
-          <version>${version.com.github.ekryd.sortpom}</version>
-          <configuration>
-            <encoding>${project.build.sourceEncoding}</encoding>
-            <expandEmptyElements>false</expandEmptyElements>
-            <lineSeparator>\n</lineSeparator>
-            <sortDependencies>scope,groupId,artifactId</sortDependencies>
-            <sortDependencyExclusions>groupId,artifactId</sortDependencyExclusions>
-            <sortPlugins>scope,groupId,artifactId</sortPlugins>
-            <sortProperties>true</sortProperties>
-            <spaceBeforeCloseEmptyElement>true</spaceBeforeCloseEmptyElement>
-          </configuration>
+          <groupId>com.dkanejs.maven.plugins</groupId>
+          <artifactId>docker-compose-maven-plugin</artifactId>
+          <version>${version.dkanejs-compose}</version>
         </plugin>
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>${version.com.github.spotbugs}</version>
+          <version>${version.spotbugs}</version>
         </plugin>
         <plugin>
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>
-          <version>${version.com.mycila}</version>
-        </plugin>
-        <plugin>
-          <groupId>net.revelc.code</groupId>
-          <artifactId>impsort-maven-plugin</artifactId>
-          <version>${version.net.revelc.code.impsort-maven-plugin}</version>
+          <version>${version.mycila}</version>
           <configuration>
-            <groups>java.,javax.,org.,com.</groups>
-            <lineEnding>LF</lineEnding>
-            <removeUnused>true</removeUnused>
-            <staticGroups>*</staticGroups>
+            <licenseSets>
+              <licenseSet>
+                <header>./license-header.txt</header>
+                <excludes>
+                  <exclude>**/README.md</exclude>
+                  <exclude>**/LICENSE</exclude>
+                  <exclude>**/checkstyle.xml</exclude>
+                  <exclude>**/license-header.txt</exclude>
+                  <exclude>**/**.properties</exclude>
+                  <exclude>**/build-finder-license-deprecated.json</exclude>
+                  <exclude>**/build-finder-license-mapping.json</exclude>
+                  <exclude>**/.mvn/**</exclude>
+                  <exclude>**/mvnw*</exclude>
+                  <exclude>**/openapi.*</exclude>
+                  <exclude>.cache/*</exclude>
+                  <exclude>.vs*/*</exclude>
+                  <exclude>src/main/docker/Dockerfile.jvm</exclude>
+                  <exclude>src/main/docker/Dockerfile.native</exclude>
+                </excludes>
+              </licenseSet>
+            </licenseSets>
           </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>net.revelc.code.formatter</groupId>
           <artifactId>formatter-maven-plugin</artifactId>
-          <version>${version.net.revelc.code.formatter.formatter-maven-plugin}</version>
+          <version>${version.formatter}</version>
           <configuration>
-            <configFile>https://raw.githubusercontent.com/project-ncl/ide-config/main/src/main/resources/java-formatter.xml</configFile>
+            <configFile>../checkstyle.xml</configFile>
             <lineEnding>LF</lineEnding>
           </configuration>
+          <executions>
+            <execution>
+              <id>java-format</id>
+              <goals>
+                <goal>format</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-antrun-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-antrun-plugin}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-checkstyle-plugin}</version>
-          <configuration>
-            <configLocation>${project.basedir}/checkstyle.xml</configLocation>
-            <includeTestSourceDirectory>true</includeTestSourceDirectory>
-          </configuration>
-          <dependencies>
-            <dependency>
-              <groupId>com.puppycrawl.tools</groupId>
-              <artifactId>checkstyle</artifactId>
-              <version>${version.com.puppycrawl.tools}</version>
-            </dependency>
-          </dependencies>
+          <version>${maven.antrun-plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-clean-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-clean-plugin}</version>
+          <version>${maven.clean-plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-compiler-plugin}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-dependency-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-dependency-plugin}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-deploy-plugin}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-enforcer-plugin}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-failsafe-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-surefire-plugin}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-gpg-plugin}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-install-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-install-plugin}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-jar-plugin}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-javadoc-plugin}</version>
+          <version>${maven.compiler-plugin.version}</version>
           <configuration>
-            <sourceFileExcludes>
-              <sourceFileExclude>org/jboss/pnc/deliverablesanalyzer/rest/AppTest.java</sourceFileExclude>
-              <sourceFileExclude>org/jboss/pnc/deliverablesanalyzer/rest/NativeAppIT.java</sourceFileExclude>
-            </sourceFileExcludes>
+            <parameters>true</parameters>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${version.lombok}</version>
+              </path>
+              <path>
+                <groupId>org.infinispan.protostream</groupId>
+                <artifactId>protostream-processor</artifactId>
+              </path>
+            </annotationProcessorPaths>
           </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>${maven.dependency-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>properties</id>
+              <goals>
+                <goal>properties</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>${maven.deploy-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>${maven.enforcer-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${maven.surefire-plugin.version}</version>
+          <configuration>
+            <excludedGroups>!integration</excludedGroups>
+            <groups>integration</groups>
+            <includes>
+              <include>**/*Test.java</include>
+            </includes>
+            <skipITs>${skipITs}</skipITs>
+            <systemPropertyVariables>
+              <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
+              <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+              <maven.home>${maven.home}</maven.home>
+            </systemPropertyVariables>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>integration-test</goal>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>${maven.gpg-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>${maven.install-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${maven.jar-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${maven.javadoc-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jxr-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-jxr-plugin}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-pmd-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-pmd-plugin}</version>
-          <dependencies>
-            <dependency>
-              <groupId>net.sourceforge.pmd</groupId>
-              <artifactId>pmd-core</artifactId>
-              <version>${version.net.sourceforge.pmd}</version>
-            </dependency>
-            <dependency>
-              <groupId>net.sourceforge.pmd</groupId>
-              <artifactId>pmd-java</artifactId>
-              <version>${version.net.sourceforge.pmd}</version>
-            </dependency>
-            <dependency>
-              <groupId>net.sourceforge.pmd</groupId>
-              <artifactId>pmd-javascript</artifactId>
-              <version>${version.net.sourceforge.pmd}</version>
-            </dependency>
-            <dependency>
-              <groupId>net.sourceforge.pmd</groupId>
-              <artifactId>pmd-jsp</artifactId>
-              <version>${version.net.sourceforge.pmd}</version>
-            </dependency>
-          </dependencies>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-project-info-reports-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-project-info-reports-plugin}</version>
+          <version>${maven.jxr-plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-release-plugin}</version>
+          <version>${maven.release-plugin.version}</version>
+          <configuration>
+            <tagNameFormat>@{project.version}</tagNameFormat>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+            <releaseProfiles>gpg-sign,release</releaseProfiles>
+            <signTag>false</signTag>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-resources-plugin}</version>
+          <version>${maven.resources-plugin.version}</version>
           <configuration>
             <propertiesEncoding>UTF-8</propertiesEncoding>
           </configuration>
@@ -553,27 +576,58 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-site-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-site-plugin}</version>
+          <version>${maven.site-plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-source-plugin}</version>
+          <version>${maven.source-plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-surefire-plugin}</version>
+          <version>${maven.surefire-plugin.version}</version>
+          <configuration>
+            <systemPropertyVariables>
+              <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+              <maven.home>${maven.home}</maven.home>
+            </systemPropertyVariables>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-report-plugin</artifactId>
-          <version>${version.org.apache.maven.plugins.maven-surefire-plugin}</version>
+          <version>${maven.surefire-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.central</groupId>
+          <artifactId>central-publishing-maven-plugin</artifactId>
+          <version>${maven.central-publishing-plugin.version}</version>
+          <extensions>true</extensions>
+          <configuration>
+            <!-- as defined in your settings.xml -->
+            <publishingServerId>central-publisher</publishingServerId>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>io.github.git-commit-id</groupId>
+          <artifactId>git-commit-id-maven-plugin</artifactId>
+          <version>${version.git-commit-id}</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>revision</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <verbose>true</verbose>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>buildnumber-maven-plugin</artifactId>
-          <version>${version.org.codehaus.mojo.buildnumber-maven-plugin}</version>
+          <version>${maven.buildnumber-plugin.version}</version>
           <configuration>
             <doCheck>false</doCheck>
             <doUpdate>false</doUpdate>
@@ -588,199 +642,51 @@
               </goals>
               <configuration>
                 <shortRevisionLength>8</shortRevisionLength>
+                <timestampFormat>{0,date,dd MMMM yyyy}</timestampFormat>
               </configuration>
             </execution>
           </executions>
         </plugin>
         <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>versions-maven-plugin</artifactId>
-          <version>${version.org.codehaus.mojo.versions-maven-plugin}</version>
-          <configuration>
-            <rulesUri>file:///${project.basedir}/maven-version-rules.xml</rulesUri>
-          </configuration>
+          <groupId>io.smallrye</groupId>
+          <artifactId>jandex-maven-plugin</artifactId>
+          <version>${version.jandex}</version>
+          <executions>
+            <execution>
+              <id>make-index</id>
+              <goals>
+                <goal>jandex</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </pluginManagement>
 
     <plugins>
       <plugin>
-        <groupId>com.github.ekryd.sortpom</groupId>
-        <artifactId>sortpom-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>verify</goal>
-            </goals>
-            <configuration>
-              <verifyFail>Stop</verifyFail>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <configuration>
-          <licenseSets>
-            <licenseSet>
-              <excludes>
-                <exclude>.cache/*</exclude>
-                <exclude>.vs*/*</exclude>
-                <exclude>LICENSE</exclude>
-                <exclude>lsp/log/*.log</exclude>
-                <exclude>src/main/docker/Dockerfile.jvm</exclude>
-                <exclude>src/main/docker/Dockerfile.native</exclude>
-              </excludes>
-              <inlineHeader><![CDATA[Copyright (C) ${project.inceptionYear} Red Hat, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.]]></inlineHeader>
-            </licenseSet>
-          </licenseSets>
-          <mapping>
-            <dockerignore>SCRIPT_STYLE</dockerignore>
-            <gitattributes>SCRIPT_STYLE</gitattributes>
-            <java>SLASHSTAR_STYLE</java>
-            <jvm>SCRIPT_STYLE</jvm>
-            <native>SCRIPT_STYLE</native>
-          </mapping>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-maven-plugin</artifactId>
-        <version>${version.io.quarkus}</version>
-        <extensions>true</extensions>
-        <executions>
-          <execution>
-            <goals>
-              <goal>build</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>net.revelc.code</groupId>
-        <artifactId>impsort-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>sort</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <groupId>net.revelc.code.formatter</groupId>
         <artifactId>formatter-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>format</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>checkstyle</id>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-            <annotationProcessorPaths>
-                <path>
-                    <groupId>org.infinispan.protostream</groupId>
-                    <artifactId>protostream-processor</artifactId>
-                </path>
-            </annotationProcessorPaths>
-      </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>properties</id>
-            <goals>
-              <goal>properties</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <configuration>
-          <excludedGroups>!integration</excludedGroups>
-          <groups>integration</groups>
-          <includes>
-            <include>**/*Test.java</include>
-          </includes>
-          <skipITs>${skipITs}</skipITs>
-          <systemPropertyVariables>
-            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-          </systemPropertyVariables>
-        </configuration>
-        <executions>
-          <execution>
-            <id>integration-test</id>
-            <goals>
-              <goal>integration-test</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>verify</id>
-            <goals>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <configuration>
-          <tagNameFormat>@{project.version}</tagNameFormat>
-          <autoVersionSubmodules>true</autoVersionSubmodules>
-          <releaseProfiles>gpg-sign,release</releaseProfiles>
-          <signTag>false</signTag>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <systemPropertyVariables>
-            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-          </systemPropertyVariables>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -789,34 +695,14 @@ limitations under the License.]]></inlineHeader>
       <plugin>
         <groupId>org.sonatype.central</groupId>
         <artifactId>central-publishing-maven-plugin</artifactId>
-        <version>${version.central-publishing-maven-plugin}</version>
-        <extensions>true</extensions>
-        <configuration>
-          <!-- as defined in your settings.xml -->
-          <publishingServerId>central-publisher</publishingServerId>
-        </configuration>
       </plugin>
       <plugin>
-        <groupId>pl.project13.maven</groupId>
-        <artifactId>git-commit-id-plugin</artifactId>
-        <version>${version.git-commit-id-plugin}</version>
-        <configuration>
-          <!--
-                If you'd like to tell the plugin where your .git directory is,
-                use this setting, otherwise we'll perform a search trying to
-                figure out the right directory. It's better to add it explicitly, IMHO.
-              -->
-          <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
-          <!-- false is default here, it prints some more information during the build -->
-          <verbose>true</verbose>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>revision</goal>
-            </goals>
-          </execution>
-        </executions>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>io.github.git-commit-id</groupId>
+        <artifactId>git-commit-id-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
@@ -830,13 +716,8 @@ limitations under the License.]]></inlineHeader>
           <effort>Max</effort>
           <threshold>Low</threshold>
           <xmlOutput>true</xmlOutput>
-          <xmlOutput>true</xmlOutput>
           <xmlOutputDirectory>${project.basedir}/target/site</xmlOutputDirectory>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -849,13 +730,6 @@ limitations under the License.]]></inlineHeader>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jxr-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-pmd-plugin</artifactId>
-        <configuration>
-          <analysisCache>true</analysisCache>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -877,67 +751,31 @@ limitations under the License.]]></inlineHeader>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId><executions>
-            <execution>
-              <id>attach-javadocs</id>
-              <goals>
-                <goal>jar</goal>
-              </goals>
-              <configuration>
-                <failOnWarnings>false</failOnWarnings>
-                <failOnError>false</failOnError>
-              </configuration>
-            </execution>
-          </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>docker</id>
-      <activation>
-        <property>
-          <name>docker</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.dkanejs.maven.plugins</groupId>
-            <artifactId>docker-compose-maven-plugin</artifactId>
+            <artifactId>maven-source-plugin</artifactId>
             <executions>
               <execution>
-                <id>pull</id>
+                <id>attach-sources</id>
                 <goals>
-                  <goal>pull</goal>
+                  <goal>jar-no-fork</goal>
                 </goals>
-                <phase>verify</phase>
-                <configuration>
-                  <composeFile>${project.basedir}/docker-compose.yml</composeFile>
-                </configuration>
               </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
               <execution>
-                <id>up</id>
+                <id>attach-javadocs</id>
                 <goals>
-                  <goal>up</goal>
+                  <goal>jar</goal>
                 </goals>
-                <phase>verify</phase>
                 <configuration>
-                  <composeFile>${project.basedir}/docker-compose.yml</composeFile>
-                  <build>true</build>
-                </configuration>
-              </execution>
-              <execution>
-                <id>down</id>
-                <goals>
-                  <goal>down</goal>
-                </goals>
-                <phase>verify</phase>
-                <configuration>
-                  <composeFile>${project.basedir}/docker-compose.yml</composeFile>
-                  <removeImages>true</removeImages>
-                  <removeOrphans>true</removeOrphans>
-                  <removeVolumes>true</removeVolumes>
+                  <detectOfflineLinks>false</detectOfflineLinks>
+                  <quiet>true</quiet>
+                  <doclint>none</doclint>
+                  <failOnWarnings>false</failOnWarnings>
+                  <failOnError>false</failOnError>
                 </configuration>
               </execution>
             </executions>
@@ -955,13 +793,14 @@ limitations under the License.]]></inlineHeader>
       <properties>
         <quarkus.native.enabled>true</quarkus.native.enabled>
         <skipITs>false</skipITs>
+        <quarkus.package.jar.enabled>false</quarkus.package.jar.enabled>
       </properties>
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
-            <version>${version.org.apache.maven.plugins.maven-surefire-plugin}</version>
+            <version>${maven.surefire-plugin.version}</version>
             <executions>
               <execution>
                 <goals>
@@ -977,60 +816,6 @@ limitations under the License.]]></inlineHeader>
             </executions>
           </plugin>
         </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>eclipse</id>
-      <activation>
-        <property>
-          <name>m2e.version</name>
-        </property>
-      </activation>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.eclipse.m2e</groupId>
-              <artifactId>lifecycle-mapping</artifactId>
-              <version>1.0.0</version>
-              <configuration>
-                <lifecycleMappingMetadata>
-                  <pluginExecutions>
-                    <pluginExecution>
-                      <pluginExecutionFilter>
-                        <groupId>com.dkanejs.maven.plugins</groupId>
-                        <artifactId>docker-compose-maven-plugin</artifactId>
-                        <versionRange>[${version.com.dkanejs.maven.plugins.docker-compose-maven-plugin},)</versionRange>
-                        <goals>
-                          <goal>up</goal>
-                          <goal>down</goal>
-                        </goals>
-                      </pluginExecutionFilter>
-                      <action>
-                        <ignore />
-                      </action>
-                    </pluginExecution>
-                    <pluginExecution>
-                      <pluginExecutionFilter>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <versionRange>[${version.org.apache.maven.plugins.maven-dependency-plugin},)</versionRange>
-                        <goals>
-                          <goal>properties</goal>
-                        </goals>
-                      </pluginExecutionFilter>
-                      <action>
-                        <execute>
-                          <runOnIncremental>false</runOnIncremental>
-                        </execute>
-                      </action>
-                    </pluginExecution>
-                  </pluginExecutions>
-                </lifecycleMappingMetadata>
-              </configuration>
-            </plugin>
-          </plugins>
-        </pluginManagement>
       </build>
     </profile>
   </profiles>
