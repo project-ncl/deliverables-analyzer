@@ -1,0 +1,112 @@
+{
+    "Apache-2.0": [
+        "http://www.apache.org/licenses/",
+        "http://www.freemarker.org/LICENSE.txt",
+        "http://www.jcraft.com/jsch/LICENSE.txt",
+        "https://github.com/swagger-api/swagger-ui",
+        "https://raw.github.com/jsr107/jsr107spec/master/LICENSE.txt",
+        "https://raw.githubusercontent.com/googleapis/java-cloud-bom/libraries-bom-v25.4.0/LICENSE",
+        "AL2",
+        "Apache License",
+        "see: http://freemarker.org/LICENSE.txt",
+        "src/assemble/EHCACHE-CORE-LICENSE.txt",
+        "The Apache License",
+        "Version 2.0"
+    ],
+    "BSD-2-Clause": [
+        "http://www.opensource.org/licenses/bsd-license.html",
+        "http://www.opensource.org/licenses/bsd-license.php"
+    ],
+    "BSD-3-Clause": [
+        "http://antlr.org/license.html",
+        "http://asm.objectweb.org/license.html",
+        "http://asm.ow2.org/license.html",
+        "https://github.com/locationtech/jts/blob/master/LICENSE_EDLv1.txt",
+        "http://jaxen.codehaus.org/license.html",
+        "http://repository.jboss.org/licenses/edl-1.0.txt",
+        "http://www.antlr.org/license.html",
+        "http://www.jcraft.com/jzlib/LICENSE.txt",
+        "http://www.thaiopensource.com/relaxng/copying.html",
+        "http://xmlunit.svn.sourceforge.net/viewvc/*checkout*/xmlunit/trunk/xmlunit/LICENSE.txt",
+        "http://x-stream.github.io/license.html",
+        "https://asm.ow2.io/license.html",
+        "https://github.com/mwiede/jsch/blob/master/LICENSE.txt",
+        "https://github.com/mwiede/jsch/blob/master/LICENSE.JZlib.txt",
+        "https://maven.atlassian.com/public/licenses/license.txt",
+        "https://packages.atlassian.com/mvn/maven-external/licenses/license.txt",
+        "https://projects.eclipse.org/content/eclipse-distribution-license-1.0-bsd",
+        "BSD",
+        "Eclipse Distribution License (New BSD License)"
+    ],
+    "BSD-4-Clause": [
+        "https://raw.github.com/hunterhacker/jdom/master/LICENSE.txt"
+    ],
+    "CC0-1.0": [
+        "http://creativecommons.org/licenses/publicdomain",
+        "http://creativecommons.org/publicdomain/zero/1.0/"
+    ],
+    "CDDL-1.0": [
+        "http://repository.jboss.org/licenses/cddl.txt",
+        "http://www.opensource.org/licenses/cddl1.php"
+    ],
+    "CDDL-1.1": [
+        "https://github.com/javaee/activation/blob/master/LICENSE.txt",
+        "https://github.com/javaee/javax.annotation/blob/master/LICENSE",
+        "https://github.com/javaee/javax.transaction/blob/master/LICENSE",
+        "https://glassfish.dev.java.net/nonav/public/CDDL+GPL.html",
+        "https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html",
+        "https://glassfish.dev.java.net/public/CDDL+GPL.html",
+        "https://javaee.github.io/javamail/LICENSE",
+        "https://oss.oracle.com/licenses/CDDL+GPL-1.1"
+    ],
+    "EPL-1.0 OR MPL-2.0": [
+        "https://h2database.com/html/license.html"
+    ],
+    "GPL-2.0-only": [
+        "http://www.gnu.org/copyleft/gpl.html",
+        "http://www.gnu.org/licenses/gpl.txt"
+    ],
+    "GPL-2.0 WITH Universal-FOSS-exception-1.0": [
+        "The GNU General Public License, v2 with FOSS exception",
+        "The GNU General Public License, v2 with Universal FOSS Exception, v1.0"
+    ],
+    "GPL-2.0-only WITH Classpath-exception-2.0": [
+        "http://openjdk.java.net/legal/gplv2+ce.html",
+        "http://repository.jboss.org/licenses/gpl-2.0-ce.txt",
+        "https://github.com/openjdk/nashorn/blob/main/LICENSE",
+        "https://projects.eclipse.org/license/secondary-gpl-2.0-cp",
+        "https://www.gnu.org/software/classpath/license.html",
+        "GPLv2 (with classpath exception)"
+    ],
+    "LGPL-2.1-only": [
+        "http://repository.jboss.com/licenses/lgpl.txt",
+        "http://repository.jboss.org/licenses/lgpl.txt",
+        "http://repository.jboss.org/licenses/lgpl-2.1.txt",
+        "http://www.gnu.org/licenses/lgpl-2.1.txt"
+    ],
+    "LGPL-3.0-only": [
+        "http://www.gnu.org/licenses/lgpl.html",
+        "http://www.gnu.org/licenses/lgpl.txt"
+    ],
+    "MIT": [
+        "http://www.bouncycastle.org/licence.html",
+        "https://www.bouncycastle.org/licence.html",
+        "https://jsoup.org/license"
+    ],
+    "NONE": [
+        "http://www.xmlpull.org/v1/download/unpacked/LICENSE.txt",
+        "Public Domain"
+    ],
+    "Plexus": [
+        "http://dom4j.sourceforge.net/dom4j-1.6.1/license.html"
+    ],
+    "WTFPL": [
+        "https://raw.github.com/errai/errai/master/errai-reflections/reflections/COPYING.txt"
+    ],
+    "xpp": [
+        "http://www.bearcave.com/software/java/xml/xmlpull_license.html",
+        "http://www.extreme.indiana.edu/viewcvs/~checkout~/XPP3/java/LICENSE.txt",
+        "https://raw.githubusercontent.com/x-stream/mxparser/master/LICENSE.txt",
+        "Indiana University Extreme! Lab Software License"
+    ]
+}
