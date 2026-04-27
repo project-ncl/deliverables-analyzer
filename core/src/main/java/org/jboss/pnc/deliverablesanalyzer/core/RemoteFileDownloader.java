@@ -61,8 +61,22 @@ public class RemoteFileDownloader {
     public DownloadedFile downloadToTempFile(String url) throws IOException, InterruptedException {
         LOGGER.info("Downloading remote file to local temp storage: {}", url);
 
-        Path tempDir = Path.of(System.getProperty("java.io.tmpdir"));
-        Path tempFile = Files.createTempFile(tempDir, "analyzer-", ".tmp");
+        // Extract the filename from the URL path
+        String pathInfo = URI.create(url).getPath();
+        String exactFilename = "downloaded-file"; // Safe fallback
+        if (pathInfo != null && pathInfo.lastIndexOf('/') != -1) {
+            exactFilename = pathInfo.substring(pathInfo.lastIndexOf('/') + 1);
+        }
+        if (exactFilename.isEmpty()) {
+            exactFilename = "downloaded-file";
+        }
+
+        // Create a unique sandbox DIRECTORY to prevent concurrent file collisions
+        Path tempBaseDir = Path.of(System.getProperty("java.io.tmpdir"));
+        Path uniqueJobDir = Files.createTempDirectory(tempBaseDir, "analyzer-");
+
+        // Assemble the target path using the original filename
+        Path targetFile = uniqueJobDir.resolve(exactFilename);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -70,43 +84,50 @@ public class RemoteFileDownloader {
                 .timeout(Duration.ofMinutes(15))
                 .build();
 
-        HttpResponse<Path> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
+        HttpResponse<Path> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofFile(targetFile));
 
         if (response.statusCode() >= 400) {
-            Files.deleteIfExists(tempFile);
+            Files.deleteIfExists(targetFile);
+            Files.deleteIfExists(uniqueJobDir);
             throw new IOException(
                     "Failed to download file. HTTP status: " + response.statusCode() + " for URL: " + url);
         }
 
-        LOGGER.debug("Successfully downloaded {} to {}", url, tempFile);
-        return new DownloadedFile(tempFile);
+        LOGGER.debug("Successfully downloaded {} to {}", url, targetFile);
+
+        // Pass both the file and the directory so the wrapper cleans up everything
+        return new DownloadedFile(targetFile, uniqueJobDir);
     }
 
     /**
      * AutoCloseable Wrapper
      */
     public static class DownloadedFile implements AutoCloseable {
-        private final Path tempPath;
+        private final Path tempFile;
+        private final Path tempDir;
 
-        public DownloadedFile(Path tempPath) {
-            this.tempPath = tempPath;
+        public DownloadedFile(Path tempFile, Path tempDir) {
+            this.tempFile = tempFile;
+            this.tempDir = tempDir;
         }
 
         public Path getPath() {
-            return tempPath;
+            return tempFile;
         }
 
         @Override
         public void close() {
-            if (tempPath != null) {
-                try {
-                    boolean deleted = Files.deleteIfExists(tempPath);
-                    if (deleted) {
-                        LOGGER.debug("Cleaned up temporary download file: {}", tempPath);
-                    }
-                } catch (IOException e) {
-                    LOGGER.warn("Failed to delete temporary local file: {}", tempPath, e);
+            try {
+                // Must delete the file first, otherwise the directory deletion will fail
+                if (tempFile != null) {
+                    Files.deleteIfExists(tempFile);
                 }
+                if (tempDir != null) {
+                    Files.deleteIfExists(tempDir);
+                }
+                LOGGER.debug("Cleaned up temporary download sandbox: {}", tempDir);
+            } catch (IOException e) {
+                LOGGER.warn("Failed to clean up temporary sandbox: {}", tempDir, e);
             }
         }
     }
