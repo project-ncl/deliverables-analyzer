@@ -30,6 +30,7 @@ import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.core.RemoteFileDownloader;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
@@ -61,6 +62,9 @@ public class FileChecksumProducer {
 
     @Inject
     BuildConfig buildConfig;
+
+    @Inject
+    RemoteFileDownloader remoteFileDownloader;
 
     @Inject
     FileSystemManager fileSystemManager;
@@ -105,34 +109,46 @@ public class FileChecksumProducer {
             BlockingQueue<QueueEntry> queue,
             BuildSpecificConfig buildSpecificConfig) {
         LOGGER.info("Scanning files for {}", inputPath);
+
         try {
             checkInterrupted("Producer cancelled before input: " + inputPath);
 
-            try (FileObject fileObject = resolveFile(inputPath)) {
-                // Determine the root path for relative path calculation
-                String rootPath = AnalyzerUtils.calculateRootPath(fileObject);
+            String vfsResolutionPath = inputPath;
 
-                // Compute root checksum
-                Checksum rootChecksum = checksumCache != null ? checksumService.checksum(fileObject, rootPath) : null;
-
-                // Try to load from cache
-                boolean checksumInCache = false;
-                if (!buildConfig.disableCache() && rootChecksum != null) {
-                    checksumInCache = loadFromCache(fileObject, rootPath, rootChecksum, inputPath, queue);
+            try (RemoteFileDownloader.DownloadedFile downloadedFile = remoteFileDownloader.isRemoteUrl(inputPath)
+                    ? remoteFileDownloader.downloadToTempFile(inputPath)
+                    : null) {
+                if (downloadedFile != null) {
+                    vfsResolutionPath = downloadedFile.getPath().toUri().toString();
                 }
 
-                // Perform deep scan - finds children, hashes them, handles archives
-                if (!checksumInCache) {
-                    performDeepScanAndCacheResult(
-                            fileObject,
-                            rootPath,
-                            rootChecksum,
-                            inputPath,
-                            queue,
-                            buildSpecificConfig);
+                try (FileObject fileObject = resolveFile(vfsResolutionPath, inputPath)) {
+                    // Determine the root path for relative path calculation
+                    String rootPath = AnalyzerUtils.calculateRootPath(fileObject);
+
+                    // Compute root checksum
+                    Checksum rootChecksum = checksumCache != null ? checksumService.checksum(fileObject, rootPath)
+                            : null;
+
+                    // Try to load from cache
+                    boolean checksumInCache = false;
+                    if (!buildConfig.disableCache() && rootChecksum != null) {
+                        checksumInCache = loadFromCache(fileObject, rootPath, rootChecksum, inputPath, queue);
+                    }
+
+                    // Perform deep scan - finds children, hashes them, handles archives
+                    if (!checksumInCache) {
+                        performDeepScanAndCacheResult(
+                                fileObject,
+                                rootPath,
+                                rootChecksum,
+                                inputPath,
+                                queue,
+                                buildSpecificConfig);
+                    }
                 }
             }
-        } catch (IOException | RuntimeException e) {
+        } catch (IOException | InterruptedException | RuntimeException e) {
             throw mapToReasonedException(e, inputPath);
         }
     }
@@ -230,14 +246,14 @@ public class FileChecksumProducer {
         checksumCache.putAsync(cacheKey, new ArchiveInfo(entries));
     }
 
-    private FileObject resolveFile(String inputPath) throws IOException {
+    private FileObject resolveFile(String resolutionPath, String inputPath) throws IOException {
         FileObject fileObject;
 
         try {
-            fileObject = fileSystemManager.resolveFile(URI.create(inputPath));
+            fileObject = fileSystemManager.resolveFile(URI.create(resolutionPath));
         } catch (IllegalArgumentException | FileSystemException e) {
             // Fallback to local path if URI creation fails or VFS doesn't recognize it
-            Path path = Path.of(inputPath);
+            Path path = Path.of(resolutionPath);
             if (!Files.exists(path) || !Files.isRegularFile(path) || !Files.isReadable(path)) {
                 throw new IOException("Input path " + path + " does not exist, is not a file, or is not readable", e);
             }
@@ -251,12 +267,9 @@ public class FileChecksumProducer {
 
         if (LOGGER.isInfoEnabled()) {
             if (fileObject.isFile()) {
-                LOGGER.info(
-                        "Analyzing: {} ({})",
-                        fileObject.getPublicURIString(),
-                        AnalyzerUtils.byteCountToDisplaySize(fileObject));
+                LOGGER.info("Analyzing: {} ({})", inputPath, AnalyzerUtils.byteCountToDisplaySize(fileObject));
             } else {
-                LOGGER.info("Analyzing: {}", fileObject.getPublicURIString());
+                LOGGER.info("Analyzing: {}", inputPath);
             }
         }
 
