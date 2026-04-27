@@ -24,10 +24,10 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.deliverablesanalyzer.core.ArchiveScanner;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
 import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.core.RemoteFileDownloader;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
@@ -60,8 +60,8 @@ class FileChecksumProducerTest {
     @Inject
     FileChecksumProducer producer;
 
-    @Inject
-    BuildConfig config; // Use real config
+    @InjectMock
+    RemoteFileDownloader fileDownloader;
 
     @InjectMock
     @Remote("pnc-archives")
@@ -89,9 +89,9 @@ class FileChecksumProducerTest {
                 Collections.emptyList());
         ArchiveInfo archiveInfo = new ArchiveInfo(List.of(cachedEntry));
 
+        when(fileDownloader.isRemoteUrl(inputPath)).thenReturn(false);
         // Mock ChecksumService to return a root hash
         when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksum);
-
         // Mock Cache to return a HIT
         when(checksumCache.get("root-hash")).thenReturn(archiveInfo);
 
@@ -120,6 +120,8 @@ class FileChecksumProducerTest {
 
         Checksum rootChecksum = new Checksum("new-hash", "new-hash", "new-hash", "new-file.zip", 100L);
 
+        when(fileDownloader.isRemoteUrl(inputPath)).thenReturn(false);
+        // Mock ChecksumService to return a root hash
         when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksum);
         // Mock Cache MISS
         when(checksumCache.get("new-hash")).thenReturn(null);
@@ -139,10 +141,49 @@ class FileChecksumProducerTest {
     }
 
     @Test
+    void testProduceWithRemoteDownload(@TempDir Path tempDir) throws IOException, InterruptedException {
+        // Given
+        String remoteUrl = "https://example.com/app-1.0.jar";
+
+        // Simulate a file successfully downloaded to a temporary sandbox
+        Path fakeSandbox = tempDir.resolve("analyzer-sandbox");
+        Files.createDirectories(fakeSandbox);
+        Path fakeDownload = fakeSandbox.resolve("app-1.0.jar");
+        Files.writeString(fakeDownload, "downloaded jar content");
+
+        // Use the AutoCloseable wrapper
+        RemoteFileDownloader.DownloadedFile mockDownloadedFile =
+            new RemoteFileDownloader.DownloadedFile(fakeDownload, fakeSandbox);
+
+        // Mock downloader behavior
+        when(fileDownloader.isRemoteUrl(remoteUrl)).thenReturn(true);
+        when(fileDownloader.downloadToTempFile(remoteUrl)).thenReturn(mockDownloadedFile);
+
+        Checksum rootChecksum = new Checksum("remote-hash", "remote-hash", "remote-hash", "app-1.0.jar", 100L);
+        when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksum);
+        when(checksumCache.get("remote-hash")).thenReturn(null); // Force deep scan
+
+        BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
+        BuildSpecificConfig buildConfig = new BuildSpecificConfig(Collections.emptyList(), Collections.emptyList());
+
+        // When
+        producer.produce(remoteUrl, queue, buildConfig);
+
+        // Then
+        // Ensure the downloader was actually invoked
+        verify(fileDownloader, times(1)).downloadToTempFile(remoteUrl);
+
+        // IMPORTANT: Ensure the scanner was passed the ORIGINAL URL, not the local temp path
+        verify(archiveScanner, times(1)).scan(any(), anyString(), any(), any(), eq(remoteUrl), any(), any());
+    }
+
+    @Test
     void testProduceFileNotFound(@TempDir Path tempDir) {
         // Given
         String inputPath = tempDir.resolve("non-existent.zip").toUri().toString();
         BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
+
+        when(fileDownloader.isRemoteUrl(inputPath)).thenReturn(false);
 
         // When & Then
         ReasonedException ex = assertThrows(ReasonedException.class, () -> producer.produce(inputPath, queue, null));
