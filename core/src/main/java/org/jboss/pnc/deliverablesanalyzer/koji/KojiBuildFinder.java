@@ -153,6 +153,13 @@ public class KojiBuildFinder {
 
         // Map remaining as not found
         for (QueueEntry notFound : unresolvedBatch.keySet()) {
+            // Cache empty state so future runs skip the lookup
+            if (archiveCache != null && notFound.checksum().getSha256Value() != null) {
+                archiveCache.putAsync(
+                    notFound.checksum().getSha256Value(),
+                    new KojiArchiveInfoWrapper(Collections.emptyList()));
+            }
+
             artifacts.add(
                     AnalyzerArtifactMapper.mapFromNotFound(
                             notFound.checksum(),
@@ -292,7 +299,7 @@ public class KojiBuildFinder {
 
             resolvedArchivesMap.put(queryHash, archiveInfos);
 
-            if (archiveCache != null) {
+            if (archiveCache != null && !archiveInfos.isEmpty()) {
                 QueueEntry originalEntry = chunk.stream()
                         .filter(e -> queryHash.equals(hashExtractor.apply(e.checksum())))
                         .findFirst()
