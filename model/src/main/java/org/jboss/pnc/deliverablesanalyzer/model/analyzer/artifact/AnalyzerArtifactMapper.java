@@ -104,7 +104,7 @@ public final class AnalyzerArtifactMapper {
 
         if (pncArtifact != null && pncArtifact.getBuild() != null) {
             artifact.setBuildId(pncArtifact.getBuild().getId());
-            artifact.setArtifactId(pncArtifact.getId());
+            artifact.setSystemArtifactId(pncArtifact.getId());
             artifact.setArtifactFilename(pncArtifact.getFilename());
             artifact.setArtifactSize(pncArtifact.getSize());
             artifact.setImport(pncArtifact.getBuild().getScmRepository() == null || pncArtifact.getBuild().getScmRepository().getInternalUrl() == null);
@@ -147,7 +147,7 @@ public final class AnalyzerArtifactMapper {
 
         if (archiveInfo != null && archiveInfo.getBuildId() != null) {
             artifact.setBuildId(String.valueOf(archiveInfo.getBuildId()));
-            artifact.setArtifactId(archiveInfo.getArchiveId().toString());
+            artifact.setSystemArtifactId(archiveInfo.getArchiveId().toString());
             artifact.setArtifactFilename(archiveInfo.getFilename());
             artifact.setArtifactSize(Long.valueOf(archiveInfo.getSize()));
 
