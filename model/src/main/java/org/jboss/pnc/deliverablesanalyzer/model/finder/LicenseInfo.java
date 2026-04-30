@@ -15,13 +15,14 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.finder;
 
+import java.util.Comparator;
+
+import org.infinispan.protostream.annotations.ProtoField;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.infinispan.protostream.annotations.ProtoField;
-
-import java.util.Comparator;
 
 @Data
 @NoArgsConstructor

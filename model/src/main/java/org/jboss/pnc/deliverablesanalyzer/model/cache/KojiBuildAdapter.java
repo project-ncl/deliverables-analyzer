@@ -15,13 +15,14 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.cache;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.AnalyzerObjectMapper;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.KojiBuild;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ProtoAdapter(KojiBuild.class)
 public class KojiBuildAdapter {

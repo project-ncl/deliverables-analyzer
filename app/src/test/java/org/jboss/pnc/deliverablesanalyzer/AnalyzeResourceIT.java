@@ -15,28 +15,15 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import io.quarkus.test.InjectMock;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
-import io.quarkus.test.junit.TestProfile;
-import io.restassured.http.ContentType;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
-import org.jboss.pnc.api.dto.Request;
-import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
-import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
-import org.jboss.pnc.deliverablesanalyzer.pnc.PncClient;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.rest.control.CallbackService;
-import org.jboss.pnc.dto.Artifact;
-import org.jboss.pnc.dto.Build;
-import org.jboss.pnc.dto.BuildConfigurationRevision;
-import org.jboss.pnc.enums.ArtifactQuality;
-import org.jboss.pnc.enums.BuildType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.ArgumentCaptor;
+import static io.restassured.RestAssured.given;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,15 +36,29 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
+import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
+import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.pnc.PncClient;
+import org.jboss.pnc.deliverablesanalyzer.rest.control.CallbackService;
+import org.jboss.pnc.dto.Artifact;
+import org.jboss.pnc.dto.Build;
+import org.jboss.pnc.dto.BuildConfigurationRevision;
+import org.jboss.pnc.enums.ArtifactQuality;
+import org.jboss.pnc.enums.BuildType;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+
+import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
+import io.quarkus.test.junit.TestProfile;
+import io.restassured.http.ContentType;
 
 @QuarkusTest
 @TestProfile(AnalyzeResourceIT.NoCacheProfile.class)

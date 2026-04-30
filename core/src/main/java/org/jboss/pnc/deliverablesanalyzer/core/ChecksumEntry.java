@@ -17,6 +17,10 @@ package org.jboss.pnc.deliverablesanalyzer.core;
 
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 
-public record ChecksumEntry(String sourceUrl,Checksum checksum){public static final ChecksumEntry POISON_PILL=new ChecksumEntry(null,null);
+public record ChecksumEntry(String sourceUrl, Checksum checksum) {
+    public static final ChecksumEntry POISON_PILL = new ChecksumEntry(null, null);
 
-public boolean isPoisonPill(){return sourceUrl==null&&checksum==null;}}
+    public boolean isPoisonPill() {
+        return sourceUrl == null && checksum == null;
+    }
+}

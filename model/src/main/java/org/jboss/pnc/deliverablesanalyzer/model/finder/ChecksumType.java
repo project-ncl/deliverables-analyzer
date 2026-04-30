@@ -15,12 +15,12 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.finder;
 
-import lombok.Getter;
-
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import lombok.Getter;
 
 @Getter
 public enum ChecksumType {

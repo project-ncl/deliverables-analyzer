@@ -15,16 +15,18 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.app.runtime;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.concurrent.ScheduledExecutorService;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
+
 import org.jboss.pnc.common.concurrent.HeartbeatScheduler;
 import org.jboss.pnc.common.concurrent.mdc.MDCScheduledThreadPoolExecutor;
 import org.jboss.pnc.common.http.PNCHttpClient;
 import org.jboss.pnc.deliverablesanalyzer.app.DeliverablesAnalyzerConfig;
 import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
 
-import java.util.concurrent.ScheduledExecutorService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ApplicationScoped
 public class BeanFactory {

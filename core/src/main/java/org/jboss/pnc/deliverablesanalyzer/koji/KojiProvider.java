@@ -15,22 +15,24 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.koji;
 
-import com.redhat.red.build.koji.KojiClient;
-import com.redhat.red.build.koji.KojiClientException;
-import com.redhat.red.build.koji.KojiClientHelper;
-import com.redhat.red.build.koji.config.KojiConfig;
-import com.redhat.red.build.koji.config.SimpleKojiConfigBuilder;
+import java.net.URL;
+import java.util.concurrent.Executors;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Produces;
+
 import org.commonjava.util.jhttpc.auth.MemoryPasswordManager;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URL;
-import java.util.concurrent.Executors;
+import com.redhat.red.build.koji.KojiClient;
+import com.redhat.red.build.koji.KojiClientException;
+import com.redhat.red.build.koji.KojiClientHelper;
+import com.redhat.red.build.koji.config.KojiConfig;
+import com.redhat.red.build.koji.config.SimpleKojiConfigBuilder;
 
 @ApplicationScoped
 public class KojiProvider {

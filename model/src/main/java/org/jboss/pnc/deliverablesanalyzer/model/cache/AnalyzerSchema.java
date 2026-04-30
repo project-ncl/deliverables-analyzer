@@ -21,8 +21,14 @@ import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
 
 @ProtoSchema(
-        includeClasses = { ArchiveInfo.class, ArchiveEntry.class, LicenseInfo.class, LocalFile.class,
-                KojiArchiveInfoAdapter.class, KojiArchiveInfoWrapper.class, KojiBuildAdapter.class,
+        includeClasses = {
+                ArchiveInfo.class,
+                ArchiveEntry.class,
+                LicenseInfo.class,
+                LocalFile.class,
+                KojiArchiveInfoAdapter.class,
+                KojiArchiveInfoWrapper.class,
+                KojiBuildAdapter.class,
                 KojiRpmInfoAdapter.class },
         schemaPackageName = "org.jboss.pnc.analyzer")
 public interface AnalyzerSchema extends GeneratedSchema {

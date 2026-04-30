@@ -15,11 +15,14 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.cache;
 
-import org.infinispan.protostream.annotations.ProtoField;
-
 import java.util.Collections;
 import java.util.List;
 
-public record ArchiveInfo(@ProtoField(number=1)List<ArchiveEntry>entries){
+import org.infinispan.protostream.annotations.ProtoField;
 
-public ArchiveInfo{entries=entries!=null?entries:Collections.emptyList();}}
+public record ArchiveInfo(@ProtoField(number = 1) List<ArchiveEntry> entries) {
+
+    public ArchiveInfo {
+        entries = entries != null ? entries : Collections.emptyList();
+    }
+}

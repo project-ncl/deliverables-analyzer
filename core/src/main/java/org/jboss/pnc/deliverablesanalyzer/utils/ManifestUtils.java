@@ -15,11 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.utils;
 
-import org.apache.commons.vfs2.FileContent;
-import org.apache.commons.vfs2.FileObject;
-import org.jboss.pnc.deliverablesanalyzer.license.LicenseStringUtils;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.BundleLicense;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -28,6 +23,11 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
+
+import org.apache.commons.vfs2.FileContent;
+import org.apache.commons.vfs2.FileObject;
+import org.jboss.pnc.deliverablesanalyzer.license.LicenseStringUtils;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.BundleLicense;
 
 public final class ManifestUtils {
 

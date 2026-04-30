@@ -15,21 +15,24 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.quarkus.arc.profile.IfBuildProfile;
+import java.io.File;
+import java.io.IOException;
+import java.util.UUID;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.quarkus.arc.profile.IfBuildProfile;
 
 @Path("/build-finder")
 @IfBuildProfile("dev")
