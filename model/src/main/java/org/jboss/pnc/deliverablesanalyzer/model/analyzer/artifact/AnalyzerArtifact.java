@@ -50,7 +50,7 @@ public class AnalyzerArtifact {
     private boolean isImport;
 
     // Artifact Properties
-    private String artifactId;
+    private String systemArtifactId;
     private String artifactFilename;
     private Long artifactSize;
     private ArtifactType artifactType;
