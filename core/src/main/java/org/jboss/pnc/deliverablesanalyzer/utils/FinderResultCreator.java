@@ -216,8 +216,8 @@ public final class FinderResultCreator {
 
         builder.buildSystemType(artifact.getBuildSystemType());
         switch (artifact.getBuildSystemType()) {
-            case PNC -> builder.pncId(artifact.getArtifactId());
-            case BREW -> builder.brewId(Long.valueOf(artifact.getArtifactId()));
+            case PNC -> builder.pncId(artifact.getSystemArtifactId());
+            case BREW -> builder.brewId(Long.valueOf(artifact.getSystemArtifactId()));
             default -> throw new IllegalArgumentException("Unknown build system type: " + artifact.getBuildSystemType());
         }
 
