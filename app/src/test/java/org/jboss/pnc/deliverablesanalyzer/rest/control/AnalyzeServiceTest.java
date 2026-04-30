@@ -15,25 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest.control;
 
-import io.quarkus.infinispan.client.Remote;
-import io.quarkus.test.InjectMock;
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
-import org.jboss.pnc.api.dto.HeartbeatConfig;
-import org.jboss.pnc.api.dto.Request;
-import org.jboss.pnc.common.concurrent.HeartbeatScheduler;
-import org.jboss.pnc.deliverablesanalyzer.AnalyzerOrchestrator;
-import org.junit.jupiter.api.Test;
-
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -47,6 +28,27 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
+import org.jboss.pnc.api.dto.HeartbeatConfig;
+import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.common.concurrent.HeartbeatScheduler;
+import org.jboss.pnc.deliverablesanalyzer.AnalyzerOrchestrator;
+import org.junit.jupiter.api.Test;
+
+import io.quarkus.infinispan.client.Remote;
+import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
 class AnalyzeServiceTest {

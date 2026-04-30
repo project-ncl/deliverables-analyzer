@@ -15,33 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.koji;
 
-import com.redhat.red.build.koji.KojiClientException;
-import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
-import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveQuery;
-import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
-import com.redhat.red.build.koji.model.xmlrpc.KojiBuildState;
-import com.redhat.red.build.koji.model.xmlrpc.KojiIdOrName;
-import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
-import io.quarkus.infinispan.client.Remote;
-import io.quarkus.virtual.threads.VirtualThreads;
-import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.jboss.pnc.api.dto.exception.ReasonedException;
-import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
-import org.jboss.pnc.deliverablesanalyzer.model.cache.KojiArchiveInfoWrapper;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.KojiBuild;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -60,6 +33,36 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.jboss.pnc.api.dto.exception.ReasonedException;
+import org.jboss.pnc.api.enums.ResultStatus;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
+import org.jboss.pnc.deliverablesanalyzer.model.cache.KojiArchiveInfoWrapper;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.KojiBuild;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.redhat.red.build.koji.KojiClientException;
+import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
+import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveQuery;
+import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
+import com.redhat.red.build.koji.model.xmlrpc.KojiBuildState;
+import com.redhat.red.build.koji.model.xmlrpc.KojiIdOrName;
+import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
+
+import io.quarkus.infinispan.client.Remote;
+import io.quarkus.virtual.threads.VirtualThreads;
 
 @ApplicationScoped
 public class KojiBuildFinder {
@@ -156,8 +159,8 @@ public class KojiBuildFinder {
             // Cache empty state so future runs skip the lookup
             if (archiveCache != null && notFound.checksum().getSha256Value() != null) {
                 archiveCache.putAsync(
-                    notFound.checksum().getSha256Value(),
-                    new KojiArchiveInfoWrapper(Collections.emptyList()));
+                        notFound.checksum().getSha256Value(),
+                        new KojiArchiveInfoWrapper(Collections.emptyList()));
             }
 
             artifacts.add(

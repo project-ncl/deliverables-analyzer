@@ -15,6 +15,8 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.license;
 
+import static org.apache.commons.lang3.StringUtils.SPACE;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,8 +26,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static org.apache.commons.lang3.StringUtils.SPACE;
 
 public final class LicenseStringUtils {
 

@@ -15,6 +15,13 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.koji;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 import com.redhat.red.build.koji.KojiClient;
 import com.redhat.red.build.koji.KojiClientException;
 import com.redhat.red.build.koji.KojiClientHelper;
@@ -25,12 +32,6 @@ import com.redhat.red.build.koji.model.xmlrpc.KojiBuildTypeInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiIdOrName;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
 import com.redhat.red.build.koji.model.xmlrpc.messages.Constants;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 @ApplicationScoped
 public class KojiMultiCallClient {

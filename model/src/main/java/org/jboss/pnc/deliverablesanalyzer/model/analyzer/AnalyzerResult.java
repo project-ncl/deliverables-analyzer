@@ -15,17 +15,25 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.analyzer;
 
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public record AnalyzerResult(Map<String,AnalyzerBuild>foundBuilds,Set<AnalyzerArtifact>notFoundArtifacts){private static final AnalyzerResult EMPTY=new AnalyzerResult(Collections.emptyMap(),Collections.emptySet());
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 
-public static AnalyzerResult empty(){return EMPTY;}
+public record AnalyzerResult(Map<String, AnalyzerBuild> foundBuilds, Set<AnalyzerArtifact> notFoundArtifacts) {
+    private static final AnalyzerResult EMPTY = new AnalyzerResult(Collections.emptyMap(), Collections.emptySet());
 
-public static AnalyzerResult init(){return new AnalyzerResult(new ConcurrentHashMap<>(),ConcurrentHashMap.newKeySet());}
+    public static AnalyzerResult empty() {
+        return EMPTY;
+    }
 
-public static AnalyzerResult of(Map<String,AnalyzerBuild>foundBuilds,Set<AnalyzerArtifact>notFoundArtifacts){return new AnalyzerResult(foundBuilds,notFoundArtifacts);}}
+    public static AnalyzerResult init() {
+        return new AnalyzerResult(new ConcurrentHashMap<>(), ConcurrentHashMap.newKeySet());
+    }
+
+    public static AnalyzerResult of(Map<String, AnalyzerBuild> foundBuilds, Set<AnalyzerArtifact> notFoundArtifacts) {
+        return new AnalyzerResult(foundBuilds, notFoundArtifacts);
+    }
+}

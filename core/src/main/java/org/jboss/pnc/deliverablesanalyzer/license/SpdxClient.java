@@ -15,14 +15,15 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.license;
 
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
 import jakarta.enterprise.context.ApplicationScoped;
+
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.spdx.core.InvalidSPDXAnalysisException;
 import org.spdx.library.LicenseInfoFactory;
 import org.spdx.library.model.v3_0_1.expandedlicensing.ListedLicense;
-
-import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 @ApplicationScoped
 public class SpdxClient {

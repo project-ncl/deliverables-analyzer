@@ -15,13 +15,14 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.finder;
 
+import java.util.List;
+
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiTagInfo;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @NoArgsConstructor

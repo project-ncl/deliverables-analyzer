@@ -15,19 +15,20 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.core;
 
+import static org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils.normalizePath;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.MessageDigest;
+
 import jakarta.enterprise.context.ApplicationScoped;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.MessageDigest;
-
-import static org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils.normalizePath;
 
 @ApplicationScoped
 public class ChecksumService {

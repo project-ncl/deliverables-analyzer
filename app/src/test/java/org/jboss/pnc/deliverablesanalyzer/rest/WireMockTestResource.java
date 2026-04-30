@@ -15,13 +15,14 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
+import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
 
 import java.util.Map;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+
+import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
 public class WireMockTestResource implements QuarkusTestResourceLifecycleManager {
 

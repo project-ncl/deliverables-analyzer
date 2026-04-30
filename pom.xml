@@ -16,8 +16,7 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -49,13 +48,6 @@
     </license>
   </licenses>
 
-  <scm>
-    <connection>scm:git:https://github.com/project-ncl/deliverables-analyzer.git</connection>
-    <developerConnection>scm:git:git@github.com:project-ncl/deliverables-analyzer.git</developerConnection>
-    <tag>HEAD</tag>
-    <url>https://github.com/project-ncl/deliverables-analyzer</url>
-  </scm>
-
   <developers>
     <developer>
       <organization>RedHat</organization>
@@ -68,6 +60,13 @@
     <module>core</module>
     <module>model</module>
   </modules>
+
+  <scm>
+    <connection>scm:git:https://github.com/project-ncl/deliverables-analyzer.git</connection>
+    <developerConnection>scm:git:git@github.com:project-ncl/deliverables-analyzer.git</developerConnection>
+    <tag>HEAD</tag>
+    <url>https://github.com/project-ncl/deliverables-analyzer</url>
+  </scm>
 
   <properties>
     <!-- Maven -->
@@ -119,7 +118,8 @@
     <!-- Versions -->
     <version.commons-vfs2>2.10.0</version.commons-vfs2>
     <version.dkanejs-compose>4.0.0</version.dkanejs-compose>
-    <version.formatter>2.26.0</version.formatter>
+    <version.spotless>3.4.0</version.spotless>
+    <version.ide-config>1.1.0</version.ide-config>
     <version.jandex>3.1.6</version.jandex>
     <version.git-commit-id>9.0.2</version.git-commit-id>
     <version.httpclient5>5.6</version.httpclient5>
@@ -130,31 +130,6 @@
     <version.spotbugs>4.9.8.2</version.spotbugs>
     <version.wiremock>3.13.2</version.wiremock>
   </properties>
-
-  <repositories>
-    <repository>
-      <name>JBoss Public Maven Repository</name>
-      <id>jboss-public-repository</id>
-      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <name>Central Portal Snapshots</name>
-      <id>central-portal-snapshots</id>
-      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
 
   <dependencyManagement>
     <dependencies>
@@ -370,6 +345,31 @@
     </dependency>
   </dependencies>
 
+  <repositories>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>jboss-public-repository</id>
+      <name>JBoss Public Maven Repository</name>
+      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+    </repository>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>central-portal-snapshots</id>
+      <name>Central Portal Snapshots</name>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+    </repository>
+  </repositories>
+
   <build>
     <pluginManagement>
       <plugins>
@@ -410,7 +410,6 @@
                 <excludes>
                   <exclude>**/README.md</exclude>
                   <exclude>**/LICENSE</exclude>
-                  <exclude>**/checkstyle.xml</exclude>
                   <exclude>**/license-header.txt</exclude>
                   <exclude>**/**.properties</exclude>
                   <exclude>**/build-finder-license-deprecated.json</exclude>
@@ -435,19 +434,39 @@
           </executions>
         </plugin>
         <plugin>
-          <groupId>net.revelc.code.formatter</groupId>
-          <artifactId>formatter-maven-plugin</artifactId>
-          <version>${version.formatter}</version>
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>${version.spotless}</version>
           <configuration>
-            <configFile>../checkstyle.xml</configFile>
-            <lineEnding>LF</lineEnding>
+            <java>
+              <removeUnusedImports/>
+              <importOrder>
+                <file>java-import-order.txt</file>
+              </importOrder>
+              <eclipse>
+                <file>java-formatter.xml</file>
+              </eclipse>
+              <lineEndings>UNIX</lineEndings>
+            </java>
+            <pom>
+              <sortPom>
+                <expandEmptyElements>false</expandEmptyElements>
+              </sortPom>
+            </pom>
           </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.jboss.pnc</groupId>
+              <artifactId>ide-config</artifactId>
+              <version>${version.ide-config}</version>
+            </dependency>
+          </dependencies>
           <executions>
             <execution>
-              <id>java-format</id>
               <goals>
-                <goal>format</goal>
+                <goal>apply</goal>
               </goals>
+              <phase>compile</phase>
             </execution>
           </executions>
         </plugin>
@@ -613,6 +632,9 @@
           <groupId>io.github.git-commit-id</groupId>
           <artifactId>git-commit-id-maven-plugin</artifactId>
           <version>${version.git-commit-id}</version>
+          <configuration>
+            <verbose>true</verbose>
+          </configuration>
           <executions>
             <execution>
               <goals>
@@ -620,9 +642,6 @@
               </goals>
             </execution>
           </executions>
-          <configuration>
-            <verbose>true</verbose>
-          </configuration>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -665,8 +684,8 @@
 
     <plugins>
       <plugin>
-        <groupId>net.revelc.code.formatter</groupId>
-        <artifactId>formatter-maven-plugin</artifactId>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

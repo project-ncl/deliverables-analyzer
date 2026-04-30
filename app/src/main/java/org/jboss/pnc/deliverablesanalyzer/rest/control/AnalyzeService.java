@@ -15,13 +15,21 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest.control;
 
-import io.quarkus.infinispan.client.Remote;
-import io.quarkus.virtual.threads.VirtualThreads;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
@@ -34,14 +42,8 @@ import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
+import io.quarkus.infinispan.client.Remote;
+import io.quarkus.virtual.threads.VirtualThreads;
 
 @ApplicationScoped
 public class AnalyzeService {

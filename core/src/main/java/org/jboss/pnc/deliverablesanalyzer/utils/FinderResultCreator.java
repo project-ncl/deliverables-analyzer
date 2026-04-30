@@ -15,6 +15,18 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.utils;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.jboss.pnc.api.deliverablesanalyzer.dto.Artifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.Artifact.ArtifactBuilder;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.Build;
@@ -31,27 +43,15 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.WindowsArtifact;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.WindowsArtifact.WindowsArtifactBuilder;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.MavenAnalyzerArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.NpmAnalyzerArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.RpmAnalyzerArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.WindowsAnalyzerArtifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class FinderResultCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(FinderResultCreator.class);
@@ -218,7 +218,8 @@ public final class FinderResultCreator {
         switch (artifact.getBuildSystemType()) {
             case PNC -> builder.pncId(artifact.getSystemArtifactId());
             case BREW -> builder.brewId(Long.valueOf(artifact.getSystemArtifactId()));
-            default -> throw new IllegalArgumentException("Unknown build system type: " + artifact.getBuildSystemType());
+            default ->
+                throw new IllegalArgumentException("Unknown build system type: " + artifact.getBuildSystemType());
         }
 
         builder.builtFromSource(artifact.getUnmatchedFilenames().isEmpty() && !isImport);

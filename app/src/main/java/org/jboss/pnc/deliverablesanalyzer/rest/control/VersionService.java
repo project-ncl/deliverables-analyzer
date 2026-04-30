@@ -15,12 +15,13 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest.control;
 
+import java.time.ZonedDateTime;
+
 import jakarta.enterprise.context.ApplicationScoped;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.pnc.api.dto.ComponentVersion;
 import org.jboss.pnc.deliverablesanalyzer.app.BuildInformationConstants;
-
-import java.time.ZonedDateTime;
 
 @ApplicationScoped
 public class VersionService {

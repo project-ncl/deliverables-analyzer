@@ -15,32 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import io.quarkus.infinispan.client.Remote;
-import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.FileSystemManager;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.jboss.pnc.api.dto.exception.ReasonedException;
-import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.core.ArchiveScanner;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
-import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
-import org.jboss.pnc.deliverablesanalyzer.core.RemoteFileDownloader;
-import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveEntry;
-import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveInfo;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumGroup;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
-import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -55,6 +29,34 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.jboss.pnc.api.dto.exception.ReasonedException;
+import org.jboss.pnc.api.enums.ResultStatus;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
+import org.jboss.pnc.deliverablesanalyzer.core.ArchiveScanner;
+import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
+import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.core.RemoteFileDownloader;
+import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveEntry;
+import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveInfo;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumGroup;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
+import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.quarkus.infinispan.client.Remote;
 
 @ApplicationScoped
 public class FileChecksumProducer {
@@ -302,12 +304,23 @@ public class FileChecksumProducer {
             case ReasonedException re -> re;
             case CancellationException ce -> ce;
             case InterruptedException ie -> new CancellationException("Producer interrupted");
-            case Exception ex when ex.getCause() instanceof InterruptedException -> new CancellationException("Producer interrupted");
-            case Exception ex when ex.getMessage() != null && ex.getMessage().contains("does not exist") -> new ReasonedException(ResultStatus.FAILED, ex.getMessage(), "Please check the URL.", ex);
-            case IllegalArgumentException iae -> new ReasonedException(ResultStatus.FAILED, "Invalid input URI: " + inputPath, "Please check the URL.", iae);
-            case FileSystemException fse -> new ReasonedException(ResultStatus.FAILED, "Invalid input URI: " + inputPath, "Please check the URL.", fse);
+            case Exception ex when ex.getCause() instanceof InterruptedException ->
+                new CancellationException("Producer interrupted");
+            case Exception ex when ex.getMessage() != null && ex.getMessage().contains("does not exist") ->
+                new ReasonedException(ResultStatus.FAILED, ex.getMessage(), "Please check the URL.", ex);
+            case IllegalArgumentException iae -> new ReasonedException(
+                    ResultStatus.FAILED,
+                    "Invalid input URI: " + inputPath,
+                    "Please check the URL.",
+                    iae);
+            case FileSystemException fse -> new ReasonedException(
+                    ResultStatus.FAILED,
+                    "Invalid input URI: " + inputPath,
+                    "Please check the URL.",
+                    fse);
             // Default to System Error for everything else
-            case null, default -> new ReasonedException(ResultStatus.SYSTEM_ERROR, "System failed to process input: " + inputPath, e);
+            case null, default ->
+                new ReasonedException(ResultStatus.SYSTEM_ERROR, "System failed to process input: " + inputPath, e);
         };
     }
 

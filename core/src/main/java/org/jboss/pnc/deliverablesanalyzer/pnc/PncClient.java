@@ -15,17 +15,18 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.pnc;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.dto.response.Page;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collection;
-import java.util.Collections;
 
 @ApplicationScoped
 public class PncClient {

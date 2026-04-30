@@ -15,15 +15,18 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.core;
 
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
-
 import java.util.Collections;
 import java.util.List;
 
-public record QueueEntry(String sourceUrl,Checksum checksum,List<LicenseInfo>licenses){
+import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 
-// Poison Pill Constant
-public static final QueueEntry POISON_PILL=new QueueEntry(null,null,Collections.emptyList());
+public record QueueEntry(String sourceUrl, Checksum checksum, List<LicenseInfo> licenses) {
 
-public QueueEntry{licenses=(licenses!=null)?licenses:Collections.emptyList();}}
+    // Poison Pill Constant
+    public static final QueueEntry POISON_PILL = new QueueEntry(null, null, Collections.emptyList());
+
+    public QueueEntry {
+        licenses = (licenses != null) ? licenses : Collections.emptyList();
+    }
+}

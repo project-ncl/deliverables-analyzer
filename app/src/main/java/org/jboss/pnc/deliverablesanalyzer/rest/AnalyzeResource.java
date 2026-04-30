@@ -15,6 +15,8 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
+import java.net.URI;
+
 import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotEmpty;
@@ -28,6 +30,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterStyle;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
@@ -40,8 +43,6 @@ import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
 import org.jboss.pnc.deliverablesanalyzer.rest.control.AnalyzeService;
 import org.jboss.pnc.deliverablesanalyzer.rest.exception.ErrorMessage;
-
-import java.net.URI;
 
 @Path("/analyze")
 public class AnalyzeResource {

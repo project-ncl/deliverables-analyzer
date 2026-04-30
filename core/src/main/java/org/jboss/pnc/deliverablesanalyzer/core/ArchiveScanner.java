@@ -15,26 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.core;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.vfs2.FileExtensionSelector;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.FileSystemManager;
-import org.apache.commons.vfs2.InvertIncludeFileSelector;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
-import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumGroup;
-import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
-import org.jboss.pnc.deliverablesanalyzer.utils.MavenUtils;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,12 +27,35 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.regex.Pattern;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.vfs2.FileExtensionSelector;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystemException;
+import org.apache.commons.vfs2.FileSystemManager;
+import org.apache.commons.vfs2.InvertIncludeFileSelector;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
+import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumGroup;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
+import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
+import org.jboss.pnc.deliverablesanalyzer.utils.MavenUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @ApplicationScoped
 public class ArchiveScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(ArchiveScanner.class);
 
     private static final String BANG_SLASH = "!/";
-    private static final String[] JARS_TO_IGNORE = { "-sources.jar" + BANG_SLASH, "-javadoc.jar" + BANG_SLASH,
+    private static final String[] JARS_TO_IGNORE = {
+            "-sources.jar" + BANG_SLASH,
+            "-javadoc.jar" + BANG_SLASH,
             "-tests.jar" + BANG_SLASH };
     private static final String JAR_URI = ".jar" + BANG_SLASH;
     private static final Set<String> NON_ARCHIVE_SCHEMES = Set.of("tmp", "res", "ram", "file", "http", "https");
