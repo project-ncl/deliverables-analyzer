@@ -15,11 +15,7 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.utils;
 
-import org.apache.commons.vfs2.FileContent;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.FileSystemException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static java.util.Comparator.reverseOrder;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,7 +27,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.Comparator.reverseOrder;
+import org.apache.commons.vfs2.FileContent;
+import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystemException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class AnalyzerUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzerUtils.class);

@@ -15,13 +15,13 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.config;
 
-import io.smallrye.config.ConfigMapping;
-import io.smallrye.config.WithDefault;
-import io.smallrye.config.WithName;
-
 import java.net.URL;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefault;
+import io.smallrye.config.WithName;
 
 @ConfigMapping(prefix = "analyzer")
 public interface BuildConfig {

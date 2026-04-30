@@ -15,8 +15,12 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact;
 
-import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
-import com.redhat.red.build.koji.model.xmlrpc.KojiBtype;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.KojiBuild;
@@ -24,11 +28,8 @@ import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.enums.BuildType;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
+import com.redhat.red.build.koji.model.xmlrpc.KojiBtype;
 
 public final class AnalyzerArtifactMapper {
 
@@ -48,7 +49,12 @@ public final class AnalyzerArtifactMapper {
         return artifact;
     }
 
-    public static AnalyzerArtifact mapFromPnc(Artifact pncArtifact, Checksum checksum, Collection<String> filenames, List<LicenseInfo> licenses, String inputPath) {
+    public static AnalyzerArtifact mapFromPnc(
+            Artifact pncArtifact,
+            Checksum checksum,
+            Collection<String> filenames,
+            List<LicenseInfo> licenses,
+            String inputPath) {
         AnalyzerArtifact artifact;
 
         if (pncArtifact != null && pncArtifact.getBuild() != null) {
@@ -107,13 +113,21 @@ public final class AnalyzerArtifactMapper {
             artifact.setSystemArtifactId(pncArtifact.getId());
             artifact.setArtifactFilename(pncArtifact.getFilename());
             artifact.setArtifactSize(pncArtifact.getSize());
-            artifact.setImport(pncArtifact.getBuild().getScmRepository() == null || pncArtifact.getBuild().getScmRepository().getInternalUrl() == null);
+            artifact.setImport(
+                    pncArtifact.getBuild().getScmRepository() == null
+                            || pncArtifact.getBuild().getScmRepository().getInternalUrl() == null);
         }
 
         return artifact;
     }
 
-    public static AnalyzerArtifact mapFromKojiArchive(KojiArchiveInfo archiveInfo, KojiBuild buildDetails, Checksum checksum, Collection<String> filenames, List<LicenseInfo> licenses, String inputPath) {
+    public static AnalyzerArtifact mapFromKojiArchive(
+            KojiArchiveInfo archiveInfo,
+            KojiBuild buildDetails,
+            Checksum checksum,
+            Collection<String> filenames,
+            List<LicenseInfo> licenses,
+            String inputPath) {
         AnalyzerArtifact artifact;
 
         if (archiveInfo != null && archiveInfo.getBuildType() != null) {
@@ -131,7 +145,9 @@ public final class AnalyzerArtifactMapper {
                 case win -> {
                     WindowsAnalyzerArtifact win = new WindowsAnalyzerArtifact();
                     win.setName(archiveInfo.getArtifactId());
-                    String release = (buildDetails != null && buildDetails.getInfo() != null && buildDetails.getInfo().getRelease() != null) ? buildDetails.getInfo().getRelease() : "unknown";
+                    String release = (buildDetails != null && buildDetails.getInfo() != null
+                            && buildDetails.getInfo().getRelease() != null) ? buildDetails.getInfo().getRelease()
+                                    : "unknown";
                     win.setVersion(archiveInfo.getVersion() + "-" + release);
                     win.setPlatforms(archiveInfo.getPlatforms());
                     win.setFlags(archiveInfo.getFlags());

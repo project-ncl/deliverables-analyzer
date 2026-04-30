@@ -15,14 +15,16 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.mock;
 
-import io.quarkus.test.Mock;
+import java.lang.reflect.Field;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+
 import org.apache.commons.vfs2.impl.StandardFileSystemManager;
 import org.apache.commons.vfs2.provider.http5.Http5FileProvider;
 import org.jboss.pnc.deliverablesanalyzer.FileChecksumProducer;
 
-import java.lang.reflect.Field;
+import io.quarkus.test.Mock;
 
 @Mock
 @ApplicationScoped

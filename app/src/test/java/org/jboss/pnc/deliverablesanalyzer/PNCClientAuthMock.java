@@ -17,10 +17,11 @@ package org.jboss.pnc.deliverablesanalyzer;
 
 import java.io.IOException;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
 
 import io.quarkus.test.Mock;
-import jakarta.enterprise.context.ApplicationScoped;
 
 @Mock
 @ApplicationScoped

@@ -15,37 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
-import io.quarkus.test.InjectMock;
-import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
-import io.quarkus.test.junit.TestProfile;
-import io.restassured.http.ContentType;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
-import org.jboss.pnc.api.dto.Request;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
-import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
-import org.jboss.pnc.deliverablesanalyzer.config.ConfigParser;
-import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
-import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
-import org.jboss.pnc.deliverablesanalyzer.rest.WireMockTestResource;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -57,10 +26,43 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.restassured.RestAssured.given;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.awaitility.Awaitility.await;
-import static java.util.concurrent.TimeUnit.SECONDS;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
+import org.jboss.pnc.api.dto.Request;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.ConfigParser;
+import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
+import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
+import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
+import org.jboss.pnc.deliverablesanalyzer.rest.WireMockTestResource;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.github.tomakehurst.wiremock.client.WireMock;
+
+import io.quarkus.test.InjectMock;
+import io.quarkus.test.common.QuarkusTestResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
+import io.quarkus.test.junit.TestProfile;
+import io.restassured.http.ContentType;
 
 @QuarkusTest
 @QuarkusTestResource(WireMockTestResource.class)

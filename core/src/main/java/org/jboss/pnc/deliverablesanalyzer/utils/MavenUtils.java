@@ -15,6 +15,15 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.utils;
 
+import static org.apache.commons.vfs2.FileName.SEPARATOR;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.maven.model.License;
@@ -28,15 +37,6 @@ import org.codehaus.plexus.interpolation.PrefixedObjectValueSource;
 import org.codehaus.plexus.interpolation.PropertiesBasedValueSource;
 import org.codehaus.plexus.interpolation.StringSearchInterpolator;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static org.apache.commons.vfs2.FileName.SEPARATOR;
 
 public final class MavenUtils {
 

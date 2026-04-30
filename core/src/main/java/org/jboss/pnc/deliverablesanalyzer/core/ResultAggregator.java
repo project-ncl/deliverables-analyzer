@@ -15,16 +15,17 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.core;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 
 @ApplicationScoped
 public class ResultAggregator {

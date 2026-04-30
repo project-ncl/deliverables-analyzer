@@ -15,10 +15,15 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.finder;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.infinispan.protostream.annotations.ProtoField;
-
 import java.io.Serial;
 import java.io.Serializable;
 
-@JsonDeserialize public record LocalFile(String filename,@ProtoField(defaultValue="0")long size)implements Serializable{@Serial private static final long serialVersionUID=1L;}
+import org.infinispan.protostream.annotations.ProtoField;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+@JsonDeserialize
+public record LocalFile(String filename, @ProtoField(defaultValue = "0") long size) implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+}

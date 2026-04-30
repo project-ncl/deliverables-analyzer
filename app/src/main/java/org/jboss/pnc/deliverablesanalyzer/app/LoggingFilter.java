@@ -15,9 +15,14 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.app;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
+
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerResponseContext;
+
 import org.jboss.pnc.api.constants.MDCHeaderKeys;
 import org.jboss.pnc.api.constants.MDCKeys;
 import org.jboss.pnc.common.Strings;
@@ -27,10 +32,6 @@ import org.jboss.resteasy.reactive.server.ServerResponseFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Supplier;
 
 @Singleton
 public class LoggingFilter {

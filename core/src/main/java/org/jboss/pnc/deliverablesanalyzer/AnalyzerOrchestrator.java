@@ -15,20 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import io.quarkus.virtual.threads.VirtualThreads;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
-import org.jboss.pnc.api.dto.exception.ReasonedException;
-import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
-import org.jboss.pnc.deliverablesanalyzer.config.ConfigParser;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.utils.FinderResultCreator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +26,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
+import org.jboss.pnc.api.dto.exception.ReasonedException;
+import org.jboss.pnc.api.enums.ResultStatus;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.ConfigParser;
+import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.utils.FinderResultCreator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.quarkus.virtual.threads.VirtualThreads;
 
 @ApplicationScoped
 public class AnalyzerOrchestrator {

@@ -15,25 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.pnc;
 
-import io.quarkus.virtual.threads.VirtualThreads;
-import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import org.jboss.pnc.api.dto.exception.ReasonedException;
-import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
-import org.jboss.pnc.dto.Artifact;
-import org.jboss.pnc.enums.ArtifactQuality;
-import org.jboss.resteasy.reactive.ClientWebApplicationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -46,6 +27,27 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import org.jboss.pnc.api.dto.exception.ReasonedException;
+import org.jboss.pnc.api.enums.ResultStatus;
+import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.dto.Artifact;
+import org.jboss.pnc.enums.ArtifactQuality;
+import org.jboss.resteasy.reactive.ClientWebApplicationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.quarkus.virtual.threads.VirtualThreads;
 
 @ApplicationScoped
 public class PncBuildFinder {

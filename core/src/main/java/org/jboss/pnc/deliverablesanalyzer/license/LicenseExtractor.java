@@ -15,19 +15,7 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.license;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.interpolation.InterpolationException;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
-import org.jboss.pnc.deliverablesanalyzer.utils.ManifestUtils;
-import org.jboss.pnc.deliverablesanalyzer.utils.MavenUtils;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.BundleLicense;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.jboss.pnc.deliverablesanalyzer.license.LicenseRegistry.NOASSERTION;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -35,7 +23,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.jboss.pnc.deliverablesanalyzer.license.LicenseRegistry.NOASSERTION;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import org.apache.commons.vfs2.FileObject;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.interpolation.InterpolationException;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.BundleLicense;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
+import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
+import org.jboss.pnc.deliverablesanalyzer.utils.ManifestUtils;
+import org.jboss.pnc.deliverablesanalyzer.utils.MavenUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class LicenseExtractor {

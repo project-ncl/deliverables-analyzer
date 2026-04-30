@@ -15,9 +15,16 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest.control;
 
+import java.io.IOException;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalysisReport;
@@ -26,12 +33,6 @@ import org.jboss.pnc.deliverablesanalyzer.utils.MdcUtils;
 import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class CallbackService {

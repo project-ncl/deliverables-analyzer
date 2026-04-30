@@ -15,13 +15,13 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.utils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jboss.pnc.api.constants.MDCHeaderKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public final class MdcUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(MdcUtils.class);

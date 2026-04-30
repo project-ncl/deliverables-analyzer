@@ -15,8 +15,9 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.app;
 
-import io.smallrye.config.ConfigMapping;
 import org.jboss.pnc.common.http.PNCHttpClientConfig;
+
+import io.smallrye.config.ConfigMapping;
 
 @ConfigMapping(prefix = "delan")
 public interface DeliverablesAnalyzerConfig {

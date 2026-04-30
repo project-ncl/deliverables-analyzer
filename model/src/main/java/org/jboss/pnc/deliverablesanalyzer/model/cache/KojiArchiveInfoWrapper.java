@@ -15,12 +15,16 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.cache;
 
-import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
-import org.infinispan.protostream.annotations.ProtoField;
-
 import java.util.Collections;
 import java.util.List;
 
-public record KojiArchiveInfoWrapper(@ProtoField(number=1)List<KojiArchiveInfo>data){
+import org.infinispan.protostream.annotations.ProtoField;
 
-public KojiArchiveInfoWrapper{data=data!=null?data:Collections.emptyList();}}
+import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
+
+public record KojiArchiveInfoWrapper(@ProtoField(number = 1) List<KojiArchiveInfo> data) {
+
+    public KojiArchiveInfoWrapper {
+        data = data != null ? data : Collections.emptyList();
+    }
+}

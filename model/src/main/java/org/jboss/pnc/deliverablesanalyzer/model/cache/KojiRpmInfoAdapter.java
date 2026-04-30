@@ -15,13 +15,14 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.cache;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.redhat.red.build.koji.model.xmlrpc.KojiRpmInfo;
 import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.AnalyzerObjectMapper;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.redhat.red.build.koji.model.xmlrpc.KojiRpmInfo;
 
 @ProtoAdapter(KojiRpmInfo.class)
 public class KojiRpmInfoAdapter {

@@ -15,11 +15,12 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import java.util.List;
+
 import org.jboss.pnc.api.deliverablesanalyzer.dto.ArtifactType;
 
-import java.util.List;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)

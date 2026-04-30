@@ -15,21 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import org.jboss.pnc.api.dto.exception.ReasonedException;
-import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
-import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
-import org.jboss.pnc.deliverablesanalyzer.core.ResultAggregator;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
-import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,6 +26,22 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import org.jboss.pnc.api.dto.exception.ReasonedException;
+import org.jboss.pnc.api.enums.ResultStatus;
+import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.core.ResultAggregator;
+import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
+import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class BuildLookupConsumer {
