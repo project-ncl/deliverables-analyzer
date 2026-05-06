@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.app;
+package org.jboss.pnc.deliverablesanalyzer.config;
 
 import org.jboss.pnc.common.http.PNCHttpClientConfig;
 
 import io.smallrye.config.ConfigMapping;
 
-@ConfigMapping(prefix = "delan")
-public interface DeliverablesAnalyzerConfig {
-
-    PNCHttpClientConfig pncHttpClientConfig();
+@ConfigMapping(prefix = "delan.heartbeat-scheduler")
+public interface HeartbeatSchedulerConfig extends PNCHttpClientConfig {
 }

@@ -24,7 +24,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Produces;
 
 import org.commonjava.util.jhttpc.auth.MemoryPasswordManager;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.AnalyzerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,12 +39,12 @@ public class KojiProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(KojiProvider.class);
 
     @Inject
-    BuildConfig buildConfig;
+    AnalyzerConfig analyzerConfig;
 
     @Produces
     @ApplicationScoped
     public KojiClient createKojiClient() throws KojiClientException {
-        URL kojiHubURL = buildConfig.kojiURL();
+        URL kojiHubURL = analyzerConfig.kojiUrl();
 
         if (kojiHubURL == null) {
             LOGGER.warn("Koji hub URL is not set. Koji client will not be initialized.");

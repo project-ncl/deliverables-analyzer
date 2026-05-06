@@ -56,14 +56,11 @@ public class LicenseInfo implements Comparable<LicenseInfo> {
             .thenComparing(LicenseInfo::getComments, Comparator.nullsFirst(String::compareTo));
 
     /**
-     * Implements comparison logic. Order: SPDX ID -> Name -> Source URL -> Distribution -> Comments. Note: 'url' is
-     * ignored in comparison.
+     * Implements comparison logic. Order: SPDX ID -> Name -> Source URL -> Distribution -> Comments.
+     * Note: 'url' is ignored in comparison.
      */
     @Override
     public int compareTo(LicenseInfo other) {
-        if (other == null) {
-            return 1;
-        }
         return COMPARATOR.compare(this, other);
     }
 }

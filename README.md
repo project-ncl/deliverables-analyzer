@@ -69,7 +69,7 @@ The following properties configure the core scanning and networking behavior of 
 | `callback.auth.enabled` | Whether to inject Bearer authorization tokens into the headers when firing completed callbacks | `true` |
 
 ### Infinispan Cache Configuration
-The application relies on Infinispan (`REMOTE` mode) to maintain a highly available cache for checksum deduplication and distributed cancellation events.
+The application relies on Infinispan (`REMOTE` mode) to maintain a highly available cache for checksummedFile deduplication and distributed cancellation events.
 
 | Configuration Key | Description | Example |
 |-------------------|-------------|---------|

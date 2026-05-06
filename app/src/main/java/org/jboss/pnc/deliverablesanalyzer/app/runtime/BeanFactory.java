@@ -23,7 +23,7 @@ import jakarta.enterprise.inject.Produces;
 import org.jboss.pnc.common.concurrent.HeartbeatScheduler;
 import org.jboss.pnc.common.concurrent.mdc.MDCScheduledThreadPoolExecutor;
 import org.jboss.pnc.common.http.PNCHttpClient;
-import org.jboss.pnc.deliverablesanalyzer.app.DeliverablesAnalyzerConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.HeartbeatSchedulerConfig;
 import org.jboss.pnc.quarkus.client.auth.runtime.PNCClientAuth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,9 +35,9 @@ public class BeanFactory {
     @ApplicationScoped
     public PNCHttpClient pncHttpClient(
             ObjectMapper objectMapper,
-            DeliverablesAnalyzerConfig config,
+            HeartbeatSchedulerConfig config,
             PNCClientAuth pncClientAuth) {
-        PNCHttpClient client = new PNCHttpClient(objectMapper, config.pncHttpClientConfig());
+        PNCHttpClient client = new PNCHttpClient(objectMapper, config);
         client.setAuthValueSupplier(pncClientAuth::getHttpAuthorizationHeaderValue);
         return client;
     }

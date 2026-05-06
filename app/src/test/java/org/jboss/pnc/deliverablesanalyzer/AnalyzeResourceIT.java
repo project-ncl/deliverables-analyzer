@@ -42,7 +42,7 @@ import org.jboss.pnc.api.deliverablesanalyzer.dto.FinderResult;
 import org.jboss.pnc.api.dto.Request;
 import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
 import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.pnc.PncClient;
 import org.jboss.pnc.deliverablesanalyzer.rest.control.CallbackService;
 import org.jboss.pnc.dto.Artifact;
@@ -93,7 +93,7 @@ public class AnalyzeResourceIT {
         String mockedMd5 = "md5-111111";
         when(checksumService.checksum(any(), any())).thenAnswer(invocation -> {
             // Return a dummy checksum for any file scanned (like README.txt)
-            return new Checksum(mockedSha256, mockedSha1, mockedMd5, "README.txt", 100L);
+            return new ChecksummedFile(mockedSha256, mockedSha1, mockedMd5, "README.txt", 100L);
         });
 
         // Create a real dummy file to analyze

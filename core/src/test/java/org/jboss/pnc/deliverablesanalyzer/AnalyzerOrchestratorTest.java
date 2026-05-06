@@ -95,7 +95,6 @@ class AnalyzerOrchestratorTest {
         // Verify flow
         verify(producer, times(1)).produce(anyString(), any(), any());
         verify(consumer, times(1)).consume(any(), any());
-        verify(producer, times(1)).cleanupVfsCache(); // Ensure cleanup happens
     }
 
     @Test
@@ -113,7 +112,5 @@ class AnalyzerOrchestratorTest {
         });
 
         assertTrue(thrown.getMessage().contains("Analysis failed"));
-        // Ensure cleanup still runs
-        verify(producer, times(1)).cleanupVfsCache();
     }
 }

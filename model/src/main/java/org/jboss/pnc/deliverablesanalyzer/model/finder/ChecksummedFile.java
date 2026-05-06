@@ -17,7 +17,6 @@ package org.jboss.pnc.deliverablesanalyzer.model.finder;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Comparator;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -28,7 +27,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Checksum implements Comparable<Checksum>, Serializable {
+public class ChecksummedFile implements Serializable {
     @Serial
     private static final long serialVersionUID = -7347509034711302799L;
 
@@ -42,7 +41,7 @@ public class Checksum implements Comparable<Checksum>, Serializable {
     @JsonIgnore
     private long fileSize;
 
-    public Checksum(String sha256Value, String sha1Value, String md5Value, LocalFile localFile) {
+    public ChecksummedFile(String sha256Value, String sha1Value, String md5Value, LocalFile localFile) {
         this.sha256Value = sha256Value;
         this.sha1Value = sha1Value;
         this.md5Value = md5Value;
@@ -50,31 +49,16 @@ public class Checksum implements Comparable<Checksum>, Serializable {
         this.fileSize = localFile.size();
     }
 
-    public static Checksum create(String sha256Value, String sha1Value, String md5Value, LocalFile localFile) {
-        return new Checksum(sha256Value, sha1Value, md5Value, localFile);
+    public static ChecksummedFile create(String sha256Value, String sha1Value, String md5Value, LocalFile localFile) {
+        return new ChecksummedFile(sha256Value, sha1Value, md5Value, localFile);
     }
 
-    public static Checksum create(
+    public static ChecksummedFile create(
             String sha256Value,
             String sha1Value,
             String md5Value,
             String filename,
             long fileSize) {
-        return new Checksum(sha256Value, sha1Value, md5Value, filename, fileSize);
-    }
-
-    /**
-     * Implements comparison logic: 1. Type (Ordinal) 2. Value (String) 3. Filename (String) 4. FileSize (Long)
-     */
-    @Override
-    public int compareTo(Checksum other) {
-        if (other == null) {
-            return 1;
-        }
-
-        return Comparator.comparing(Checksum::getSha256Value)
-                .thenComparing(Checksum::getFilename)
-                .thenComparingLong(Checksum::getFileSize)
-                .compare(this, other);
+        return new ChecksummedFile(sha256Value, sha1Value, md5Value, filename, fileSize);
     }
 }

@@ -49,7 +49,7 @@ import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
 import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.rest.WireMockTestResource;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,7 +119,7 @@ public class AnalyzeCallbackIT {
 
         // Ensure we return a checksum so the analysis has "results" to report
         when(checksumService.checksum(any(), any()))
-                .thenAnswer(inv -> new Checksum("sha256-111111", "sha1-111111", "md5-111111", "test.txt", 100L));
+                .thenAnswer(inv -> new ChecksummedFile("sha256-111111", "sha1-111111", "md5-111111", "test.txt", 100L));
 
         // Prepare Wiremock
         // Serve the JAR file (Download phase)

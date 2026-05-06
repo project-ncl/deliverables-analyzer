@@ -22,7 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.KojiBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.jboss.pnc.dto.Artifact;
@@ -40,18 +40,18 @@ public final class AnalyzerArtifactMapper {
     }
 
     public static AnalyzerArtifact mapFromNotFound(
-            Checksum checksum,
+            ChecksummedFile checksummedFile,
             Collection<String> filenames,
             List<LicenseInfo> licenses,
             String inputPath) {
         AnalyzerArtifact artifact = new AnalyzerArtifact();
-        populateBaseProperties(artifact, null, inputPath, checksum, filenames, licenses);
+        populateBaseProperties(artifact, null, inputPath, checksummedFile, filenames, licenses);
         return artifact;
     }
 
     public static AnalyzerArtifact mapFromPnc(
             Artifact pncArtifact,
-            Checksum checksum,
+            ChecksummedFile checksummedFile,
             Collection<String> filenames,
             List<LicenseInfo> licenses,
             String inputPath) {
@@ -106,7 +106,7 @@ public final class AnalyzerArtifactMapper {
             artifact = new AnalyzerArtifact();
         }
 
-        populateBaseProperties(artifact, BuildSystemType.PNC, inputPath, checksum, filenames, licenses);
+        populateBaseProperties(artifact, BuildSystemType.PNC, inputPath, checksummedFile, filenames, licenses);
 
         if (pncArtifact != null && pncArtifact.getBuild() != null) {
             artifact.setBuildId(pncArtifact.getBuild().getId());
@@ -124,7 +124,7 @@ public final class AnalyzerArtifactMapper {
     public static AnalyzerArtifact mapFromKojiArchive(
             KojiArchiveInfo archiveInfo,
             KojiBuild buildDetails,
-            Checksum checksum,
+            ChecksummedFile checksummedFile,
             Collection<String> filenames,
             List<LicenseInfo> licenses,
             String inputPath) {
@@ -159,7 +159,7 @@ public final class AnalyzerArtifactMapper {
             artifact = new AnalyzerArtifact();
         }
 
-        populateBaseProperties(artifact, BuildSystemType.BREW, inputPath, checksum, filenames, licenses);
+        populateBaseProperties(artifact, BuildSystemType.BREW, inputPath, checksummedFile, filenames, licenses);
 
         if (archiveInfo != null && archiveInfo.getBuildId() != null) {
             artifact.setBuildId(String.valueOf(archiveInfo.getBuildId()));
@@ -180,12 +180,12 @@ public final class AnalyzerArtifactMapper {
             AnalyzerArtifact artifact,
             BuildSystemType systemType,
             String inputPath,
-            Checksum checksum,
+            ChecksummedFile checksummedFile,
             Collection<String> filenames,
             List<LicenseInfo> licenses) {
         artifact.setBuildSystemType(systemType);
         artifact.setInputPath(inputPath);
-        artifact.setChecksum(checksum);
+        artifact.setChecksummedFile(checksummedFile);
         artifact.setFilenames(filenames != null ? new ArrayList<>(filenames) : new ArrayList<>());
         artifact.setLicenses(licenses != null ? new ArrayList<>(licenses) : new ArrayList<>());
         artifact.setUnmatchedFilenames(new ArrayList<>());

@@ -28,9 +28,6 @@ public class AnalyzerJacksonCustomizer implements ObjectMapperCustomizer {
 
     @Override
     public void customize(ObjectMapper objectMapper) {
-        // objectMapper.setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_EMPTY,
-        // JsonInclude.Include.NON_EMPTY));
-
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
         objectMapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
     }

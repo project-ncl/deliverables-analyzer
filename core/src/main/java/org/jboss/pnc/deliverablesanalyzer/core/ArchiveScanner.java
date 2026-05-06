@@ -36,11 +36,11 @@ import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.InvertIncludeFileSelector;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.AnalyzerConfig;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumGroup;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
 import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
@@ -63,7 +63,7 @@ public class ArchiveScanner {
             .of("jar", "war", "rar", "ear", "sar", "kar", "jdocbook", "jdocbook-style", "plugin");
 
     @Inject
-    BuildConfig buildConfig;
+    AnalyzerConfig analyzerConfig;
 
     @Inject
     ChecksumService checksumService;
@@ -80,7 +80,7 @@ public class ArchiveScanner {
             Map<ChecksumGroup, Set<LocalFile>> checksumMap,
             Map<String, List<LicenseInfo>> licensesMap,
             String inputPath,
-            BlockingQueue<QueueEntry> queue,
+            BlockingQueue<ScannedArtifact> queue,
             BuildSpecificConfig buildSpecificConfig) throws IOException {
         listChildren(fileObject, rootPath, checksumMap, licensesMap, inputPath, queue, 0, buildSpecificConfig);
     }
@@ -91,7 +91,7 @@ public class ArchiveScanner {
             Map<ChecksumGroup, Set<LocalFile>> checksumMap,
             Map<String, List<LicenseInfo>> licensesMap,
             String inputPath,
-            BlockingQueue<QueueEntry> queue,
+            BlockingQueue<ScannedArtifact> queue,
             int currentLevel,
             BuildSpecificConfig buildSpecificConfig) throws IOException {
         List<FileObject> pomFiles = new ArrayList<>();
@@ -148,8 +148,8 @@ public class ArchiveScanner {
 
                     // Checksum Task & Queue
                     if (shouldChecksum(file, buildSpecificConfig)) {
-                        Checksum checksum = checksumService.checksum(file, rootPath);
-                        handleChecksum(checksum, checksumMap, licensesMap, inputPath, queue);
+                        ChecksummedFile checksummedFile = checksumService.checksum(file, rootPath);
+                        handleChecksum(checksummedFile, checksumMap, licensesMap, inputPath, queue);
                     }
                 }
             }
@@ -160,35 +160,38 @@ public class ArchiveScanner {
     }
 
     private void handleChecksum(
-            Checksum checksum,
+            ChecksummedFile checksummedFile,
             Map<ChecksumGroup, Set<LocalFile>> checksumMap,
             Map<String, List<LicenseInfo>> licensesMap,
             String inputPath,
-            BlockingQueue<QueueEntry> queue) {
+            BlockingQueue<ScannedArtifact> queue) {
 
-        if (checksum == null) {
+        if (checksummedFile == null) {
             return;
         }
 
         // Update Map, Attach Licenses and Queue
         ChecksumGroup key = new ChecksumGroup(
-                checksum.getSha256Value(),
-                checksum.getSha1Value(),
-                checksum.getMd5Value());
+                checksummedFile.getSha256Value(),
+                checksummedFile.getSha1Value(),
+                checksummedFile.getMd5Value());
         checksumMap.computeIfAbsent(key, k -> new HashSet<>())
-                .add(new LocalFile(checksum.getFilename(), checksum.getFileSize()));
+                .add(new LocalFile(checksummedFile.getFilename(), checksummedFile.getFileSize()));
 
-        List<LicenseInfo> licenses = licensesMap.getOrDefault(checksum.getFilename(), Collections.emptyList());
-        Checksum fullChecksum = Checksum.create(
-                checksum.getSha256Value(),
-                checksum.getSha1Value(),
-                checksum.getMd5Value(),
-                new LocalFile(checksum.getFilename(), checksum.getFileSize()));
+        List<LicenseInfo> licenses = licensesMap.getOrDefault(checksummedFile.getFilename(), Collections.emptyList());
+        ChecksummedFile fullChecksummedFile = ChecksummedFile.create(
+                checksummedFile.getSha256Value(),
+                checksummedFile.getSha1Value(),
+                checksummedFile.getMd5Value(),
+                new LocalFile(checksummedFile.getFilename(), checksummedFile.getFileSize()));
 
         if (queue != null) {
             try {
-                LOGGER.debug("Adding checksum {} for file {} to queue", fullChecksum, checksum.getFilename());
-                queue.put(new QueueEntry(inputPath, fullChecksum, licenses));
+                LOGGER.debug(
+                        "Adding checksum {} for file {} to queue",
+                        fullChecksummedFile,
+                        checksummedFile.getFilename());
+                queue.put(new ScannedArtifact(inputPath, fullChecksummedFile, licenses));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new CancellationException("Interrupted while waiting for checksums");
@@ -202,7 +205,7 @@ public class ArchiveScanner {
             Map<ChecksumGroup, Set<LocalFile>> checksumMap,
             Map<String, List<LicenseInfo>> licensesMap,
             String inputPath,
-            BlockingQueue<QueueEntry> queue,
+            BlockingQueue<ScannedArtifact> queue,
             int nextLevel,
             BuildSpecificConfig buildSpecificConfig) {
 
@@ -237,7 +240,7 @@ public class ArchiveScanner {
         // Allow recursion if recursion is enabled globally
         // || it matches specific heuristics (Level 1 "Distribution" or Level 2 "Tarball")
         try {
-            return !buildConfig.disableRecursion() || isDistributionArchive(fo, level) || isTarArchive(fo, level);
+            return !analyzerConfig.disableRecursion() || isDistributionArchive(fo, level) || isTarArchive(fo, level);
         } catch (FileSystemException e) {
             LOGGER.warn("Error checking archive type: {}", fo.getName(), e);
             return false;

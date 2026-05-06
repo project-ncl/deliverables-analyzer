@@ -41,11 +41,11 @@ import jakarta.inject.Inject;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.AnalyzerConfig;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.license.LicenseExtractor;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumGroup;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,7 +62,7 @@ class ArchiveScannerTest {
     ArchiveScanner archiveScanner;
 
     @Inject
-    BuildConfig config;
+    AnalyzerConfig config;
 
     @InjectMock
     ChecksumService checksumService;
@@ -95,7 +95,7 @@ class ArchiveScannerTest {
         // Mock ChecksumService to return dummy checksums for any file
         when(checksumService.checksum(any(FileObject.class), anyString())).thenAnswer(invocation -> {
             FileObject fo = invocation.getArgument(0);
-            return new Checksum("123456", "123456", "123456", fo.getName().getBaseName(), 100L);
+            return new ChecksummedFile("123456", "123456", "123456", fo.getName().getBaseName(), 100L);
         });
 
         // Mock LicenseService
@@ -103,7 +103,7 @@ class ArchiveScannerTest {
         when(licenseExtractor.getPomLicenses(any(), anyString())).thenReturn(Collections.emptyList());
 
         // Prepare inputs
-        BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
+        BlockingQueue<ScannedArtifact> queue = new LinkedBlockingQueue<>();
         Map<ChecksumGroup, Set<LocalFile>> checksumMap = new HashMap<>();
         Map<String, List<LicenseInfo>> licensesMap = new HashMap<>();
         BuildSpecificConfig buildConfig = new BuildSpecificConfig(Collections.emptyList(), Collections.emptyList());
@@ -118,8 +118,8 @@ class ArchiveScannerTest {
 
         boolean foundInner = false;
         while (!queue.isEmpty()) {
-            QueueEntry entry = queue.take();
-            if ("inner.txt".equals(entry.checksum().getFilename())) {
+            ScannedArtifact entry = queue.take();
+            if ("inner.txt".equals(entry.file().getFilename())) {
                 foundInner = true;
             }
         }

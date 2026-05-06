@@ -143,10 +143,10 @@ public final class FinderResultCreator {
             ArtifactBuilder<?, ?> builder = Artifact.builder();
             builder.builtFromSource(false);
             builder.filename(filename);
-            builder.sha256(artifact.getChecksum().getSha256Value());
-            builder.sha1(artifact.getChecksum().getSha1Value());
-            builder.md5(artifact.getChecksum().getMd5Value());
-            builder.size(artifact.getChecksum().getFileSize());
+            builder.sha256(artifact.getChecksummedFile().getSha256Value());
+            builder.sha1(artifact.getChecksummedFile().getSha1Value());
+            builder.md5(artifact.getChecksummedFile().getMd5Value());
+            builder.size(artifact.getChecksummedFile().getFileSize());
 
             setLicenseInformation(builder, artifact.getLicenses());
 
@@ -183,10 +183,14 @@ public final class FinderResultCreator {
                 if (LOGGER.isDebugEnabled()) {
                     artifactIndex++;
                     LOGGER.debug(
-                            "Artifact: {} / {} ({})",
+                            "Artifact: {} / {} ({}) of Build {}",
                             artifactIndex,
                             numberOfArtifacts,
-                            getIdentifier(artifact.getBuildSystemType(), artifact.getPncId(), artifact.getBrewId()));
+                            getArtifactIdentifier(
+                                    artifact.getBuildSystemType(),
+                                    artifact.getPncId(),
+                                    artifact.getBrewId()),
+                            getBuildIdentifier(analyzerBuild.getBuildSystemType(), analyzerBuild.getBuildId()));
                 }
             }
 
@@ -198,7 +202,7 @@ public final class FinderResultCreator {
                         "Build: {} / {} ({})",
                         buildIndex,
                         numberOfBuilds,
-                        getIdentifier(build.getBuildSystemType(), build.getPncId(), build.getBrewId()));
+                        getArtifactIdentifier(build.getBuildSystemType(), build.getPncId(), build.getBrewId()));
             }
         }
 
@@ -224,9 +228,9 @@ public final class FinderResultCreator {
 
         builder.builtFromSource(artifact.getUnmatchedFilenames().isEmpty() && !isImport);
 
-        builder.sha256(artifact.getChecksum().getSha256Value());
-        builder.sha1(artifact.getChecksum().getSha1Value());
-        builder.md5(artifact.getChecksum().getMd5Value());
+        builder.sha256(artifact.getChecksummedFile().getSha256Value());
+        builder.sha1(artifact.getChecksummedFile().getSha1Value());
+        builder.md5(artifact.getChecksummedFile().getMd5Value());
         builder.filename(artifact.getArtifactFilename());
         builder.size(artifact.getArtifactSize());
 
@@ -278,10 +282,17 @@ public final class FinderResultCreator {
         return licenseBuilder.build();
     }
 
-    private static String getIdentifier(BuildSystemType buildSystemType, String pncId, Long brewId) {
+    private static String getArtifactIdentifier(BuildSystemType buildSystemType, String pncId, Long brewId) {
         return switch (buildSystemType) {
             case PNC -> "PNC#" + pncId;
             case BREW -> "Brew#" + brewId;
+        };
+    }
+
+    private static String getBuildIdentifier(BuildSystemType buildSystemType, String buildId) {
+        return switch (buildSystemType) {
+            case PNC -> "PNC#" + buildId;
+            case BREW -> "Brew#" + buildId;
         };
     }
 }

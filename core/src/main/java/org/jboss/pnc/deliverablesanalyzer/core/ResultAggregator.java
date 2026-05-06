@@ -46,7 +46,7 @@ public class ResultAggregator {
     }
 
     /**
-     * Performs final clean-up across all results, marking nested artifacts from Build Zero
+     * Performs final clean-up across all results, marking nested artifacts from not found artifacts
      */
     public void cleanUp(Map<String, AnalyzerResult> globalResults) {
         for (AnalyzerResult pathResult : globalResults.values()) {
@@ -154,7 +154,7 @@ public class ResultAggregator {
      * Extracts a unique hash key for the artifact. Prefers SHA-256, but safely falls back to MD5 for legacy RPMs.
      */
     private String getArtifactHashKey(AnalyzerArtifact artifact) {
-        return artifact.getChecksum().getSha256Value() != null ? artifact.getChecksum().getSha256Value()
-                : artifact.getChecksum().getMd5Value();
+        return artifact.getChecksummedFile().getSha256Value() != null ? artifact.getChecksummedFile().getSha256Value()
+                : artifact.getChecksummedFile().getMd5Value();
     }
 }

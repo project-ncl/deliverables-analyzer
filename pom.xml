@@ -81,7 +81,7 @@
     <!-- Quarkus -->
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
-    <quarkus.platform.version>3.31.4</quarkus.platform.version>
+    <quarkus.platform.version>3.35.1</quarkus.platform.version>
 
     <!-- Maven Plugin Versions -->
     <maven.antrun-plugin.version>3.2.0</maven.antrun-plugin.version>
@@ -218,6 +218,14 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>log4j-over-slf4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

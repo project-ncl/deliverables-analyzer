@@ -15,6 +15,8 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.pnc;
 
+import java.time.temporal.ChronoUnit;
+
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -23,6 +25,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.dto.BuildPushReport;
@@ -38,6 +41,7 @@ public interface PncRestClient {
 
     @GET
     @Path("/artifacts")
+    @Retry(delay = 1000, delayUnit = ChronoUnit.MILLIS)
     Page<Artifact> getArtifacts(@QueryParam("sha256") String sha256, @QueryParam("q") String q);
 
     @GET

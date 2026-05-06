@@ -28,14 +28,14 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 
 @ApplicationScoped
 public class ChecksumService {
 
     private static final int BUFFER_SIZE = 8192;
 
-    public Checksum checksum(FileObject fo, String root) throws IOException {
+    public ChecksummedFile checksum(FileObject fo, String root) throws IOException {
         MessageDigest sha256Digest = DigestUtils.getSha256Digest();
         MessageDigest sha1Digest = DigestUtils.getSha1Digest();
         MessageDigest md5Digest = DigestUtils.getMd5Digest();
@@ -55,7 +55,7 @@ public class ChecksumService {
             String sha1 = Hex.encodeHexString(sha1Digest.digest());
             String md5 = Hex.encodeHexString(md5Digest.digest());
 
-            return Checksum.create(sha256, sha1, md5, normalizePath(fo, root), fileSize);
+            return ChecksummedFile.create(sha256, sha1, md5, normalizePath(fo, root), fileSize);
         }
     }
 
