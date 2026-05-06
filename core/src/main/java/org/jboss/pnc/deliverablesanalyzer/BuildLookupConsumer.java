@@ -32,13 +32,13 @@ import jakarta.inject.Inject;
 
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.core.ResultAggregator;
+import org.jboss.pnc.deliverablesanalyzer.core.ScannedArtifact;
 import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,20 +61,20 @@ public class BuildLookupConsumer {
     @Inject
     ResultAggregator resultAggregator;
 
-    public void consume(BlockingQueue<QueueEntry> queue, Map<String, AnalyzerResult> results) {
+    public void consume(BlockingQueue<ScannedArtifact> queue, Map<String, AnalyzerResult> results) {
         LOGGER.info("Consumer started. Waiting for checksums...");
 
-        List<QueueEntry> queueBatch = new ArrayList<>(BATCH_SIZE);
+        List<ScannedArtifact> queueBatch = new ArrayList<>(BATCH_SIZE);
 
         try {
             while (true) {
-                QueueEntry queueEntry = queue.take();
-                queueBatch.add(queueEntry);
+                ScannedArtifact scannedArtifact = queue.take();
+                queueBatch.add(scannedArtifact);
                 queue.drainTo(queueBatch, BATCH_SIZE - 1);
 
-                int pillIndex = queueBatch.indexOf(QueueEntry.POISON_PILL);
+                int pillIndex = queueBatch.indexOf(ScannedArtifact.POISON_PILL);
                 if (pillIndex != -1) {
-                    List<QueueEntry> validItems = queueBatch.subList(0, pillIndex);
+                    List<ScannedArtifact> validItems = queueBatch.subList(0, pillIndex);
                     processBatch(validItems, results);
                     break;
                 }
@@ -93,18 +93,18 @@ public class BuildLookupConsumer {
         LOGGER.info("Consumer finished.");
     }
 
-    private void processBatch(List<QueueEntry> batch, Map<String, AnalyzerResult> globalResults) {
+    private void processBatch(List<ScannedArtifact> batch, Map<String, AnalyzerResult> globalResults) {
         if (batch.isEmpty())
             return;
 
         LOGGER.debug("Processing batch of {} checksums", batch.size());
 
-        var batchByPath = batch.stream().collect(Collectors.groupingBy(QueueEntry::sourceUrl));
+        var batchByPath = batch.stream().collect(Collectors.groupingBy(ScannedArtifact::sourceUrl));
         for (var entry : batchByPath.entrySet()) {
             String path = entry.getKey();
 
             // Create the initial batch of everything to be identified
-            Map<QueueEntry, Collection<String>> unresolvedBatch = createBatch(entry.getValue());
+            Map<ScannedArtifact, Collection<String>> unresolvedBatch = createBatch(entry.getValue());
 
             // Remove empty files/zips from the batch
             filterEmptyFiles(path, unresolvedBatch, globalResults);
@@ -136,7 +136,7 @@ public class BuildLookupConsumer {
             if (!unresolvedBatch.isEmpty()) {
                 LOGGER.debug("Marking {} unresolved artifacts as Not Found", unresolvedBatch.size());
 
-                for (Map.Entry<QueueEntry, Collection<String>> unresolvedEntry : unresolvedBatch.entrySet()) {
+                for (Map.Entry<ScannedArtifact, Collection<String>> unresolvedEntry : unresolvedBatch.entrySet()) {
                     mapToNotFound(path, unresolvedEntry.getKey(), unresolvedEntry.getValue(), globalResults);
                 }
 
@@ -147,17 +147,17 @@ public class BuildLookupConsumer {
 
     private void filterEmptyFiles(
             String path,
-            Map<QueueEntry, Collection<String>> unresolvedBatch,
+            Map<ScannedArtifact, Collection<String>> unresolvedBatch,
             Map<String, AnalyzerResult> globalResults) {
         var iterator = unresolvedBatch.entrySet().iterator();
         while (iterator.hasNext()) {
             var batchEntry = iterator.next();
-            QueueEntry queueEntry = batchEntry.getKey();
+            ScannedArtifact scannedArtifact = batchEntry.getKey();
             Collection<String> filenames = batchEntry.getValue();
 
-            if (isEmptyFileDigest(queueEntry.checksum()) || isEmptyZipDigest(queueEntry.checksum())) {
-                LOGGER.debug("Short-circuiting empty file/zip to Build Zero: {}", filenames);
-                mapToNotFound(path, queueEntry, filenames, globalResults);
+            if (isEmptyFileDigest(scannedArtifact.file()) || isEmptyZipDigest(scannedArtifact.file())) {
+                LOGGER.debug("Short-circuiting empty file/zip to not found artifacts: {}", filenames);
+                mapToNotFound(path, scannedArtifact, filenames, globalResults);
 
                 // Remote the resolved entry from the batch
                 iterator.remove();
@@ -167,9 +167,9 @@ public class BuildLookupConsumer {
 
     private void processLookup(
             String path,
-            Map<QueueEntry, Collection<String>> unresolvedBatch,
+            Map<ScannedArtifact, Collection<String>> unresolvedBatch,
             Map<String, AnalyzerResult> globalResults,
-            Function<Map<QueueEntry, Collection<String>>, AnalyzerResult> findFunction) {
+            Function<Map<ScannedArtifact, Collection<String>>, AnalyzerResult> findFunction) {
         AnalyzerResult lookupResults = findFunction.apply(unresolvedBatch);
 
         if (lookupResults == null || lookupResults.foundBuilds().isEmpty()) {
@@ -183,21 +183,21 @@ public class BuildLookupConsumer {
         // Remove found items from the unresolved batch
         Set<String> missingChecksums = lookupResults.notFoundArtifacts()
                 .stream()
-                .map(a -> a.getChecksum().getSha256Value())
+                .map(a -> a.getChecksummedFile().getSha256Value())
                 .collect(Collectors.toSet());
-        unresolvedBatch.keySet().removeIf(entry -> !missingChecksums.contains(entry.checksum().getSha256Value()));
+        unresolvedBatch.keySet().removeIf(entry -> !missingChecksums.contains(entry.file().getSha256Value()));
     }
 
-    private Map<QueueEntry, Collection<String>> createBatch(List<QueueEntry> queueEntries) {
-        Map<QueueEntry, Collection<String>> batchMap = new HashMap<>();
+    private Map<ScannedArtifact, Collection<String>> createBatch(List<ScannedArtifact> scannedArtifacts) {
+        Map<ScannedArtifact, Collection<String>> batchMap = new HashMap<>();
 
-        Map<String, QueueEntry> checksumEntries = new HashMap<>();
-        for (QueueEntry queueEntry : queueEntries) {
-            String hash = queueEntry.checksum().getSha256Value();
+        Map<String, ScannedArtifact> checksumEntries = new HashMap<>();
+        for (ScannedArtifact scannedArtifact : scannedArtifacts) {
+            String hash = scannedArtifact.file().getSha256Value();
 
-            QueueEntry keyEntry = checksumEntries.computeIfAbsent(hash, k -> queueEntry);
+            ScannedArtifact keyEntry = checksumEntries.computeIfAbsent(hash, k -> scannedArtifact);
             batchMap.computeIfAbsent(keyEntry, k -> ConcurrentHashMap.newKeySet())
-                    .add(queueEntry.checksum().getFilename());
+                    .add(scannedArtifact.file().getFilename());
         }
 
         return batchMap;
@@ -205,22 +205,22 @@ public class BuildLookupConsumer {
 
     private void mapToNotFound(
             String path,
-            QueueEntry queueEntry,
+            ScannedArtifact scannedArtifact,
             Collection<String> filenames,
             Map<String, AnalyzerResult> globalResults) {
         AnalyzerArtifact artifact = AnalyzerArtifactMapper.mapFromNotFound(
-                queueEntry.checksum(),
+                scannedArtifact.file(),
                 new ArrayList<>(filenames),
-                queueEntry.licenses(),
-                queueEntry.sourceUrl());
+                scannedArtifact.licenses(),
+                scannedArtifact.sourceUrl());
         globalResults.get(path).notFoundArtifacts().add(artifact);
     }
 
-    private boolean isEmptyFileDigest(Checksum checksum) {
-        return checksum.getSha256Value() != null && EMPTY_FILE_SHA256.equals(checksum.getSha256Value());
+    private boolean isEmptyFileDigest(ChecksummedFile checksummedFile) {
+        return checksummedFile.getSha256Value() != null && EMPTY_FILE_SHA256.equals(checksummedFile.getSha256Value());
     }
 
-    private boolean isEmptyZipDigest(Checksum checksum) {
-        return checksum.getSha256Value() != null && EMPTY_ZIP_SHA256.equals(checksum.getSha256Value());
+    private boolean isEmptyZipDigest(ChecksummedFile checksummedFile) {
+        return checksummedFile.getSha256Value() != null && EMPTY_ZIP_SHA256.equals(checksummedFile.getSha256Value());
     }
 }

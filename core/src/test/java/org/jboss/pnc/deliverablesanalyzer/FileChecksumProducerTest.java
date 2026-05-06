@@ -43,11 +43,11 @@ import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ArchiveScanner;
 import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.core.RemoteFileDownloader;
+import org.jboss.pnc.deliverablesanalyzer.core.ScannedArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveInfo;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -82,7 +82,12 @@ class FileChecksumProducerTest {
         Files.writeString(testFile, "dummy content");
         String inputPath = testFile.toUri().toString();
 
-        Checksum rootChecksum = new Checksum("root-hash", "root-hash", "root-hash", "cached-file.zip", 100L);
+        ChecksummedFile rootChecksummedFile = new ChecksummedFile(
+                "root-hash",
+                "root-hash",
+                "root-hash",
+                "cached-file.zip",
+                100L);
         ArchiveEntry cachedEntry = new ArchiveEntry(
                 "inner-hash",
                 "inner-hash",
@@ -93,11 +98,11 @@ class FileChecksumProducerTest {
 
         when(fileDownloader.isRemoteUrl(inputPath)).thenReturn(false);
         // Mock ChecksumService to return a root hash
-        when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksum);
+        when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksummedFile);
         // Mock Cache to return a HIT
         when(checksumCache.get("root-hash")).thenReturn(archiveInfo);
 
-        BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
+        BlockingQueue<ScannedArtifact> queue = new LinkedBlockingQueue<>();
         BuildSpecificConfig buildConfig = new BuildSpecificConfig(Collections.emptyList(), Collections.emptyList());
 
         // When
@@ -109,8 +114,8 @@ class FileChecksumProducerTest {
 
         // 2. Queue should contain the cached entry
         assertEquals(1, queue.size());
-        QueueEntry entry = queue.take();
-        assertEquals("inner.txt", entry.checksum().getFilename());
+        ScannedArtifact entry = queue.take();
+        assertEquals("inner.txt", entry.file().getFilename());
     }
 
     @Test
@@ -120,15 +125,20 @@ class FileChecksumProducerTest {
         Files.writeString(testFile, "content");
         String inputPath = testFile.toUri().toString();
 
-        Checksum rootChecksum = new Checksum("new-hash", "new-hash", "new-hash", "new-file.zip", 100L);
+        ChecksummedFile rootChecksummedFile = new ChecksummedFile(
+                "new-hash",
+                "new-hash",
+                "new-hash",
+                "new-file.zip",
+                100L);
 
         when(fileDownloader.isRemoteUrl(inputPath)).thenReturn(false);
         // Mock ChecksumService to return a root hash
-        when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksum);
+        when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksummedFile);
         // Mock Cache MISS
         when(checksumCache.get("new-hash")).thenReturn(null);
 
-        BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
+        BlockingQueue<ScannedArtifact> queue = new LinkedBlockingQueue<>();
         BuildSpecificConfig buildConfig = new BuildSpecificConfig(Collections.emptyList(), Collections.emptyList());
 
         // When
@@ -162,11 +172,16 @@ class FileChecksumProducerTest {
         when(fileDownloader.isRemoteUrl(remoteUrl)).thenReturn(true);
         when(fileDownloader.downloadToTempFile(remoteUrl)).thenReturn(mockDownloadedFile);
 
-        Checksum rootChecksum = new Checksum("remote-hash", "remote-hash", "remote-hash", "app-1.0.jar", 100L);
-        when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksum);
+        ChecksummedFile rootChecksummedFile = new ChecksummedFile(
+                "remote-hash",
+                "remote-hash",
+                "remote-hash",
+                "app-1.0.jar",
+                100L);
+        when(checksumService.checksum(any(FileObject.class), anyString())).thenReturn(rootChecksummedFile);
         when(checksumCache.get("remote-hash")).thenReturn(null); // Force deep scan
 
-        BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
+        BlockingQueue<ScannedArtifact> queue = new LinkedBlockingQueue<>();
         BuildSpecificConfig buildConfig = new BuildSpecificConfig(Collections.emptyList(), Collections.emptyList());
 
         // When
@@ -184,7 +199,7 @@ class FileChecksumProducerTest {
     void testProduceFileNotFound(@TempDir Path tempDir) {
         // Given
         String inputPath = tempDir.resolve("non-existent.zip").toUri().toString();
-        BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
+        BlockingQueue<ScannedArtifact> queue = new LinkedBlockingQueue<>();
 
         when(fileDownloader.isRemoteUrl(inputPath)).thenReturn(false);
 

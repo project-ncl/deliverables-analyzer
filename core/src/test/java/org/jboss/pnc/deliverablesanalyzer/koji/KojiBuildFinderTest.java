@@ -34,12 +34,12 @@ import jakarta.inject.Inject;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.ArtifactType;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.core.ScannedArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.MavenAnalyzerArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.KojiArchiveInfoWrapper;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.KojiBuild;
 import org.junit.jupiter.api.Test;
 
@@ -78,10 +78,10 @@ public class KojiBuildFinderTest {
         String md5 = "testMd5";
         Integer buildId = 100;
         String nvr = "org.test:test-1.0-1";
-        Checksum checksum = new Checksum(sha256, sha1, md5, "test.jar", 100L);
+        ChecksummedFile checksummedFile = new ChecksummedFile(sha256, sha1, md5, "test.jar", 100L);
 
-        QueueEntry entry = new QueueEntry("http://source", checksum, Collections.emptyList());
-        ConcurrentHashMap<QueueEntry, Collection<String>> table = new ConcurrentHashMap<>();
+        ScannedArtifact entry = new ScannedArtifact("http://source", checksummedFile, Collections.emptyList());
+        ConcurrentHashMap<ScannedArtifact, Collection<String>> table = new ConcurrentHashMap<>();
         table.put(entry, List.of("test.jar"));
 
         // Mock Koji Archive Response
@@ -133,7 +133,7 @@ public class KojiBuildFinderTest {
 
         // Verify Artifact Mapping
         var artifact = resultBuild.getBuiltArtifacts().iterator().next();
-        assertEquals(sha256, artifact.getChecksum().getSha256Value());
+        assertEquals(sha256, artifact.getChecksummedFile().getSha256Value());
         assertEquals(ArtifactType.MAVEN, artifact.getArtifactType());
         MavenAnalyzerArtifact mavenArtifact = assertInstanceOf(MavenAnalyzerArtifact.class, artifact);
         assertEquals("org.test", mavenArtifact.getGroupId());
@@ -141,7 +141,7 @@ public class KojiBuildFinderTest {
 
     @Test
     void testFindBuildsHandlesEmptyResult() {
-        ConcurrentHashMap<QueueEntry, Collection<String>> table = new ConcurrentHashMap<>();
+        ConcurrentHashMap<ScannedArtifact, Collection<String>> table = new ConcurrentHashMap<>();
         AnalyzerResult results = kojiBuildFinder.findBuilds(table);
 
         assertNotNull(results);

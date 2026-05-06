@@ -34,13 +34,13 @@ import jakarta.inject.Inject;
 
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.config.AnalyzerConfig;
+import org.jboss.pnc.deliverablesanalyzer.core.ScannedArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.enums.ArtifactQuality;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
@@ -54,7 +54,7 @@ public class PncBuildFinder {
     private static final Logger LOGGER = LoggerFactory.getLogger(PncBuildFinder.class);
 
     @Inject
-    BuildConfig buildConfig;
+    AnalyzerConfig analyzerConfig;
 
     @Inject
     PncClient pncClient;
@@ -67,14 +67,14 @@ public class PncBuildFinder {
 
     @PostConstruct
     void init() {
-        this.pncThrottle = new Semaphore(buildConfig.pncNumThreads());
+        this.pncThrottle = new Semaphore(analyzerConfig.pncNumThreads(), true);
     }
 
     /**
      * Main Entry Point: Finds builds for a batch of checksums. Returns a map of BuildID -> PncBuild (containing the
      * identified artifacts).
      */
-    public AnalyzerResult findBuilds(Map<QueueEntry, Collection<String>> checksumTable) {
+    public AnalyzerResult findBuilds(Map<ScannedArtifact, Collection<String>> checksumTable) {
         if (checksumTable == null || checksumTable.isEmpty()) {
             return AnalyzerResult.empty();
         }
@@ -86,7 +86,7 @@ public class PncBuildFinder {
         return groupArtifactsAsBuilds(artifacts);
     }
 
-    private Set<AnalyzerArtifact> lookupArtifactsInPnc(Map<QueueEntry, Collection<String>> checksumTable) {
+    private Set<AnalyzerArtifact> lookupArtifactsInPnc(Map<ScannedArtifact, Collection<String>> checksumTable) {
         Set<AnalyzerArtifact> artifacts = ConcurrentHashMap.newKeySet();
 
         List<CompletableFuture<Void>> tasks = checksumTable.entrySet()
@@ -126,30 +126,30 @@ public class PncBuildFinder {
         return artifacts;
     }
 
-    private AnalyzerArtifact processChecksum(Map.Entry<QueueEntry, Collection<String>> entry) {
-        QueueEntry queueEntry = entry.getKey();
-        Checksum checksum = queueEntry.checksum();
+    private AnalyzerArtifact processChecksum(Map.Entry<ScannedArtifact, Collection<String>> entry) {
+        ScannedArtifact scannedArtifact = entry.getKey();
+        ChecksummedFile checksummedFile = scannedArtifact.file();
         Collection<String> filenames = entry.getValue();
 
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Parallel execution lookup for checksum {}", checksum);
+            LOGGER.debug("Parallel execution lookup for checksum {}", checksummedFile);
         }
 
         try {
             return AnalyzerArtifactMapper.mapFromPnc(
-                    findArtifactInPnc(checksum).orElse(null),
-                    checksum,
+                    findArtifactInPnc(checksummedFile).orElse(null),
+                    checksummedFile,
                     filenames,
-                    queueEntry.licenses(),
-                    queueEntry.sourceUrl());
+                    scannedArtifact.licenses(),
+                    scannedArtifact.sourceUrl());
         } catch (ClientWebApplicationException e) {
             throw new CompletionException(e);
         }
     }
 
-    private Optional<Artifact> findArtifactInPnc(Checksum checksum) throws ClientWebApplicationException {
+    private Optional<Artifact> findArtifactInPnc(ChecksummedFile checksummedFile) throws ClientWebApplicationException {
         Collection<Artifact> artifacts;
-        artifacts = lookupPncArtifactsByChecksum(checksum);
+        artifacts = lookupPncArtifactsByChecksum(checksummedFile);
         if (artifacts == null || artifacts.isEmpty()) {
             return Optional.empty();
         }
@@ -174,11 +174,12 @@ public class PncBuildFinder {
         return AnalyzerResult.of(pncBuilds, notFoundArtifacts);
     }
 
-    private Collection<Artifact> lookupPncArtifactsByChecksum(Checksum checksum) throws ClientWebApplicationException {
-        if (checksum.getSha256Value() == null) {
+    private Collection<Artifact> lookupPncArtifactsByChecksum(ChecksummedFile checksummedFile)
+            throws ClientWebApplicationException {
+        if (checksummedFile.getSha256Value() == null) {
             return null;
         }
-        return pncClient.getArtifactsBySha256(checksum.getSha256Value());
+        return pncClient.getArtifactsBySha256(checksummedFile.getSha256Value());
     }
 
     private static Optional<Artifact> getBestPncArtifact(Collection<Artifact> artifacts) {
@@ -202,7 +203,7 @@ public class PncBuildFinder {
             case BLACKLISTED -> -2;
             case TEMPORARY -> -3;
             case DELETED -> -4;
-            default -> -100;
+            case IMPORTED -> -5;
         };
     }
 

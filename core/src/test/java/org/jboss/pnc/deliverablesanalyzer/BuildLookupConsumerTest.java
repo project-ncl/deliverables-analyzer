@@ -28,11 +28,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import jakarta.inject.Inject;
 
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.core.ResultAggregator;
+import org.jboss.pnc.deliverablesanalyzer.core.ScannedArtifact;
 import org.jboss.pnc.deliverablesanalyzer.koji.KojiBuildFinder;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.pnc.PncBuildFinder;
 import org.junit.jupiter.api.Test;
 
@@ -57,12 +57,12 @@ class BuildLookupConsumerTest {
     @Test
     void testConsumeFlow() throws InterruptedException {
         // Given
-        BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>();
+        BlockingQueue<ScannedArtifact> queue = new LinkedBlockingQueue<>();
         String path = "http://test";
-        Checksum checksum = new Checksum("123", "123", "123", "file.jar", 100L);
+        ChecksummedFile checksummedFile = new ChecksummedFile("123", "123", "123", "file.jar", 100L);
 
-        queue.put(new QueueEntry(path, checksum, Collections.emptyList()));
-        queue.put(QueueEntry.POISON_PILL); // Signal to stop
+        queue.put(new ScannedArtifact(path, checksummedFile, Collections.emptyList()));
+        queue.put(ScannedArtifact.POISON_PILL); // Signal to stop
 
         Map<String, AnalyzerResult> globalResults = new ConcurrentHashMap<>();
         globalResults.put(path, AnalyzerResult.init());

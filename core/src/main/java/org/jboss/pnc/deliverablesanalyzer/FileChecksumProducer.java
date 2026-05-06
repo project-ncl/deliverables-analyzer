@@ -16,6 +16,7 @@
 package org.jboss.pnc.deliverablesanalyzer;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,7 +25,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
@@ -40,16 +40,16 @@ import org.apache.commons.vfs2.FileSystemManager;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.AnalyzerConfig;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.core.ArchiveScanner;
 import org.jboss.pnc.deliverablesanalyzer.core.ChecksumService;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
 import org.jboss.pnc.deliverablesanalyzer.core.RemoteFileDownloader;
+import org.jboss.pnc.deliverablesanalyzer.core.ScannedArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveEntry;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.ArchiveInfo;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksumGroup;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LocalFile;
 import org.jboss.pnc.deliverablesanalyzer.utils.AnalyzerUtils;
@@ -63,7 +63,7 @@ public class FileChecksumProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileChecksumProducer.class);
 
     @Inject
-    BuildConfig buildConfig;
+    AnalyzerConfig analyzerConfig;
 
     @Inject
     RemoteFileDownloader remoteFileDownloader;
@@ -83,7 +83,7 @@ public class FileChecksumProducer {
 
     @PostConstruct
     public void init() {
-        if (buildConfig.disableCache()) {
+        if (analyzerConfig.disableCache()) {
             LOGGER.info("Cache disabled via configuration");
             this.checksumCache = null;
         }
@@ -97,7 +97,10 @@ public class FileChecksumProducer {
      * @param queue The shared blocking queue to populate.
      * @param buildSpecificConfig Config for builds
      */
-    public void produce(String inputPath, BlockingQueue<QueueEntry> queue, BuildSpecificConfig buildSpecificConfig) {
+    public void produce(
+            String inputPath,
+            BlockingQueue<ScannedArtifact> queue,
+            BuildSpecificConfig buildSpecificConfig) {
         if (queue == null) {
             throw new IllegalStateException("Queue has not been set in the Producer!");
         }
@@ -108,7 +111,7 @@ public class FileChecksumProducer {
 
     private void scanAndChecksumFiles(
             String inputPath,
-            BlockingQueue<QueueEntry> queue,
+            BlockingQueue<ScannedArtifact> queue,
             BuildSpecificConfig buildSpecificConfig) {
         LOGGER.info("Scanning files for {}", inputPath);
 
@@ -129,13 +132,14 @@ public class FileChecksumProducer {
                     String rootPath = AnalyzerUtils.calculateRootPath(fileObject);
 
                     // Compute root checksum
-                    Checksum rootChecksum = checksumCache != null ? checksumService.checksum(fileObject, rootPath)
+                    ChecksummedFile rootChecksummedFile = checksumCache != null
+                            ? checksumService.checksum(fileObject, rootPath)
                             : null;
 
                     // Try to load from cache
                     boolean checksumInCache = false;
-                    if (!buildConfig.disableCache() && rootChecksum != null) {
-                        checksumInCache = loadFromCache(fileObject, rootPath, rootChecksum, inputPath, queue);
+                    if (!analyzerConfig.disableCache() && rootChecksummedFile != null) {
+                        checksumInCache = loadFromCache(fileObject, rootPath, rootChecksummedFile, inputPath, queue);
                     }
 
                     // Perform deep scan - finds children, hashes them, handles archives
@@ -143,7 +147,7 @@ public class FileChecksumProducer {
                         performDeepScanAndCacheResult(
                                 fileObject,
                                 rootPath,
-                                rootChecksum,
+                                rootChecksummedFile,
                                 inputPath,
                                 queue,
                                 buildSpecificConfig);
@@ -162,14 +166,14 @@ public class FileChecksumProducer {
     private boolean loadFromCache(
             FileObject fo,
             String rootPath,
-            Checksum rootChecksum,
+            ChecksummedFile rootChecksummedFile,
             String inputPath,
-            BlockingQueue<QueueEntry> queue) throws IOException {
-        if (buildConfig.disableCache())
+            BlockingQueue<ScannedArtifact> queue) throws IOException {
+        if (analyzerConfig.disableCache())
             return false;
 
-        String cacheKey = rootChecksum.getSha256Value() != null ? rootChecksum.getSha256Value()
-                : rootChecksum.getMd5Value();
+        String cacheKey = rootChecksummedFile.getSha256Value() != null ? rootChecksummedFile.getSha256Value()
+                : rootChecksummedFile.getMd5Value();
 
         if (cacheKey == null || checksumCache == null)
             return false;
@@ -177,12 +181,12 @@ public class FileChecksumProducer {
         ArchiveInfo archiveInfo = checksumCache.get(cacheKey);
         if (archiveInfo != null) {
             for (ArchiveEntry entry : archiveInfo.entries()) {
-                Checksum checksum = Checksum
+                ChecksummedFile checksummedFile = ChecksummedFile
                         .create(entry.sha256Checksum(), entry.sha1Checksum(), entry.md5Checksum(), entry.file());
 
                 try {
-                    LOGGER.debug("Adding checksum {} for file {} to queue", checksum, entry.file());
-                    queue.put(new QueueEntry(inputPath, checksum, entry.licenses()));
+                    LOGGER.debug("Adding checksum {} for file {} to queue", checksummedFile, entry.file());
+                    queue.put(new ScannedArtifact(inputPath, checksummedFile, entry.licenses()));
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new CancellationException("Producer interrupted while loading from cache");
@@ -203,9 +207,9 @@ public class FileChecksumProducer {
     private void performDeepScanAndCacheResult(
             FileObject fileObject,
             String rootPath,
-            Checksum rootChecksum,
+            ChecksummedFile rootChecksummedFile,
             String inputPath,
-            BlockingQueue<QueueEntry> queue,
+            BlockingQueue<ScannedArtifact> queue,
             BuildSpecificConfig buildSpecificConfig) throws IOException {
 
         Map<ChecksumGroup, Set<LocalFile>> jobMap = new HashMap<>();
@@ -217,17 +221,17 @@ public class FileChecksumProducer {
         archiveScanner.scan(fileObject, rootPath, jobMap, licensesMap, inputPath, queue, buildSpecificConfig);
 
         // Save the newly found structure to the cache
-        if (!buildConfig.disableCache() && checksumCache != null && rootChecksum != null) {
-            updateCacheWithNewScan(rootChecksum, jobMap, licensesMap);
+        if (!analyzerConfig.disableCache() && checksumCache != null && rootChecksummedFile != null) {
+            updateCacheWithNewScan(rootChecksummedFile, jobMap, licensesMap);
         }
     }
 
     private void updateCacheWithNewScan(
-            Checksum rootChecksum,
+            ChecksummedFile rootChecksummedFile,
             Map<ChecksumGroup, Set<LocalFile>> jobMap,
             Map<String, List<LicenseInfo>> licensesMap) throws IOException {
-        String cacheKey = rootChecksum.getSha256Value() != null ? rootChecksum.getSha256Value()
-                : rootChecksum.getMd5Value();
+        String cacheKey = rootChecksummedFile.getSha256Value() != null ? rootChecksummedFile.getSha256Value()
+                : rootChecksummedFile.getMd5Value();
 
         if (cacheKey == null) {
             throw new IOException("Neither SHA256 nor MD5 checksum found after scan");
@@ -278,21 +282,6 @@ public class FileChecksumProducer {
         return fileObject;
     }
 
-    public void cleanupVfsCache() {
-        try {
-            Optional<Path> cleanedPath = AnalyzerUtils.cleanupVfsCache();
-            if (LOGGER.isDebugEnabled()) {
-                if (cleanedPath.isPresent()) {
-                    LOGGER.debug("Cleaned up VFS cache at: {}", cleanedPath.get());
-                } else {
-                    LOGGER.debug("No VFS cache cleanup needed (directory absent or empty).");
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.warn("Cleaning up VFS cache failed: {}", e.getMessage());
-        }
-    }
-
     private void checkInterrupted(String message) {
         if (Thread.currentThread().isInterrupted()) {
             throw new CancellationException(message);
@@ -318,6 +307,11 @@ public class FileChecksumProducer {
                     "Invalid input URI: " + inputPath,
                     "Please check the URL.",
                     fse);
+            case ConnectException ce -> new ReasonedException(
+                    ResultStatus.FAILED,
+                    "Invalid input URI: " + inputPath,
+                    "Please check the URL.",
+                    ce);
             // Default to System Error for everything else
             case null, default ->
                 new ReasonedException(ResultStatus.SYSTEM_ERROR, "System failed to process input: " + inputPath, e);

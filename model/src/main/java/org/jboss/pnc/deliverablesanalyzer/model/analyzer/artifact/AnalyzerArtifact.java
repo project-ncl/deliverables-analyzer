@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.jboss.pnc.api.deliverablesanalyzer.dto.ArtifactType;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 
 import lombok.AllArgsConstructor;
@@ -39,7 +39,7 @@ public class AnalyzerArtifact {
 
     private BuildSystemType buildSystemType;
     private String inputPath;
-    private Checksum checksum;
+    private ChecksummedFile checksummedFile;
 
     private Collection<String> filenames = new ArrayList<>();
     private Collection<String> unmatchedFilenames = new ArrayList<>();

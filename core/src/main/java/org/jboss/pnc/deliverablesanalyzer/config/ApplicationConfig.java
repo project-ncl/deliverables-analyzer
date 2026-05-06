@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.core;
+package org.jboss.pnc.deliverablesanalyzer.config;
 
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import io.smallrye.config.ConfigMapping;
 
-public record ChecksumEntry(String sourceUrl, Checksum checksum) {
-    public static final ChecksumEntry POISON_PILL = new ChecksumEntry(null, null);
+@ConfigMapping(prefix = "delan")
+public interface ApplicationConfig {
 
-    public boolean isPoisonPill() {
-        return sourceUrl == null && checksum == null;
-    }
+    HeartbeatSchedulerConfig heartbeatScheduler();
+
+    AnalyzerConfig analyzer();
 }

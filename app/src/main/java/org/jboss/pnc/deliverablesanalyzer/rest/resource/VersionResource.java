@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.pnc.deliverablesanalyzer.rest;
+package org.jboss.pnc.deliverablesanalyzer.rest.resource;
 
-import jakarta.annotation.security.PermitAll;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import org.jboss.pnc.deliverablesanalyzer.rest.VersionEndpoint;
 import org.jboss.pnc.deliverablesanalyzer.rest.control.VersionService;
 
-@Path("/version")
-public class VersionResource {
+public class VersionResource implements VersionEndpoint {
 
     @Inject
     VersionService versionService;
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @PermitAll
-    @Path("/")
+    @Override
     public Response getVersion() {
         return Response.ok(versionService.getComponentVersion()).build();
     }

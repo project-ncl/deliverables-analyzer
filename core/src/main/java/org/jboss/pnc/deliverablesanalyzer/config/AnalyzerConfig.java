@@ -21,50 +21,35 @@ import java.util.regex.Pattern;
 
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
-import io.smallrye.config.WithName;
 
-@ConfigMapping(prefix = "analyzer")
-public interface BuildConfig {
+@ConfigMapping(prefix = "delan.analyzer")
+public interface AnalyzerConfig {
 
-    @WithName("disable-spdx-init")
     @WithDefault("false")
     boolean disableSpdxInit();
 
-    @WithName("disable-cache")
     @WithDefault("false")
     boolean disableCache();
 
-    @WithName("cache-lifespan")
-    @WithDefault("3600000") // 1 hour
-    long cacheLifespan();
-
-    @WithName("disable-recursion")
     @WithDefault("false")
     boolean disableRecursion();
 
-    @WithName("archive-extensions")
     @WithDefault("dll,dylib,ear,jar,jdocbook,jdocbook-style,kar,plugin,pom,rar,sar,so,war,xml,exe,msi,zip,rpm")
     List<String> archiveExtensions();
 
-    @WithName("excludes")
     @WithDefault("^(?!.*/pom\\.xml$).*/.*\\.xml$")
     List<Pattern> excludes();
 
-    @WithName("pnc-num-threads")
     @WithDefault("10")
     int pncNumThreads();
 
-    @WithName("pnc-url")
-    URL pncURL();
+    URL pncUrl();
 
-    @WithName("koji-num-threads")
     @WithDefault("12")
     int kojiNumThreads();
 
-    @WithName("koji-multicall-size")
     @WithDefault("8")
-    int kojiMultiCallSize();
+    int kojiMulticallSize();
 
-    @WithName("koji-url")
-    URL kojiURL();
+    URL kojiUrl();
 }

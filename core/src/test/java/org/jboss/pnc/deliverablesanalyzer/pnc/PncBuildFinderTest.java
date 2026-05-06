@@ -27,10 +27,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.inject.Inject;
 
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.core.ScannedArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.dto.Build;
 import org.jboss.pnc.dto.BuildConfigurationRevision;
@@ -58,10 +58,10 @@ class PncBuildFinderTest {
         String sha1 = "testSha1";
         String md5 = "testMd5";
         String buildId = "100";
-        Checksum checksum = new Checksum(sha256, sha1, md5, "test.jar", 100L);
+        ChecksummedFile checksummedFile = new ChecksummedFile(sha256, sha1, md5, "test.jar", 100L);
 
-        QueueEntry entry = new QueueEntry("http://source", checksum, Collections.emptyList());
-        ConcurrentHashMap<QueueEntry, Collection<String>> table = new ConcurrentHashMap<>();
+        ScannedArtifact entry = new ScannedArtifact("http://source", checksummedFile, Collections.emptyList());
+        ConcurrentHashMap<ScannedArtifact, Collection<String>> table = new ConcurrentHashMap<>();
         table.put(entry, List.of("test.jar"));
 
         // Mock PNC Artifact Response
@@ -90,12 +90,12 @@ class PncBuildFinderTest {
 
         AnalyzerBuild resultBuild = results.foundBuilds().get(buildId);
         assertEquals(1, resultBuild.getBuiltArtifacts().size());
-        assertEquals(sha256, resultBuild.getBuiltArtifacts().iterator().next().getChecksum().getSha256Value());
+        assertEquals(sha256, resultBuild.getBuiltArtifacts().iterator().next().getChecksummedFile().getSha256Value());
     }
 
     @Test
     void testFindBuildsHandlesEmptyResult() {
-        ConcurrentHashMap<QueueEntry, Collection<String>> table = new ConcurrentHashMap<>();
+        ConcurrentHashMap<ScannedArtifact, Collection<String>> table = new ConcurrentHashMap<>();
         AnalyzerResult results = pncBuildFinder.findBuilds(table);
         assertTrue(results.foundBuilds().isEmpty());
         assertTrue(results.notFoundArtifacts().isEmpty());

@@ -29,7 +29,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -64,7 +64,7 @@ class ChecksumServiceTest {
         String expectedSha256 = DigestUtils.sha256Hex(content);
 
         // When
-        Checksum result = checksumService.checksum(file, root.getName().getPath());
+        ChecksummedFile result = checksumService.checksum(file, root.getName().getPath());
 
         // Then
         assertNotNull(result);
@@ -82,7 +82,7 @@ class ChecksumServiceTest {
         String expectedSha256 = DigestUtils.sha256Hex("");
 
         // When
-        Checksum result = checksumService.checksum(file, root.getName().getPath());
+        ChecksummedFile result = checksumService.checksum(file, root.getName().getPath());
 
         // Then
         assertEquals(expectedSha256, result.getSha256Value());

@@ -41,14 +41,14 @@ import jakarta.inject.Inject;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.config.AnalyzerConfig;
+import org.jboss.pnc.deliverablesanalyzer.core.ScannedArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifactMapper;
 import org.jboss.pnc.deliverablesanalyzer.model.cache.KojiArchiveInfoWrapper;
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.KojiBuild;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,7 @@ public class KojiBuildFinder {
     private static final Logger LOGGER = LoggerFactory.getLogger(KojiBuildFinder.class);
 
     @Inject
-    BuildConfig buildConfig;
+    AnalyzerConfig analyzerConfig;
 
     @Inject
     KojiMultiCallClient kojiClient;
@@ -90,16 +90,16 @@ public class KojiBuildFinder {
 
     @PostConstruct
     void init() {
-        if (buildConfig.disableCache()) {
+        if (analyzerConfig.disableCache()) {
             LOGGER.info("Koji Caches disabled via configuration");
             this.archiveCache = null;
             this.buildCache = null;
         }
 
-        this.kojiThrottle = new Semaphore(buildConfig.kojiNumThreads());
+        this.kojiThrottle = new Semaphore(analyzerConfig.kojiNumThreads(), true);
     }
 
-    public AnalyzerResult findBuilds(Map<QueueEntry, Collection<String>> checksumTable) {
+    public AnalyzerResult findBuilds(Map<ScannedArtifact, Collection<String>> checksumTable) {
         if (checksumTable == null || checksumTable.isEmpty()) {
             return AnalyzerResult.empty();
         }
@@ -111,61 +111,64 @@ public class KojiBuildFinder {
         return groupArtifactsAsBuilds(kojiArtifacts);
     }
 
-    private Set<AnalyzerArtifact> lookupArtifactsInKoji(Map<QueueEntry, Collection<String>> checksumTable) {
+    private Set<AnalyzerArtifact> lookupArtifactsInKoji(Map<ScannedArtifact, Collection<String>> checksumTable) {
         Set<AnalyzerArtifact> artifacts = ConcurrentHashMap.newKeySet();
-        Map<QueueEntry, Collection<String>> unresolvedBatch = new ConcurrentHashMap<>(checksumTable);
+        Map<ScannedArtifact, Collection<String>> unresolvedBatch = new ConcurrentHashMap<>(checksumTable);
 
         // SHA256 Lookup
-        Map<QueueEntry, Collection<String>> sha256Batch = unresolvedBatch.entrySet()
+        Map<ScannedArtifact, Collection<String>> sha256Batch = unresolvedBatch.entrySet()
                 .stream()
-                .filter(e -> e.getKey().checksum().getSha256Value() != null)
+                .filter(e -> e.getKey().file().getSha256Value() != null)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         if (!sha256Batch.isEmpty()) {
             Set<AnalyzerArtifact> sha256Found = executeParallelLookup(
                     sha256Batch,
                     checksumTable,
-                    Checksum::getSha256Value);
+                    ChecksummedFile::getSha256Value);
             artifacts.addAll(sha256Found);
 
             if (!sha256Found.isEmpty()) {
                 Set<String> foundHashes = sha256Found.stream()
-                        .map(a -> a.getChecksum().getSha256Value())
+                        .map(a -> a.getChecksummedFile().getSha256Value())
                         .collect(Collectors.toSet());
 
-                unresolvedBatch.keySet().removeIf(entry -> foundHashes.contains(entry.checksum().getSha256Value()));
+                unresolvedBatch.keySet().removeIf(entry -> foundHashes.contains(entry.file().getSha256Value()));
             }
         }
 
         // MD5 Lookup
-        Map<QueueEntry, Collection<String>> md5Batch = unresolvedBatch.entrySet()
+        Map<ScannedArtifact, Collection<String>> md5Batch = unresolvedBatch.entrySet()
                 .stream()
-                .filter(e -> e.getKey().checksum().getMd5Value() != null)
+                .filter(e -> e.getKey().file().getMd5Value() != null)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         if (!md5Batch.isEmpty()) {
-            Set<AnalyzerArtifact> md5Found = executeParallelLookup(md5Batch, checksumTable, Checksum::getMd5Value);
+            Set<AnalyzerArtifact> md5Found = executeParallelLookup(
+                    md5Batch,
+                    checksumTable,
+                    ChecksummedFile::getMd5Value);
             artifacts.addAll(md5Found);
 
             if (!md5Found.isEmpty()) {
                 Set<String> foundHashes = md5Found.stream()
-                        .map(a -> a.getChecksum().getMd5Value())
+                        .map(a -> a.getChecksummedFile().getMd5Value())
                         .collect(Collectors.toSet());
 
-                unresolvedBatch.keySet().removeIf(entry -> foundHashes.contains(entry.checksum().getMd5Value()));
+                unresolvedBatch.keySet().removeIf(entry -> foundHashes.contains(entry.file().getMd5Value()));
             }
         }
 
         // Map remaining as not found
-        for (QueueEntry notFound : unresolvedBatch.keySet()) {
+        for (ScannedArtifact notFound : unresolvedBatch.keySet()) {
             // Cache empty state so future runs skip the lookup
-            if (archiveCache != null && notFound.checksum().getSha256Value() != null) {
+            if (archiveCache != null && notFound.file().getSha256Value() != null) {
                 archiveCache.putAsync(
-                        notFound.checksum().getSha256Value(),
+                        notFound.file().getSha256Value(),
                         new KojiArchiveInfoWrapper(Collections.emptyList()));
             }
 
             artifacts.add(
                     AnalyzerArtifactMapper.mapFromNotFound(
-                            notFound.checksum(),
+                            notFound.file(),
                             checksumTable.get(notFound),
                             notFound.licenses(),
                             notFound.sourceUrl()));
@@ -175,18 +178,18 @@ public class KojiBuildFinder {
     }
 
     private Set<AnalyzerArtifact> executeParallelLookup(
-            Map<QueueEntry, Collection<String>> validForHash,
-            Map<QueueEntry, Collection<String>> originalChecksumTable,
-            Function<Checksum, String> hashExtractor) {
+            Map<ScannedArtifact, Collection<String>> validForHash,
+            Map<ScannedArtifact, Collection<String>> originalChecksumTable,
+            Function<ChecksummedFile, String> hashExtractor) {
         Set<AnalyzerArtifact> artifacts = ConcurrentHashMap.newKeySet();
-        List<QueueEntry> entries = new ArrayList<>(validForHash.keySet());
+        List<ScannedArtifact> entries = new ArrayList<>(validForHash.keySet());
 
-        int chunkSize = buildConfig.kojiMultiCallSize();
+        int chunkSize = analyzerConfig.kojiMulticallSize();
         int capacity = (entries.size() / chunkSize) + 1;
         List<CompletableFuture<Void>> tasks = new ArrayList<>(capacity);
 
         for (int i = 0; i < entries.size(); i += chunkSize) {
-            List<QueueEntry> chunk = entries.subList(i, Math.min(i + chunkSize, entries.size()));
+            List<ScannedArtifact> chunk = entries.subList(i, Math.min(i + chunkSize, entries.size()));
 
             tasks.add(CompletableFuture.supplyAsync(() -> {
                 try {
@@ -219,9 +222,9 @@ public class KojiBuildFinder {
     }
 
     private Set<AnalyzerArtifact> processChecksumChunk(
-            List<QueueEntry> chunk,
-            Map<QueueEntry, Collection<String>> checksumTable,
-            Function<Checksum, String> hashExtractor) {
+            List<ScannedArtifact> chunk,
+            Map<ScannedArtifact, Collection<String>> checksumTable,
+            Function<ChecksummedFile, String> hashExtractor) {
         Map<String, List<KojiArchiveInfo>> resolvedArchivesMap = new HashMap<>();
         List<KojiArchiveQuery> checksumsToQuery = new ArrayList<>();
 
@@ -259,14 +262,14 @@ public class KojiBuildFinder {
     }
 
     private void identifyArchiveCacheHitsAndMisses(
-            List<QueueEntry> chunk,
-            Function<Checksum, String> hashExtractor,
+            List<ScannedArtifact> chunk,
+            Function<ChecksummedFile, String> hashExtractor,
             Map<String, List<KojiArchiveInfo>> resolvedArchivesMap,
             List<KojiArchiveQuery> checksumsToQuery) {
 
-        for (QueueEntry entry : chunk) {
-            String queryHash = hashExtractor.apply(entry.checksum());
-            String cacheKey = entry.checksum().getSha256Value();
+        for (ScannedArtifact scannedArtifact : chunk) {
+            String queryHash = hashExtractor.apply(scannedArtifact.file());
+            String cacheKey = scannedArtifact.file().getSha256Value();
 
             // Strict Null Check to prevent Infinispan crashes on MD5 fallbacks
             KojiArchiveInfoWrapper cached = (archiveCache != null && cacheKey != null) ? archiveCache.get(cacheKey)
@@ -281,10 +284,10 @@ public class KojiBuildFinder {
     }
 
     private void queryMissingArchivesFromKoji(
-            List<QueueEntry> chunk,
+            List<ScannedArtifact> chunk,
             List<KojiArchiveQuery> checksumsToQuery,
             Map<String, List<KojiArchiveInfo>> resolvedArchivesMap,
-            Function<Checksum, String> hashExtractor) throws KojiClientException {
+            Function<ChecksummedFile, String> hashExtractor) throws KojiClientException {
 
         if (checksumsToQuery.isEmpty())
             return;
@@ -303,15 +306,15 @@ public class KojiBuildFinder {
             resolvedArchivesMap.put(queryHash, archiveInfos);
 
             if (archiveCache != null && !archiveInfos.isEmpty()) {
-                QueueEntry originalEntry = chunk.stream()
-                        .filter(e -> queryHash.equals(hashExtractor.apply(e.checksum())))
+                ScannedArtifact originalEntry = chunk.stream()
+                        .filter(e -> queryHash.equals(hashExtractor.apply(e.file())))
                         .findFirst()
                         .orElse(null);
 
                 // Write to cache using SHA256
-                if (originalEntry != null && originalEntry.checksum().getSha256Value() != null) {
+                if (originalEntry != null && originalEntry.file().getSha256Value() != null) {
                     archiveCache.putAsync(
-                            originalEntry.checksum().getSha256Value(),
+                            originalEntry.file().getSha256Value(),
                             new KojiArchiveInfoWrapper(archiveInfos));
                 }
             }
@@ -319,18 +322,18 @@ public class KojiBuildFinder {
     }
 
     private Set<AnalyzerArtifact> mapArchivesToAnalyzerArtifacts(
-            List<QueueEntry> chunk,
-            Map<QueueEntry, Collection<String>> checksumTable,
-            Function<Checksum, String> hashExtractor,
+            List<ScannedArtifact> chunk,
+            Map<ScannedArtifact, Collection<String>> checksumTable,
+            Function<ChecksummedFile, String> hashExtractor,
             Map<String, List<KojiArchiveInfo>> resolvedArchivesMap,
             Map<Integer, KojiBuild> buildDetailsMap) {
 
         Set<AnalyzerArtifact> artifactsInPass = new HashSet<>();
 
-        for (QueueEntry queueEntry : chunk) {
-            Checksum checksum = queueEntry.checksum();
-            List<KojiArchiveInfo> archivesForChecksum = resolvedArchivesMap.get(hashExtractor.apply(checksum));
-            Collection<String> filenames = checksumTable.get(queueEntry);
+        for (ScannedArtifact scannedArtifact : chunk) {
+            ChecksummedFile checksummedFile = scannedArtifact.file();
+            List<KojiArchiveInfo> archivesForChecksum = resolvedArchivesMap.get(hashExtractor.apply(checksummedFile));
+            Collection<String> filenames = checksumTable.get(scannedArtifact);
 
             KojiArchiveInfo bestArchive = findArtifactInKoji(archivesForChecksum, buildDetailsMap).orElse(null);
 
@@ -339,10 +342,10 @@ public class KojiBuildFinder {
                 AnalyzerArtifact analyzerArtifact = AnalyzerArtifactMapper.mapFromKojiArchive(
                         bestArchive,
                         buildDetails,
-                        queueEntry.checksum(),
+                        scannedArtifact.file(),
                         filenames,
-                        queueEntry.licenses(),
-                        queueEntry.sourceUrl());
+                        scannedArtifact.licenses(),
+                        scannedArtifact.sourceUrl());
                 artifactsInPass.add(analyzerArtifact);
             }
         }

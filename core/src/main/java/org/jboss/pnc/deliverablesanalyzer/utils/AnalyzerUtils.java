@@ -15,29 +15,17 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.utils;
 
-import static java.util.Comparator.reverseOrder;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.vfs2.FileContent;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class AnalyzerUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzerUtils.class);
-
     private static final String BANG_SLASH = "!/";
-    private static final String VFS_CACHE = "vfs_cache";
 
     private AnalyzerUtils() {
         // Prevent instantiation
@@ -71,54 +59,6 @@ public final class AnalyzerUtils {
         String uri = fileObject.getName().getFriendlyURI();
         String baseName = fileObject.getName().getBaseName();
         return uri.substring(0, uri.indexOf(baseName));
-    }
-
-    // --- System / Environment ---
-
-    public static Path getUserHome() {
-        String userHome = System.getProperty("user.home");
-
-        // Check for null or the specific placeholder "?"
-        if (userHome == null || "?".equals(userHome)) {
-            String fallbackDir = System.getProperty("java.io.tmpdir");
-            LOGGER.error("Using java.io.tmpdir {} instead of bogus user.home value {}", fallbackDir, userHome);
-            return Path.of(fallbackDir);
-        }
-
-        return Path.of(userHome);
-    }
-
-    public static Optional<Path> getVfsCache() {
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        LOGGER.debug("java.io.tmpdir: {}", tmpDir);
-
-        if (tmpDir == null) {
-            return Optional.empty();
-        }
-
-        Path vfsCacheDir = Path.of(tmpDir, VFS_CACHE).toAbsolutePath();
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Commons VFS cache directory: {}", vfsCacheDir);
-        }
-
-        return Optional.of(vfsCacheDir);
-    }
-
-    public static Optional<Path> cleanupVfsCache() throws IOException {
-        Optional<Path> optionalVfsCacheDir = getVfsCache();
-        if (optionalVfsCacheDir.isEmpty() || !Files.exists(optionalVfsCacheDir.get())) {
-            return Optional.empty();
-        }
-
-        Path vfsCacheDir = optionalVfsCacheDir.get();
-        try (Stream<Path> stream = Files.walk(vfsCacheDir)) {
-            List<Path> paths = stream.sorted(reverseOrder()).toList();
-            for (Path path : paths) {
-                Files.delete(path);
-            }
-        }
-        return optionalVfsCacheDir;
     }
 
     // --- Formatting & Exceptions ---

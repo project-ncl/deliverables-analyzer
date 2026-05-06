@@ -35,7 +35,7 @@ import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.config.ConfigParser;
-import org.jboss.pnc.deliverablesanalyzer.core.QueueEntry;
+import org.jboss.pnc.deliverablesanalyzer.core.ScannedArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.utils.FinderResultCreator;
 import org.slf4j.Logger;
@@ -69,7 +69,7 @@ public class AnalyzerOrchestrator {
      */
     public List<FinderResult> analyze(String id, Set<String> inputPaths, String specificConfig) {
         // Setup Shared Resources
-        BlockingQueue<QueueEntry> queue = new LinkedBlockingQueue<>(1000);
+        BlockingQueue<ScannedArtifact> queue = new LinkedBlockingQueue<>(1000);
         Map<String, AnalyzerResult> results = new ConcurrentHashMap<>();
         inputPaths.forEach(path -> results.put(path, AnalyzerResult.init()));
 
@@ -110,15 +110,12 @@ public class AnalyzerOrchestrator {
             try {
                 if (!consumerTask.isDone() && !consumerTask.isCancelled()) {
                     // Whether producer succeeds or fails, we must stop the consumer
-                    queue.put(QueueEntry.POISON_PILL);
+                    queue.put(ScannedArtifact.POISON_PILL);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 LOGGER.warn("Interrupted while sending Poison Pill");
             }
-
-            LOGGER.debug("Cleaning up VFS cache...");
-            fileChecksumProducer.cleanupVfsCache();
         }
 
         // Wait for Consumer to Finish

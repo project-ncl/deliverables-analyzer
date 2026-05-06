@@ -18,15 +18,15 @@ package org.jboss.pnc.deliverablesanalyzer.core;
 import java.util.Collections;
 import java.util.List;
 
-import org.jboss.pnc.deliverablesanalyzer.model.finder.Checksum;
+import org.jboss.pnc.deliverablesanalyzer.model.finder.ChecksummedFile;
 import org.jboss.pnc.deliverablesanalyzer.model.finder.LicenseInfo;
 
-public record QueueEntry(String sourceUrl, Checksum checksum, List<LicenseInfo> licenses) {
+public record ScannedArtifact(String sourceUrl, ChecksummedFile file, List<LicenseInfo> licenses) {
 
     // Poison Pill Constant
-    public static final QueueEntry POISON_PILL = new QueueEntry(null, null, Collections.emptyList());
+    public static final ScannedArtifact POISON_PILL = new ScannedArtifact(null, null, Collections.emptyList());
 
-    public QueueEntry {
+    public ScannedArtifact {
         licenses = (licenses != null) ? licenses : Collections.emptyList();
     }
 }

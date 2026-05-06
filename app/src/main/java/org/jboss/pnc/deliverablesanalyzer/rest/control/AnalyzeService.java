@@ -38,7 +38,7 @@ import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.common.concurrent.HeartbeatScheduler;
 import org.jboss.pnc.deliverablesanalyzer.AnalyzerOrchestrator;
-import org.jboss.pnc.deliverablesanalyzer.config.BuildConfig;
+import org.jboss.pnc.deliverablesanalyzer.config.AnalyzerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ public class AnalyzeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnalyzeService.class);
 
     @Inject
-    BuildConfig buildConfig;
+    AnalyzerConfig analyzerConfig;
 
     @Inject
     HeartbeatScheduler heartbeatScheduler;
@@ -75,7 +75,7 @@ public class AnalyzeService {
 
     @PostConstruct
     void init() {
-        if (!buildConfig.disableCache()) {
+        if (!analyzerConfig.disableCache()) {
             try {
                 cancelListener = new DistributedCancelListener(this);
                 cancelEventsCache.addClientListener(cancelListener);
@@ -189,7 +189,6 @@ public class AnalyzeService {
             List<FinderResult> finderResults = analyzerOrchestrator.analyze(id, urls, specificConfig);
             analysisReport = new AnalysisReport(finderResults);
             LOGGER.info("Analysis with ID {} finished successfully.", id);
-            // LOGGER.warn("Analysis ID {} - Analysis Result: {}", id, analysisReport);
         } catch (CancellationException e) {
             LOGGER.info(
                     "Analysis with ID {} cancelled. No callback will be performed. Exception: {}",
