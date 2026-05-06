@@ -62,7 +62,7 @@ public class BuildLookupConsumer {
     ResultAggregator resultAggregator;
 
     public void consume(BlockingQueue<ScannedArtifact> queue, Map<String, AnalyzerResult> results) {
-        LOGGER.info("Consumer started. Waiting for checksums...");
+        LOGGER.debug("Consumer started. Waiting for checksums...");
 
         List<ScannedArtifact> queueBatch = new ArrayList<>(BATCH_SIZE);
 
@@ -90,7 +90,7 @@ public class BuildLookupConsumer {
             throw new CancellationException("Consumer interrupted");
         }
 
-        LOGGER.info("Consumer finished.");
+        LOGGER.debug("Consumer finished.");
     }
 
     private void processBatch(List<ScannedArtifact> batch, Map<String, AnalyzerResult> globalResults) {

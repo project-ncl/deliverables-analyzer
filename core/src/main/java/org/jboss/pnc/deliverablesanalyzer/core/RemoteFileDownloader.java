@@ -60,7 +60,7 @@ public class RemoteFileDownloader {
      * @throws InterruptedException If the download thread is interrupted.
      */
     public DownloadedFile downloadToTempFile(String url) throws IOException, InterruptedException {
-        LOGGER.info("Downloading remote file to local temp storage: {}", url);
+        LOGGER.debug("Downloading remote file to local temp storage: {}", url);
 
         // Extract the filename from the URL path
         String pathInfo = URI.create(url).getPath();
