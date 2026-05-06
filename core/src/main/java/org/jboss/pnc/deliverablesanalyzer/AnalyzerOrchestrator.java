@@ -35,6 +35,7 @@ import org.jboss.pnc.api.dto.exception.ReasonedException;
 import org.jboss.pnc.api.enums.ResultStatus;
 import org.jboss.pnc.deliverablesanalyzer.config.BuildSpecificConfig;
 import org.jboss.pnc.deliverablesanalyzer.config.ConfigParser;
+import org.jboss.pnc.deliverablesanalyzer.core.AnalyzerAnalyticsLogger;
 import org.jboss.pnc.deliverablesanalyzer.core.ScannedArtifact;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.utils.FinderResultCreator;
@@ -59,6 +60,9 @@ public class AnalyzerOrchestrator {
     @Inject
     @VirtualThreads
     ExecutorService executorService;
+
+    @Inject
+    AnalyzerAnalyticsLogger analyticsLogger;
 
     /**
      * Analyses the given input paths to find their corresponding builds in PNC.
@@ -129,7 +133,7 @@ public class AnalyzerOrchestrator {
         }
 
         long duration = System.currentTimeMillis() - startTime;
-        LOGGER.info("Analysis complete. Found {} builds in {} ms.", results.size(), duration);
+        analyticsLogger.logFinalAnalyzerInformation(results, duration);
 
         return results.entrySet()
                 .stream()
