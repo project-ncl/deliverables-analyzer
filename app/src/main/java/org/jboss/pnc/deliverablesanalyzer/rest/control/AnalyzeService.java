@@ -188,7 +188,7 @@ public class AnalyzeService {
         try {
             List<FinderResult> finderResults = analyzerOrchestrator.analyze(id, urls, specificConfig);
             analysisReport = new AnalysisReport(finderResults);
-            LOGGER.info("Analysis with ID {} finished successfully.", id);
+            LOGGER.debug("Analysis with ID {} finished successfully.", id);
         } catch (CancellationException e) {
             LOGGER.info(
                     "Analysis with ID {} cancelled. No callback will be performed. Exception: {}",

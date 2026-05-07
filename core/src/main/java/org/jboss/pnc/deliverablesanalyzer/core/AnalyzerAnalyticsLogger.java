@@ -25,7 +25,6 @@ import java.util.stream.Stream;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import org.jboss.pnc.api.deliverablesanalyzer.dto.BuildSystemType;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerBuild;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.AnalyzerResult;
 import org.jboss.pnc.deliverablesanalyzer.model.analyzer.artifact.AnalyzerArtifact;
@@ -104,43 +103,5 @@ public class AnalyzerAnalyticsLogger {
                 numArtifactsWithLicenses,
                 numTotalArtifacts,
                 artifactLicensePercent);
-
-        // Calculate & Print Built From Source Analytics
-        long pncTotal = 0;
-        long pncNotBuilt = 0;
-
-        long brewTotal = 0;
-        long brewNotBuilt = 0;
-
-        long otherNotBuilt = 0;
-
-        for (AnalyzerArtifact artifact : allArtifacts) {
-            boolean isBuiltFromSource = artifact.getUnmatchedFilenames().isEmpty() && !artifact.isImport();
-
-            if (artifact.getBuildSystemType() == null) {
-                if (!isBuiltFromSource)
-                    otherNotBuilt++;
-            } else if (artifact.getBuildSystemType().equals(BuildSystemType.PNC)) {
-                pncTotal++;
-                if (!isBuiltFromSource)
-                    pncNotBuilt++;
-            } else if (artifact.getBuildSystemType().equals(BuildSystemType.BREW)) {
-                brewTotal++;
-                if (!isBuiltFromSource)
-                    brewNotBuilt++;
-            }
-        }
-
-        long totalNotBuilt = pncNotBuilt + brewNotBuilt + otherNotBuilt;
-
-        LOGGER.info(
-                "PNC artifacts: {} ({} artifacts not built from source), BREW artifacts: {} ({} artifacts not built from source), other artifacts not built from source: {}",
-                pncTotal,
-                pncNotBuilt,
-                brewTotal,
-                brewNotBuilt,
-                otherNotBuilt);
-
-        LOGGER.info("There are total {} artifacts not built from source!", totalNotBuilt);
     }
 }
