@@ -122,7 +122,7 @@
     <version.jandex>3.1.6</version.jandex>
     <version.git-commit-id>9.0.2</version.git-commit-id>
     <version.httpclient5>5.6.1</version.httpclient5>
-    <version.lombok>1.18.42</version.lombok>
+    <version.lombok>1.18.46</version.lombok>
     <version.maven-core>3.9.12</version.maven-core>
     <version.mycila>5.0.0</version.mycila>
     <version.spdx>2.0.1</version.spdx>
