@@ -106,7 +106,7 @@
     <!-- Versions PNC -->
     <version.pnc>3.5.0</version.pnc>
     <version.pnc-api>3.5.0</version.pnc-api>
-    <version.pnc-common>3.4.1-SNAPSHOT</version.pnc-common>
+    <version.pnc-common>3.5.0</version.pnc-common>
     <version.pnc-client-auth>1.0.0</version.pnc-client-auth>
     <version.pnc-logging-kafka>3.0.4</version.pnc-logging-kafka>
 
