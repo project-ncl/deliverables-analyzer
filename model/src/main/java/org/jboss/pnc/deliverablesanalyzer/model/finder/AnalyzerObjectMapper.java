@@ -31,6 +31,7 @@ public final class AnalyzerObjectMapper extends ObjectMapper {
         enable(SerializationFeature.INDENT_OUTPUT);
         enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
         disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         registerModule(new Jdk8Module());
         registerModule(new JavaTimeModule());
     }

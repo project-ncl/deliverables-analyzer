@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import com.redhat.red.build.koji.KojiClientException;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiArchiveQuery;
+import com.redhat.red.build.koji.model.xmlrpc.KojiBtype;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildInfo;
 import com.redhat.red.build.koji.model.xmlrpc.KojiBuildState;
 import com.redhat.red.build.koji.model.xmlrpc.KojiIdOrName;
@@ -404,6 +405,7 @@ public class KojiBuildFinder {
             return archives.getFirst();
 
         List<KojiArchiveInfo> sortedArchives = archives.stream()
+                .filter(a -> a.getBuildType().equals(KojiBtype.maven) || a.getBuildType().equals(KojiBtype.win))
                 .sorted(Comparator.comparing(KojiArchiveInfo::getBuildId))
                 .toList();
 
