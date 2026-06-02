@@ -95,15 +95,6 @@ $ mvn clean install
 
 ---
 
-### OpenTelemetry
-
-| Configuration Key                   | Description                             | Example                                                                |
-|-------------------------------------|-----------------------------------------|------------------------------------------------------------------------|
-| quarkus.otel.exporter.otlp.endpoint | OTLP endpoint to send telemetry data to | http://localhost:4317                                                  |
-| quarkus.otel.resource.attributes    | Attributes to add to the exported trace | "service.name=pnc-deliverable-analyzer,deployment.environment=staging" |
-
----
-
 ### Related Guides
 
 - Infinispan Client ([guide](https://quarkus.io/guides/infinispan-client)): Connect to the Infinispan data grid for distributed caching
