@@ -314,6 +314,12 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- Observability -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-micrometer-opentelemetry</artifactId>
+    </dependency>
+
     <!-- Logging -->
     <dependency>
       <groupId>org.jboss.pnc.logging</groupId>
