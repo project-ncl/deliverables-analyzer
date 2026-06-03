@@ -112,7 +112,7 @@
 
     <!-- Versions Koji -->
     <version.kojiji>2.25</version.kojiji>
-    <version.jhttpc>1.16</version.jhttpc>
+    <version.jhttpc>1.17</version.jhttpc>
 
     <!-- Versions -->
     <version.commons-vfs2>2.10.0</version.commons-vfs2>
