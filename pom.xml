@@ -73,6 +73,9 @@
     <maven.compiler.parameters>true</maven.compiler.parameters>
     <maven.compiler.release>21</maven.compiler.release>
 
+    <!-- JDK -->
+    <jdk.min.version>21</jdk.min.version>
+
     <!-- Project -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
