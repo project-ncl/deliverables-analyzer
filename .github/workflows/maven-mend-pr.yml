@@ -2,7 +2,7 @@ name: Mend CLI scan for Maven PR
 
 on:
   workflow_run: # zizmor: ignore[dangerous-triggers]
-    workflows: ["Java CI with Maven"]
+    workflows: ["Deliverables Analyzer CI"]
     types: [completed]
 
 permissions:
