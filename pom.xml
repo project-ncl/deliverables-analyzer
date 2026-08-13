@@ -124,7 +124,7 @@
     <version.ide-config>1.1.0</version.ide-config>
     <version.jandex>3.5.3</version.jandex>
     <version.git-commit-id>10.0.0</version.git-commit-id>
-    <version.httpclient5>5.6.2</version.httpclient5>
+    <version.httpclient5>5.6.3</version.httpclient5>
     <version.lombok>1.18.46</version.lombok>
     <version.maven-core>3.9.15</version.maven-core>
     <version.mycila>5.0.0</version.mycila>
