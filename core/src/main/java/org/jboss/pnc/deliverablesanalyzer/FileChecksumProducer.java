@@ -312,6 +312,11 @@ public class FileChecksumProducer {
                     "Invalid input URI: " + inputPath,
                     "Please check the URL.",
                     ce);
+            case IOException ioe -> new ReasonedException(
+                    ResultStatus.FAILED,
+                    "Invalid input URI: " + inputPath,
+                    "Failed to download file. Please check the URL.",
+                    ioe);
             // Default to System Error for everything else
             case null, default ->
                 new ReasonedException(ResultStatus.SYSTEM_ERROR, "System failed to process input: " + inputPath, e);
