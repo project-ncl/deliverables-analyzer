@@ -144,7 +144,9 @@ public final class AnalyzerArtifactMapper {
                 }
                 case win -> {
                     WindowsAnalyzerArtifact win = new WindowsAnalyzerArtifact();
-                    win.setName(archiveInfo.getArtifactId());
+                    String name = archiveInfo.getArtifactId() != null ? archiveInfo.getArtifactId()
+                            : archiveInfo.getArchiveId().toString();
+                    win.setName(name);
                     String release = (buildDetails != null && buildDetails.getInfo() != null
                             && buildDetails.getInfo().getRelease() != null) ? buildDetails.getInfo().getRelease()
                                     : "unknown";
