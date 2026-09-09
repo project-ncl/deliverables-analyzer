@@ -25,11 +25,6 @@ target/
 .idea
 *.iml
 
-# Maven Wrapper
-.mvn/
-mvnw
-mvnw.cmd
-
 # formatter-maven-plugin
 .cache/
 
