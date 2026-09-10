@@ -120,7 +120,7 @@
     <!-- Versions -->
     <version.commons-vfs2>2.10.0</version.commons-vfs2>
     <version.dkanejs-compose>4.0.0</version.dkanejs-compose>
-    <version.spotless>3.4.0</version.spotless>
+    <version.spotless>3.10.1</version.spotless>
     <version.ide-config>1.1.0</version.ide-config>
     <version.jandex>3.5.3</version.jandex>
     <version.git-commit-id>10.0.0</version.git-commit-id>
