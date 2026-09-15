@@ -129,7 +129,7 @@
     <version.maven-core>3.9.16</version.maven-core>
     <version.mycila>5.1.2</version.mycila>
     <version.spdx>2.0.4</version.spdx>
-    <version.spotbugs>4.10.2.0</version.spotbugs>
+    <version.spotbugs>4.10.4.1</version.spotbugs>
     <version.wiremock>3.13.2</version.wiremock>
   </properties>
 
