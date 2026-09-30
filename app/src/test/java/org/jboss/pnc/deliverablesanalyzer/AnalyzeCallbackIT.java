@@ -62,11 +62,13 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 
 @QuarkusTest
 @QuarkusTestResource(WireMockTestResource.class)
 @TestProfile(AnalyzeCallbackIT.NoCacheProfile.class)
+@TestSecurity(authorizationEnabled = false)
 public class AnalyzeCallbackIT {
 
     private static final String ANALYZE_URL = "/api/analyze";

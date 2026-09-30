@@ -58,10 +58,12 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 
 @QuarkusTest
 @TestProfile(AnalyzeResourceIT.NoCacheProfile.class)
+@TestSecurity(authorizationEnabled = false)
 public class AnalyzeResourceIT {
 
     @InjectMock

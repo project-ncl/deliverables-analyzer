@@ -15,7 +15,7 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
-import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -35,6 +35,7 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.pnc.api.deliverablesanalyzer.dto.AnalyzePayload;
 import org.jboss.pnc.deliverablesanalyzer.model.AnalyzeResponse;
+import org.jboss.pnc.deliverablesanalyzer.rest.control.AuthorizationConstants;
 import org.jboss.pnc.deliverablesanalyzer.rest.exception.ErrorMessage;
 
 @Path("/analyze")
@@ -64,7 +65,7 @@ public interface AnalyzeEndpoint {
                     mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ErrorMessage.class)))
     @POST
-    @PermitAll
+    @RolesAllowed({ AuthorizationConstants.ADMIN_ROLE, AuthorizationConstants.DELAN_ROLE })
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/")
@@ -89,7 +90,7 @@ public interface AnalyzeEndpoint {
                     mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ErrorMessage.class)))
     @POST
-    @PermitAll
+    @RolesAllowed({ AuthorizationConstants.ADMIN_ROLE, AuthorizationConstants.DELAN_ROLE })
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/cancel")
