@@ -88,7 +88,7 @@
 
     <!-- Maven Plugin Versions -->
     <maven.antrun-plugin.version>3.2.0</maven.antrun-plugin.version>
-    <maven.buildnumber-plugin.version>3.3.0</maven.buildnumber-plugin.version>
+    <maven.buildnumber-plugin.version>3.3.1</maven.buildnumber-plugin.version>
     <maven.clean-plugin.version>3.5.0</maven.clean-plugin.version>
     <maven.compiler-plugin.version>3.16.0</maven.compiler-plugin.version>
     <maven.central-publishing-plugin.version>0.11.0</maven.central-publishing-plugin.version>
