@@ -42,7 +42,10 @@ public interface PncRestClient {
     @GET
     @Path("/artifacts")
     @Retry(delay = 1000, delayUnit = ChronoUnit.MILLIS)
-    Page<Artifact> getArtifacts(@QueryParam("sha256") String sha256, @QueryParam("q") String q);
+    Page<Artifact> getArtifacts(
+            @QueryParam("q") String q,
+            @QueryParam("pageIndex") int pageIndex,
+            @QueryParam("pageSize") int pageSize);
 
     @GET
     @Path("/build-pushes/{id}")
