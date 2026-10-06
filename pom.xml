@@ -91,7 +91,6 @@
     <maven.buildnumber-plugin.version>3.3.1</maven.buildnumber-plugin.version>
     <maven.clean-plugin.version>3.5.0</maven.clean-plugin.version>
     <maven.compiler-plugin.version>3.16.0</maven.compiler-plugin.version>
-    <maven.central-publishing-plugin.version>0.11.0</maven.central-publishing-plugin.version>
     <maven.dependency-plugin.version>3.11.0</maven.dependency-plugin.version>
     <maven.deploy-plugin.version>3.2.0</maven.deploy-plugin.version>
     <maven.enforcer-plugin.version>3.6.3</maven.enforcer-plugin.version>
@@ -640,16 +639,6 @@
           <version>${maven.surefire-plugin.version}</version>
         </plugin>
         <plugin>
-          <groupId>org.sonatype.central</groupId>
-          <artifactId>central-publishing-maven-plugin</artifactId>
-          <version>${maven.central-publishing-plugin.version}</version>
-          <extensions>true</extensions>
-          <configuration>
-            <!-- as defined in your settings.xml -->
-            <publishingServerId>central-publisher</publishingServerId>
-          </configuration>
-        </plugin>
-        <plugin>
           <groupId>io.github.git-commit-id</groupId>
           <artifactId>git-commit-id-maven-plugin</artifactId>
           <version>${version.git-commit-id}</version>
@@ -731,10 +720,6 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>buildnumber-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.sonatype.central</groupId>
-        <artifactId>central-publishing-maven-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>com.mycila</groupId>
