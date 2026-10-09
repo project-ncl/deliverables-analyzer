@@ -437,8 +437,16 @@
           <artifactId>spotless-maven-plugin</artifactId>
           <version>${version.spotless}</version>
           <configuration>
+            <pom>
+              <sortPom>
+                <expandEmptyElements>false</expandEmptyElements>
+              </sortPom>
+            </pom>
             <java>
-              <removeUnusedImports/>
+              <removeUnusedImports>
+                <!-- default parser does not support Java 21 features -->
+                <engine>cleanthat-javaparser-unnecessaryimport</engine>
+              </removeUnusedImports>
               <importOrder>
                 <file>java-import-order.txt</file>
               </importOrder>
@@ -447,11 +455,6 @@
               </eclipse>
               <lineEndings>UNIX</lineEndings>
             </java>
-            <pom>
-              <sortPom>
-                <expandEmptyElements>false</expandEmptyElements>
-              </sortPom>
-            </pom>
           </configuration>
           <dependencies>
             <dependency>
