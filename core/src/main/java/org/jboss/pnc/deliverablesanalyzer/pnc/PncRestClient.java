@@ -26,6 +26,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.faulttolerance.Retry;
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.jboss.pnc.dto.Artifact;
 import org.jboss.pnc.dto.BuildPushReport;
@@ -35,6 +36,7 @@ import org.jboss.pnc.dto.response.Page;
 
 @Path("/pnc-rest/v2")
 @RegisterRestClient(configKey = "pnc-api")
+@RegisterProvider(PNCAuthClientRequestFilter.class)
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface PncRestClient {
