@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -122,7 +123,7 @@ public class AnalyzeResourceIT {
                 .build(mockBuild)
                 .build();
 
-        when(pncClient.getArtifactsBySha256(mockedSha256)).thenReturn(List.of(mockArtifact));
+        when(pncClient.getArtifactsBySha256(anyCollection())).thenReturn(List.of(mockArtifact));
 
         // Call the REST API
         AnalyzePayload payload = AnalyzePayload.builder()
