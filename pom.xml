@@ -85,7 +85,7 @@
     <quarkus.platform.version>3.40.1.1</quarkus.platform.version>
 
     <!-- Versions PNC -->
-    <version.pnc>3.5.21</version.pnc>
+    <version.pnc>3.5.23</version.pnc>
     <version.pnc-api>3.99.0</version.pnc-api>
     <version.pnc-common>3.5.4</version.pnc-common>
     <version.pnc-client-auth>1.0.0</version.pnc-client-auth>
