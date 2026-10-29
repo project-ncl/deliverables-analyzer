@@ -27,7 +27,7 @@
 
   <groupId>org.jboss.pnc.deliverablesanalyzer</groupId>
   <artifactId>parent</artifactId>
-  <version>4.0.0</version>
+  <version>4.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Deliverables Analyzer</name>
