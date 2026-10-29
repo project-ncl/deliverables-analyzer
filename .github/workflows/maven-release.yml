@@ -16,4 +16,3 @@ jobs:
       uses: project-ncl/shared-github-actions/.github/workflows/maven-release.yml@461b242bf215856b94e7b40f1ecfa06f7ebb1b45 # v0.0.26
       with:
         ref_to_release: ${{ inputs.ref_to_release }}
-      secrets: inherit
