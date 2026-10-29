@@ -61,7 +61,7 @@ public final class AnalyzerArtifactMapper {
             BuildType buildType = pncArtifact.getBuild().getBuildConfigRevision().getBuildType();
 
             artifact = switch (buildType) {
-                case GRADLE, MVN, MVN_RPM, SBT -> {
+                case GRADLE, MVN, MVN_RPM, SBT, ANT -> {
                     MavenAnalyzerArtifact maven = new MavenAnalyzerArtifact();
                     String[] gaecv = pncArtifact.getIdentifier().split(":");
                     if (gaecv.length >= 3) {
