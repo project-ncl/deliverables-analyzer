@@ -88,7 +88,7 @@
     <version.pnc>3.5.23</version.pnc>
     <version.pnc-api>3.99.0</version.pnc-api>
     <version.pnc-common>4.0.0</version.pnc-common>
-    <version.pnc-client-auth>1.0.0</version.pnc-client-auth>
+    <version.pnc-client-auth>4.0.0</version.pnc-client-auth>
     <version.pnc-logging-kafka>4.0.0</version.pnc-logging-kafka>
 
     <!-- Versions Koji -->
