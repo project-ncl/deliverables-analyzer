@@ -15,7 +15,6 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.rest;
 
-import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -27,7 +26,6 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.pnc.api.dto.ComponentVersion;
-import org.jboss.pnc.deliverablesanalyzer.rest.control.AuthorizationConstants;
 
 @Path("/version")
 public interface VersionEndpoint {
