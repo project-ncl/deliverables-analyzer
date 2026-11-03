@@ -18,6 +18,7 @@ package org.jboss.pnc.deliverablesanalyzer.pnc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.when;
 
 import java.util.Collection;
@@ -79,7 +80,7 @@ class PncBuildFinderTest {
                 .artifactQuality(ArtifactQuality.VERIFIED)
                 .build();
 
-        when(pncClient.getArtifactsBySha256(sha256)).thenReturn(List.of(artifact));
+        when(pncClient.getArtifactsBySha256(anyCollection())).thenReturn(List.of(artifact));
 
         // When
         AnalyzerResult results = pncBuildFinder.findBuilds(table);

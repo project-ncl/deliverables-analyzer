@@ -15,8 +15,10 @@
  */
 package org.jboss.pnc.deliverablesanalyzer.pnc;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -34,17 +36,44 @@ public class PncClient {
 
     private static final String ONLY_BUILT = "build=isnull=false";
 
+    /**
+     * Number of artifacts requested per page when paginating a batched query.
+     */
+    private static final int PAGE_SIZE = 200;
+
     @Inject
     @RestClient
     PncRestClient restClient;
 
-    public Collection<Artifact> getArtifactsBySha256(String sha256) {
+    /**
+     * Looks up all PNC artifacts matching any of the given sha256 checksums using a single RSQL query (plus follow-up
+     * requests if the result spans multiple pages), rather than one HTTP request per checksum.
+     *
+     * @param sha256s the sha256 checksums to look up
+     * @return every matching (built) artifact across all the given checksums; callers can group by
+     *         {@link Artifact#getSha256()}
+     */
+    public Collection<Artifact> getArtifactsBySha256(Collection<String> sha256s) {
+        if (sha256s == null || sha256s.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String q = "sha256=in=(" + String.join(",", sha256s) + ");" + ONLY_BUILT;
+
         try {
-            Page<Artifact> page = restClient.getArtifacts(sha256, ONLY_BUILT);
-            if (page == null || page.getContent() == null) {
-                return Collections.emptyList();
-            }
-            return page.getContent();
+            List<Artifact> artifacts = new ArrayList<>();
+            int pageIndex = 0;
+            int totalPages;
+            do {
+                Page<Artifact> page = restClient.getArtifacts(q, pageIndex, PAGE_SIZE);
+                if (page == null || page.getContent() == null) {
+                    break;
+                }
+                artifacts.addAll(page.getContent());
+                totalPages = page.getTotalPages();
+                pageIndex++;
+            } while (pageIndex < totalPages);
+            return artifacts;
         } catch (ClientWebApplicationException e) {
             LOGGER.error("Failed to fetch PNC artifacts by sha256", e);
             throw e;
