@@ -9,3 +9,8 @@ jobs:
       uses: project-ncl/shared-github-actions/.github/workflows/maven-snapshot.yml@e7102dd3bf74f91aaccae7a3539241c03a652d1a # v0.0.27
       with:
         project_name: 'project-ncl/deliverables-analyzer'
+      secrets:
+        SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+        SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+        QUAY_DEVEL_USERNAME: ${{ secrets.QUAY_DEVEL_USERNAME }}
+        QUAY_DEVEL_PASSWORD: ${{ secrets.QUAY_DEVEL_PASSWORD }}
