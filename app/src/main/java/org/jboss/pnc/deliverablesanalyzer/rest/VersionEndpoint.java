@@ -43,7 +43,6 @@ public interface VersionEndpoint {
                     schema = @Schema(implementation = ComponentVersion.class)))
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ AuthorizationConstants.ADMIN_ROLE, AuthorizationConstants.DELAN_ROLE })
     @Path("/")
     Response getVersion();
 }
