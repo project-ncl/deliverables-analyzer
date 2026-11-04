@@ -405,11 +405,12 @@
           <configuration>
             <licenseSets>
               <licenseSet>
-                <header>./license-header.txt</header>
+                <inlineHeader><![CDATA[SPDX-FileCopyrightText: Copyright © ${project.inceptionYear} Red Hat, Inc.
+SPDX-License-Identifier: Apache-2.0
+]]></inlineHeader>
                 <excludes>
                   <exclude>**/README.md</exclude>
                   <exclude>**/LICENSE</exclude>
-                  <exclude>**/license-header.txt</exclude>
                   <exclude>**/**.properties</exclude>
                   <exclude>**/build-finder-license-deprecated.json</exclude>
                   <exclude>**/build-finder-license-mapping.json</exclude>
