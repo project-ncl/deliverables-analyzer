@@ -93,7 +93,7 @@
     <version.git-commit-id>10.0.1</version.git-commit-id>
     <version.httpclient5>5.6.5</version.httpclient5>
     <version.lombok>1.18.48</version.lombok>
-    <version.maven-core>3.10.1</version.maven-core>
+    <version.maven-core>3.10.2</version.maven-core>
     <version.mycila>5.1.2</version.mycila>
     <version.spdx>2.0.5</version.spdx>
     <version.spotbugs>4.10.5.0</version.spotbugs>
